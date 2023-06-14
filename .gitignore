@@ -1,0 +1,6 @@
+# This .gitignore file should be placed at the root of your project directory
+
+x64/
+Debug/
+.vs/
+*.props
