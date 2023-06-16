@@ -52,15 +52,18 @@ private:
 	shared_ptr<VertexBuffer> m_buffer;
 	vector<shared_ptr<Texture>> m_textures;
 	shared_ptr<Material> m_material;
+	
+	glm::vec3 m_center;
 	glm::mat4 m_transform;
 
 public:
 	Mesh();
+	Mesh(const string& path);
 	Mesh(string name, shared_ptr<VertexBuffer> buffer,
 		 vector<shared_ptr<Texture>> textures,
 		 shared_ptr<Material> material);
 
-	void loadTXT(const string& file_path);
+	void processMesh();
 
 	void draw();
 	virtual void draw(Shader& shader);
@@ -68,22 +71,29 @@ public:
 	void bind() const;
 	void unbind() const;
 
-	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);	
-	inline virtual void setDirectory(string directory) { m_directory = directory; };
-	
-	virtual inline void setPosition(glm::mat4 transform) {m_transform = transform; };
+	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
+
+	virtual inline void setDirectory(string directory) { m_directory = directory; };
+	virtual inline void setTransform(glm::mat4& t) 
+	{ 
+		m_transform += t; 
+	};
 	
 	inline string getName() { return m_name; };
+	inline glm::vec3 getCenter() { return m_center; };
+	inline glm::mat4 getTransform() { return m_transform; };
 };
 
-class FBXMesh : public  Mesh
+class FBXMesh : public Mesh
 {
 private:	
 	vector<shared_ptr<Mesh>> m_meshes;
 	vector<shared_ptr<Texture>> m_textures_loaded;
+	string m_path;
 
 public:
 	FBXMesh();
+	FBXMesh(const string& path);
 	~FBXMesh();
 
 	void processNode(const aiNode* node, const aiScene* scene);
@@ -95,15 +105,17 @@ public:
 	virtual void draw(Shader& shader);
 
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
-
-	virtual inline void setPosition(glm::mat4 transform)
+	
+	virtual inline string getPath() { return m_path; };
+	virtual inline void setTransform(glm::mat4& t)
 	{
 		//cout << "Set position in FBX Mesh" << endl;
 		for (auto& it : m_meshes)
 		{
-			it->setPosition(transform);
+			it->setTransform(t);
 		}
 	};
+
 
 };
 

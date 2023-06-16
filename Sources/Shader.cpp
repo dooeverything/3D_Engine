@@ -3,20 +3,23 @@
 #include <fstream>
 #include <sstream>
 
-Shader::Shader() : m_shader_ID(0) {}
+Shader::Shader() : m_shader_ID(0), m_paths({})
+{}
 
-Shader::~Shader() {}
+Shader::Shader(const vector<string>& paths) : m_shader_ID(0),  m_paths(paths)
+{}
 
-bool Shader::loadShaderFile(const string& vert_path, const string& frag_path, const string& geom_path)
+Shader::~Shader() 
+{}
+
+bool Shader::loadShaderFile()
 {
-	//cout << "Load Shader File" << endl;
-
 	GLuint vert_shader = 0;
 	GLuint frag_shader = 0;
 	GLuint geom_shader = 0;
 
-	if (!CompileShader(vert_path, GL_VERTEX_SHADER, vert_shader) || 
-		!CompileShader(frag_path, GL_FRAGMENT_SHADER, frag_shader))
+	if (!CompileShader(m_paths.at(0), GL_VERTEX_SHADER, vert_shader) || 
+		!CompileShader(m_paths.at(1), GL_FRAGMENT_SHADER, frag_shader))
 		return false;
 
 	m_shader_ID = glCreateProgram();
@@ -24,7 +27,7 @@ bool Shader::loadShaderFile(const string& vert_path, const string& frag_path, co
 	glAttachShader(m_shader_ID, vert_shader);
 	glAttachShader(m_shader_ID, frag_shader);
 
-	if (geom_path != "")
+	if (m_paths.at(2) != "")
 		glAttachShader(m_shader_ID, geom_shader);
 
 	glLinkProgram(m_shader_ID);
@@ -43,7 +46,7 @@ bool Shader::loadShaderFile(const string& vert_path, const string& frag_path, co
 	glDeleteShader(vert_shader);
 	glDeleteShader(frag_shader);
 
-	if (geom_path != "")
+	if (m_paths.at(2) != "")
 		glDeleteShader(geom_shader);
 
 	return true;
@@ -129,10 +132,7 @@ void Shader::setVec3(const string& name, float x, float y, float z) const
 
 void Shader::setMat4(const string& name, mat4& matrix) const
 {
-	//cout << "Set matrix " << name << ": ";
-	//cout << matrix << endl;
 	glUniformMatrix4fv(glGetUniformLocation(m_shader_ID, name.c_str()), 1, GL_FALSE, value_ptr(matrix));
-	//cout << endl;
 }
 
 void Shader::setPVM(glm::mat4& p, glm::mat4& v, glm::mat4& m) const

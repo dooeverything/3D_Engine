@@ -2,10 +2,11 @@
 
 #include <GL/glew.h>
 #include <string>
-#include "Math.h"
 #include <iostream>
+#include <vector>
 
-#include <Light.h>
+#include "Math.h"
+#include "Light.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -17,9 +18,10 @@ class Shader
 {
 public:
 	Shader();
+	Shader(const vector<string>& paths);
 	~Shader();
 
-	bool loadShaderFile(const string& vert_path, const string& frag_path, const string& geom_path = "");
+	bool loadShaderFile();
 	
 	void setInt(const string& name, int value) const;
 	void setFloat(const string& name, float value) const;
@@ -37,4 +39,5 @@ private:
 	bool IsCompiled(GLuint& shader);
 
 	GLuint m_shader_ID;
+	vector<string> m_paths;
 };

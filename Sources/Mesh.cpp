@@ -8,7 +8,6 @@ BoundingBox::BoundingBox(glm::vec3 min, glm::vec3 max) : m_min(min), m_max(max)
 
 BoundingBox::~BoundingBox() {}
 
-
 bool BoundingBox::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 {
 	float temp;
@@ -68,30 +67,38 @@ void BoundingBox::draw()
 	glm::mat4 transform = glm::translate(glm::mat4(1), center) * glm::scale(glm::mat4(1), size);
 }
 
-Mesh::Mesh() : m_directory(""), m_name(""), m_buffer(make_unique<VertexBuffer>()),
-			   m_textures({}), m_material(make_unique<Material>())
+Mesh::Mesh()
+	: m_directory(""), m_name(""), m_buffer(make_unique<VertexBuffer>()),
+	m_textures({}), m_material(make_unique<Material>()),
+	m_center(glm::vec3(0.0f)), m_transform(glm::mat4(1.0f))
+{}
+
+Mesh::Mesh(const string& path) 
+	: m_directory(path), m_name(""), m_buffer(make_unique<VertexBuffer>()),
+	  m_textures({}), m_material(make_unique<Material>()), 
+	  m_center(glm::vec3(0.0f)), m_transform(glm::mat4(1.0f))
 {}
 
 Mesh::Mesh(string name, shared_ptr<VertexBuffer> buffer, 
 		   vector<shared_ptr<Texture>> textures, 
 		   shared_ptr<Material> material)
 	: m_directory(""), m_name(name), 
-	  m_buffer(buffer), m_textures(textures), 
-	  m_material(material), m_transform(mat4(1.0f))
+	  m_buffer(buffer), m_textures(textures), m_material(material), 
+	  m_center(glm::vec3(0.0f)), m_transform(glm::mat4(1.0f))
 {}
 
-void Mesh::loadTXT(const string& file_path)
+void Mesh::processMesh()
 {
 	vector<info::VertexLayout> layouts;
 	vector<unsigned int> indices;
 
-	ifstream vertex_file(file_path);
+	ifstream vertex_file(m_directory);
 
-	cout << "Load mesh from text file: " << file_path << endl;
+	cout << "Load mesh from text file: " << m_directory << endl;
 
 	if (!vertex_file.is_open())
 	{
-		cout << "Failed to open the vertex file " << file_path << endl;
+		cout << "Failed to open the vertex file " << m_directory << endl;
 		assert(0);
 	}
 
@@ -234,24 +241,20 @@ bool Mesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 
 shared_ptr<BoundingBox> Mesh::computeBoundingBox()
 {
-	//cout << "  Compute bounding box " << endl;
-	//cout << "   With size of layout: " << m_buffer->getLayouts().size() << endl;
 	glm::vec3 min;
 	glm::vec3 max;
 
 	vector<glm::vec3> positions;
 	for (auto& it : m_buffer->getLayouts())
 	{
-		//cout << "Position before transform: " << it.position.x << ", " << it.position.y << ", " << it.position.z << endl;
 		glm::vec4 p = glm::vec4(it.position, 1.0f);
 		p = m_transform * p;
-		//cout << "Position after transform: " << p.x << ", " << p.y << ", " << p.z << endl;
 		positions.push_back(glm::vec3(p.x, p.y, p.z));
 	}
 
-	min = max = positions.at(0); //m_buffer->getLayouts().at(0).position;
+	min = max = positions.at(0); 
 
-	for (auto& it : positions) // m_buffer->getLayouts()
+	for (auto& it : positions)
 	{
 		if (it.x < min.x) min.x = it.x;
 		if (it.x > max.x) max.x = it.x;
@@ -263,13 +266,20 @@ shared_ptr<BoundingBox> Mesh::computeBoundingBox()
 		if (it.z > max.z) max.z = it.z;
 	}
 	
+	m_center = glm::vec3((max.x + min.x) / 2, (max.y + min.y) / 2, (max.z + min.z) / 2);
+
 	return make_shared<BoundingBox>(min, max);
 }
 
-FBXMesh::FBXMesh() : m_meshes({}), m_textures_loaded({})
+FBXMesh::FBXMesh() : m_meshes({}), m_textures_loaded({}), m_path("")
 {}
 
-FBXMesh::~FBXMesh() {}
+FBXMesh::FBXMesh(const string& path)
+	: m_meshes({}), m_textures_loaded({}), m_path(path)
+{}
+
+FBXMesh::~FBXMesh() 
+{}
 
 void FBXMesh::processNode(const aiNode* node, const aiScene* scene)
 {
@@ -509,7 +519,6 @@ void FBXMesh::draw(Shader& shader)
 		m_meshes[i]->draw(shader);
 }
 
-
 bool FBXMesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 {
 	//cout << "Intersect in FBX Mesh" << endl;
@@ -522,7 +531,6 @@ bool FBXMesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 
 	return false;
 }
-
 
 mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& aiMat)
 {

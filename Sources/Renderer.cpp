@@ -2,10 +2,10 @@
 
 Renderer::Renderer() :
 	m_sdl_window(make_unique<SDL_GL_Window>()), m_camera(unique_ptr<Camera>()),
-	m_shader(make_unique<Shader>()), m_shader_grid(make_unique<Shader>()),
 	m_framebuffer(make_unique<FrameBuffer>()),
-	m_files({}), m_is_running(true), m_ticks(0), m_start_time(0),
-	m_scene_min(0.0f, 0.0f), m_scene_max(0.0f, 0.0f), m_is_mouse_clicked(false), m_pick(false)
+	m_objects({}), m_is_running(true), m_ticks(0), m_start_time(0),
+	m_scene_min(0.0f, 0.0f), m_scene_max(0.0f, 0.0f), 
+	m_is_mouse_clicked(false), m_pick(false), m_axis(false)
 {}
 
 Renderer::~Renderer() {}
@@ -19,16 +19,14 @@ bool Renderer::init()
 
 	m_sdl_window->init(width, height, "Refractoring & ImGui");
 
-	string file_path =  "Models/Link/Link.fbx";
-	file_path = { "Models/Cube.txt" };
+	loadFile("Models/Cube.txt");
+	loadFile("Models/Arrow.fbx");
+	loadFile("Models/Arrow.fbx");
+	loadFile("Models/Arrow.fbx");
 
-	loadFile(file_path);
-	loadFile("Models/Arrow.fbx");
-	loadFile("Models/Arrow.fbx");
-	loadFile("Models/Arrow.fbx");
 	loadFile("Models/Plane.txt");
 
-	cout << "Number of object in scene: " << m_files.size() << endl;
+	cout << "Number of objects in scene: " << m_objects.size() << endl;
 
 	//m_shader->loadShaderFile("Shaders/Link.vert", "Shaders/Link.frag");
 	m_shader->loadShaderFile("Shaders/Basic.vert", "Shaders/Basic.frag");
@@ -36,26 +34,25 @@ bool Renderer::init()
 
 	m_framebuffer->createBuffers(width, height);
 
-	m_camera = make_unique<Camera>(glm::vec3(0.0f, 0.0f, 10.0f), -90.0f, 0.0f );
+	m_camera = make_unique<Camera>(glm::vec3(0.0f, 5.0f, 20.0f), -90.0f, 0.0f );
 
 	m_start_time = SDL_GetTicks64();
 
 	return true;
 }
 
-void Renderer::loadFile(const string& path)
+void Renderer::addObject(const string& mesh_path, const vector<string>& shader_path)
 {
-	shared_ptr<FileLoader> file;
-	string::size_type pos = path.find_last_of('.');
-	if (pos != path.length())
+	shared_ptr<Object> object;
+	string::size_type pos = mesh_path.find_last_of('.');
+	if (pos != mesh_path.length())
 	{
-		string file_type = path.substr(pos + 1, path.length());
+		string file_type = mesh_path.substr(pos + 1, mesh_path.length());
 		cout << "Loaded file type : " << file_type << endl;
 		if (file_type == "txt")
 		{
-			file = make_unique<TXTLoader>();
-			file->loadMesh(path);
-			m_files.push_back(file);
+			object = make_unique<GameObject>(mesh_path, shader_path);
+			m_objects.push_back(object);
 		}
 		else if (file_type == "fbx")
 		{
@@ -65,7 +62,6 @@ void Renderer::loadFile(const string& path)
 		}
 	}
 }
-
 
 void Renderer::run()
 {
@@ -85,7 +81,8 @@ void Renderer::render()
 	m_camera->setLastFrame(current_frame);
 	m_camera->processInput();
 
-	handleInput();
+	if(!m_axis) 
+		handleInput();
 
 	m_sdl_window->clearWindow();
 	renderDocking();
@@ -107,6 +104,7 @@ void Renderer::handleInput()
 				case SDL_QUIT:
 					m_is_running = 0;
 					break;
+				
 				case SDL_WINDOWEVENT:
 					if (event.window.event == SDL_WINDOWEVENT_RESIZED)
 					{
@@ -132,7 +130,6 @@ void Renderer::handleInput()
 
 			int mouse_x = x - m_scene_min.x;
 			int mouse_y = y - m_scene_min.y;
-
 			switch (event.type)
 			{
 				case SDL_MOUSEBUTTONUP:
@@ -140,7 +137,6 @@ void Renderer::handleInput()
 					break;
 
 				case SDL_MOUSEBUTTONDOWN:
-					//m_camera->processPicker(m_wsize.x, m_wsize.y, mouse_x, mouse_y);
 					m_is_mouse_clicked = true;
 					m_camera->processMouseDown(event);
 					break;
@@ -153,10 +149,70 @@ void Renderer::handleInput()
 	}
 }
 
+void Renderer::handleTransform(int axis)
+{
+	SDL_Event event;
+	ImGuiIO& io = ImGui::GetIO();
+	float moveCellSize = 0.05;
+	while (SDL_PollEvent(&event))
+	{
+		switch (event.type)
+		{
+		case SDL_MOUSEBUTTONUP:
+			cout << "Up" << endl;
+			m_axis = false;
+			m_click = false;
+			break;
+
+		case SDL_MOUSEBUTTONDOWN:
+			cout << "Down" << endl;
+			m_click = true;
+			SDL_GetGlobalMouseState(&m_x, &m_y);
+			cout << m_x << " " << m_y << endl;
+			break;
+
+		case SDL_MOUSEMOTION:
+			if (m_click)
+			{
+				cout << "Motion at " << axis  << endl;
+				SDL_GetGlobalMouseState(&m_final_x, &m_final_y);
+				cout << m_final_x << " " << m_final_y << endl;
+
+				glm::vec3 pos = glm::vec3(0.0, 0.0, 0.0);
+				if (axis-1 == 0)
+				{
+					if ((m_final_x - m_x) < 0)
+						pos[axis-1] = -moveCellSize;
+					else
+						pos[axis-1] = moveCellSize;
+				}
+				else if (axis - 1 == 1)
+				{
+					if ((m_final_y - m_y) < 0)
+						pos[axis - 1] = moveCellSize;
+					else
+						pos[axis - 1] = -moveCellSize;
+				}
+				else
+				{
+					if ((m_final_y - m_y) < 0)
+						pos[axis-1] = -moveCellSize;
+					else
+						pos[axis-1] = moveCellSize;
+				}
+
+
+				cout << pos.x << " " << pos.y << " " << pos.z << endl;
+
+				m_files.at(0)->getMesh()->setPosition(pos);
+			}
+			break;
+		}
+	}
+}
+
 bool Renderer::handlePicking(int w, int h, int index)
 {
-	//cout << "Handle picking: " << index << " " << m_files.at(index)->getPath() << endl;
-
 	int x, y;
 	SDL_GetGlobalMouseState(&x, &y);
 	int mouse_x = x - m_scene_min.x;
@@ -284,16 +340,15 @@ void Renderer::renderScene(int width, int height)
 	glStencilMask(0xFF);
 
 	M = mat4(1.0f);
-	M = glm::translate(M, vec3(0.0f, 1.0f, 0.0f));
+	glm::vec3 pos = m_files.at(0)->getMesh()->getPosition();
+	M = glm::translate(M, pos);
 	m_shader->load();
 	m_shader->setPVM(P, V, M);
-	m_files.at(0)->getMesh()->setPosition(M);
-	//m_shader->setInt("animation", 0);
+	m_files.at(0)->getMesh()->setTransform(M);
 	m_shader->setVec3("light_pos", vec3(10.0f, 10.0f, 10.0f));
 	m_shader->setVec3("object_color", vec3(1.0f, 0.5f, 0.31f));
 	m_shader->setLight(*light);
 	m_files.at(0)->getMesh()->draw();
-	//m_files.front()->getMesh()->draw(*m_shader.get());
 	
 	// Handling picking object
 	if (m_is_mouse_clicked)
@@ -304,93 +359,107 @@ void Renderer::renderScene(int width, int height)
 
 	if (m_pick)
 	{
-		//cout << "Clicked?" << endl;
-		unique_ptr<Shader> m_shader_outline = make_unique<Shader>();
-		m_shader_outline->loadShaderFile("Shaders/Outline.vert", "Shaders/Outline.frag");
-
-		// #2 Draw a larger model with white color
-		// The pixel that is NOT equal to 1  will be passed
-		// --> It will only draw a object where the stencil buffer is equal to 0
-		// --> hence, it will only draw border of a model
-		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-		// Disable modifying stencil buffer
-		// Stencil buffer will not be updated when drawing larger model
-		glStencilMask(0x00);
-		// Disable depth test
-		glDisable(GL_DEPTH_TEST);
-
-		m_shader_outline->load();
-		m_shader_outline->setPVM(P, V, M);
-		m_shader_outline->setFloat("outline", 0.05f);
-		m_files.front()->getMesh()->draw();
-
-		// #3 Enable modifying stencil buffer
-		glStencilMask(0xFF);
-		// Set stencil buffer with 0 --> clear stencil buffer
-		glStencilFunc(GL_ALWAYS, 0, 0xFF);
-
-		unique_ptr<Shader> m_shader_arrow = make_unique<Shader>();
-		m_shader_arrow->loadShaderFile("Shaders/Arrow.vert", "Shaders/Arrow.frag");
-		
-		m_shader_arrow->load();
-		M = mat4(1.0f);
-		M = glm::translate(M, vec3(0.0f, 1.0f, 0.0f));
-		M = glm::translate(M, vec3(1.0f, 0.0f, 0.0f));
-		M = glm::scale(M, vec3(0.5f));
-
-		// Check if a gizmo is clicked
-		glm::vec3 color_red = vec3(1.0f, 0.0f, 0.0f);
-		m_files.at(1)->getMesh()->setPosition(M);
-		if (handlePicking(width, height, 1))
-		{
-			color_red = vec3(0.5f, 0.0f, 0.0f);
-			cout << "X-axis arrow is picked" << endl;
-		}
-
-		m_shader_arrow->setPVM(P, V, M);
-		m_shader_arrow->setVec3("object_color", color_red);
-		m_files.at(1)->getMesh()->draw(*m_shader_arrow.get());
-
-		m_shader_arrow->load();
-		M = mat4(1.0f);
-		M = glm::translate(M, vec3(0.0f, 1.0f, 0.0f));
-		M = glm::translate(M, vec3(0.0f, 1.0f, 0.0f));
-		M = glm::rotate(M, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		M = glm::scale(M, vec3(0.5f));
-
-		glm::vec3 color_green = vec3(0.0f, 1.0f, 0.0f);
-		m_files.at(2)->getMesh()->setPosition(M);
-		if (handlePicking(width, height, 2))
-		{
-			color_green = vec3(0.0f, 0.5f, 0.0f);
-			cout << "Y-axis arrow is picked" << endl;
-		}
-
-		m_shader_arrow->setPVM(P, V, M);
-		m_shader_arrow->setVec3("object_color", color_green);
-		m_files.at(2)->getMesh()->draw(*m_shader_arrow.get());
-
-		m_shader_arrow->load();
-		M = mat4(1.0f);
-		M = glm::translate(M, vec3(0.0f, 1.0f, 0.0f));
-		M = glm::translate(M, vec3(0.0f, 0.0f, 1.0f));
-		M = glm::rotate(M, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		M = glm::scale(M, vec3(0.5f));
-
-		glm::vec3 color_blue = vec3(0.0f, 0.0f, 1.0f);
-		m_files.at(3)->getMesh()->setPosition(M);
-		if (handlePicking(width, height, 3))
-		{
-			color_blue = vec3(0.0f, 0.0f, 0.5f);
-			cout << "Z-axis arrow is picked" << endl;
-		}
-
-		m_shader_arrow->setPVM(P, V, M);
-		m_shader_arrow->setVec3("object_color", color_blue);
-		m_files.at(3)->getMesh()->draw(*m_shader_arrow.get());	
+		renderGizmo(width, height);
 	}
+
 	//Enable depth test
 	glEnable(GL_DEPTH_TEST);
+}
+
+void Renderer::renderGizmo(int width, int height)
+{
+	float aspect = static_cast<float>(width) / static_cast<float>(height);
+	mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+	mat4 V = m_camera->camera2pixel();
+	mat4 M = mat4(1.0f);
+
+	unique_ptr<Shader> m_shader_outline = make_unique<Shader>();
+	m_shader_outline->loadShaderFile("Shaders/Outline.vert", "Shaders/Outline.frag");
+
+	// #2 Draw a larger model with white color
+	// The pixel that is NOT equal to 1  will be passed
+	// --> It will only draw a object where the stencil buffer is equal to 0
+	// --> hence, it will only draw border of a model
+	glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+	// Disable modifying stencil buffer
+	// Stencil buffer will not be updated when drawing larger model
+	glStencilMask(0x00);
+	// Disable depth test
+	glDisable(GL_DEPTH_TEST);
+
+	m_shader_outline->load();
+	M = m_files.at(0)->getMesh()->getTransform();
+	m_shader_outline->setPVM(P, V, M);
+	m_shader_outline->setFloat("outline", 0.025f);
+	m_files.front()->getMesh()->draw();
+
+	// #3 Enable modifying stencil buffer
+	glStencilMask(0xFF);
+	// Set stencil buffer with 0 --> clear stencil buffer
+	glStencilFunc(GL_ALWAYS, 0, 0xFF);
+
+	unique_ptr<Shader> m_shader_arrow = make_unique<Shader>();
+	m_shader_arrow->loadShaderFile("Shaders/Arrow.vert", "Shaders/Arrow.frag");
+	
+	if (!m_click)
+	{
+		for (int i=1; i < 4; i++)
+		{
+			m_axis = handlePicking(width, height, i);
+			if (m_axis)
+			{
+				cout << "Pick: " << i << endl;
+				m_axis_selected = i;
+				break;
+			}
+		}
+	}
+
+	if (m_axis)
+	{
+		cout << "Axis : " << m_axis_selected << endl;
+		handleTransform(m_axis_selected);
+		if (m_click)
+		{
+			color[m_axis_selected -1] = 0.5f;
+			cout << "Color: " << color.r << " " << color.g << " " << color.b << endl;
+		}
+	}
+
+	// Draw x-axis(red) gizmo
+	m_shader_arrow->load();
+	M = mat4(1.0f);
+	M = m_files.at(0)->getMesh()->getTransform();
+	M = glm::translate(M, vec3(1.0f, 0.0f, 0.0f));
+	M = glm::scale(M, vec3(0.5f));
+	m_files.at(1)->getMesh()->setTransform(M);
+	m_shader_arrow->setPVM(P, V, M);
+	m_shader_arrow->setVec3("object_color", glm::vec3(color.r, 0.0f, 0.0f));
+	m_files.at(1)->getMesh()->draw(*m_shader_arrow.get());
+
+	// Draw y-axis(green) gizmo
+	m_shader_arrow->load();
+	M = mat4(1.0f);
+	M = m_files.at(0)->getMesh()->getTransform();
+	M = glm::translate(M, vec3(0.0f, 1.0f, 0.0f));
+	M = glm::rotate(M, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	M = glm::scale(M, vec3(0.5f));
+	m_files.at(2)->getMesh()->setTransform(M);
+	m_shader_arrow->setPVM(P, V, M);
+	m_shader_arrow->setVec3("object_color", glm::vec3(0.0f, color.g, 0.0f));
+	m_files.at(2)->getMesh()->draw(*m_shader_arrow.get());
+
+	// Draw a z-axis(blue) gizmo
+	m_shader_arrow->load();
+	M = mat4(1.0f);
+	M = m_files.at(0)->getMesh()->getTransform();
+	M = glm::translate(M, vec3(0.0f, 0.0f, 1.0f));
+	M = glm::rotate(M, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	M = glm::scale(M, vec3(0.5f));
+	m_files.at(3)->getMesh()->setTransform(M);
+	m_shader_arrow->setPVM(P, V, M);
+	m_shader_arrow->setVec3("object_color", glm::vec3(0.0f, 0.0, color.b));
+	m_files.at(3)->getMesh()->draw(*m_shader_arrow.get());
 }
 
 void Renderer::end()
