@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "Mesh.h"
+#include "imgui-docking/imgui.h"
 
 using namespace std;
 
@@ -17,73 +18,76 @@ private:
 
 public:
 	Object();
-	Object(const vector<string>& shader);
+	Object(const string& mesh_path, const vector<string>& shader);
 	~Object();
 
-	virtual void draw(glm::mat4 P, glm::mat4 V) = 0;
-	virtual void loadObject();
-	virtual void loadMesh() = 0;
-	virtual void loadShader();
-	virtual void isPicking(int w, int h, glm::vec3 ray_dir, glm::vec3 ray_pos) = 0;
+	virtual bool isClick(glm::vec3& ray_dir, glm::vec3& ray_pos);
 
-	virtual shared_ptr<Mesh> getMesh() = 0;
+	//virtual inline void isClick(bool click) { m_click = click; };
+	virtual inline void loadShader() { m_shader->processShader(); };
 	virtual inline shared_ptr<Shader> getShader() { return m_shader; };
+	virtual inline shared_ptr<Mesh> getMesh() { return m_mesh; };
+	virtual inline bool getIsClick() { return m_click; };
+	virtual inline string getName() { return m_name; };
+
+	virtual inline void setIsClick(bool click) { m_click = click; };
 
 protected:
+	shared_ptr<Mesh> m_mesh;
 	shared_ptr<Shader> m_shader;
+	string m_name;
 	bool m_click;
+};
+
+class Grid : public Object
+{
+public:
+	Grid();
+	void draw(glm::mat4& P, glm::mat4& V, glm::vec3 cam_pos);
+};
+
+class Gizmo;
+
+class GameObject : public Object
+{
+private:
+	shared_ptr<Shader> m_outline_shader;
+	glm::vec3 m_color;
+
+protected:
+	vector<shared_ptr<Gizmo>> m_gizmos;
+
+public:
+	GameObject(const string& mesh_path, const vector<string>& shader_path);
+	~GameObject();
+
+	virtual void draw(glm::mat4& P, glm::mat4& V, Light& light, glm::vec3& view_pos);
+	virtual void loadMesh();
+	virtual void loadOutlineShader();
+	virtual bool isGizmoClick(glm::vec3& ray_dir, glm::vec3& ray_pos);
+
+	virtual inline void setColor(glm::vec3 color) { m_color = color; };
+	virtual inline shared_ptr<Gizmo> getGizmo(int index) { return m_gizmos[index]; };
+
+	int m_move_axis;
+	int m_x;
+	int m_y;
+
 };
 
 class Gizmo : public Object
 {
 private:
-	vector<shared_ptr<Mesh>> m_axis_mesh;
-	shared_ptr<Object> m_root;
-	int m_clicked_axis;
+	GameObject& m_root;
+	int m_axis;
 
 public:
-	Gizmo();
-	Gizmo(shared_ptr<Object> root);
+	Gizmo(GameObject& root, int axis);
 	~Gizmo();
 
-	virtual void draw(glm::mat4 P, glm::mat4 V);
-	virtual void loadMesh();
-	virtual void isPicking(int w, int h, glm::vec3 ray_dir, glm::vec3 ray_pos);
-	inline shared_ptr<Mesh> getMesh(int index) { return m_axis_mesh.at(index); };
+	void draw(glm::mat4& P, glm::mat4& V, glm::mat4& M);
+	//void isPicking(glm::vec3 ray_dir, glm::vec3 ray_pos);
 };
 
-class GameObject : public Object
-{
-private:
-	shared_ptr<Mesh> m_mesh;
-	unique_ptr<Gizmo> m_gizmo;
-
-public:
-	GameObject();
-	GameObject(string& mesh_path, const vector<string>& shader_path);
-	~GameObject();
-
-	virtual void draw(glm::mat4 P, glm::mat4 V);
-	virtual void loadMesh();
-	virtual inline shared_ptr<Mesh> getMesh() { return m_mesh; };
-};
-
-class FBXObject : public Object
-{
-private:
-	shared_ptr<FBXMesh> m_mesh;
-	const aiScene* m_aiScene;
-	Assimp::Importer m_importer;
-
-public:
-	FBXObject();
-	FBXObject(const string& mesh_path,
-			  const vector<string>& shader_path);
-	~FBXObject();
-
-	virtual void draw(glm::mat4 P, glm::mat4 V);
-	virtual void loadMesh();
-	virtual inline shared_ptr<Mesh> getMesh() { return m_mesh; };
-};
 
 #endif

@@ -175,12 +175,12 @@ void Mesh::processMesh()
 
 void Mesh::draw()
 {
-	bind();
+	m_buffer->bind();
 	glDrawElements(GL_TRIANGLES, m_buffer->getSizeOfIndices(), GL_UNSIGNED_INT, nullptr);
-	unbind();
+	m_buffer->unbind();
 }
 
-void Mesh::draw(Shader& shader)
+void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 {
 	unsigned int diffuse_index = 1;
 	unsigned int specular_index = 1;
@@ -188,13 +188,13 @@ void Mesh::draw(Shader& shader)
 	unsigned int height_index = 1;
 
 	glm::mat4 adjust = glm::mat4(1.0f);
-
 	shader.load();
 	shader.setMat4("adjust", adjust);
 	shader.setVec3("mat.ambient", m_material->ambient);
 	shader.setVec3("mat.diffuse", m_material->diffuse);
 	shader.setVec3("mat.specular", m_material->specular);
 	shader.setFloat("mat.shininess", m_material->shininess);
+	shader.setPVM(P, V, m_transform);
 
 	// Set texture before draw a mesh
 	for (int i = 0; i < m_textures.size(); ++i)
@@ -222,22 +222,22 @@ void Mesh::draw(Shader& shader)
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void Mesh::bind() const
-{
-	m_buffer->bind();
-}
-
-void Mesh::unbind() const
-{
-	m_buffer->unbind();
-}
-
 bool Mesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 {
 	//cout << "Intersect with mesh: " << m_name << endl;
 	m_bbox = computeBoundingBox();
 	return m_bbox->intersect(ray_dir, ray_pos);
 }
+
+inline void Mesh::setTransform(glm::mat4& t)
+{
+	if (m_name != "Arrow")
+	{
+		//cout << "Set position in Mesh: " << m_name << endl;
+		//cout << t << endl;
+	}
+	m_transform = t;
+};
 
 shared_ptr<BoundingBox> Mesh::computeBoundingBox()
 {
@@ -254,6 +254,7 @@ shared_ptr<BoundingBox> Mesh::computeBoundingBox()
 
 	min = max = positions.at(0); 
 
+	
 	for (auto& it : positions)
 	{
 		if (it.x < min.x) min.x = it.x;
@@ -265,35 +266,62 @@ shared_ptr<BoundingBox> Mesh::computeBoundingBox()
 		if (it.z < min.z) min.z = it.z;
 		if (it.z > max.z) max.z = it.z;
 	}
+	m_center = glm::vec3((max.x + min.x) / 2, (max.y + min.y) / 2, (max.z + min.z) / 2);	
 	
-	m_center = glm::vec3((max.x + min.x) / 2, (max.y + min.y) / 2, (max.z + min.z) / 2);
-
+	//cout << m_name << ": " << endl;
+	//cout << "Max: " << max << endl;
+	//cout << "Min: " << min << endl;
 	return make_shared<BoundingBox>(min, max);
 }
 
-FBXMesh::FBXMesh() : m_meshes({}), m_textures_loaded({}), m_path("")
+FBXMesh::FBXMesh() 
+	: m_meshes({}), m_textures_loaded({}), m_path(""),
+	  m_aiScene(nullptr), m_importer()
 {}
 
 FBXMesh::FBXMesh(const string& path)
-	: m_meshes({}), m_textures_loaded({}), m_path(path)
+	: m_meshes({}), m_textures_loaded({}), m_path(path),
+	  m_aiScene(nullptr), m_importer()
 {}
 
 FBXMesh::~FBXMesh() 
 {}
 
+void FBXMesh::processMesh()
+{
+	cout << "Process mesh from fbx file: " << m_path << endl;
+	
+	m_aiScene = m_importer.ReadFile(
+		m_path, 
+		aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace
+	);
+
+	if (!m_aiScene || m_aiScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !m_aiScene->mRootNode)
+	{
+		cout << "ERROR::ASSIMP:: " << m_importer.GetErrorString() << endl;
+		assert(0);
+	}
+
+	// The directory path of the fbx file 
+	m_directory = m_path.substr(0, m_path.find_last_of('/'));
+	// Process ASSIMP's root node, and then recursively process its child node
+	aiNode* root_node = m_aiScene->mRootNode;
+	processNode(root_node, m_aiScene);
+}
+
 void FBXMesh::processNode(const aiNode* node, const aiScene* scene)
 {
-	cout << "Process aiNode " << node->mName.C_Str() << " meshes: " << node->mNumMeshes << " childrens: " << node->mNumChildren << endl;
+	cout << " -Process aiNode " << node->mName.C_Str() << " meshes: " << node->mNumMeshes << " childrens: " << node->mNumChildren << endl;
 
 	// Node Transformation:
 	// coordinates of vertices of meshes from a node --> model space coordinate
 	// Ends up whole nodes placed at correct position 
-	mat4 node_transformation = ConvertMatrixToGLMFormat(node->mTransformation);
+	glm::mat4 node_transformation = ConvertMatrixToGLMFormat(node->mTransformation);
 
-	mat4 adjust = { 1.0f,  0.0f,  0.0f, 0.0f,
-					0.0f,  0.0f, -1.0f, 0.0f,
-					0.0f,  1.0f,  0.0f, 0.0f,
-					0.0f,  0.0f,  0.0f, 1.0f };
+	glm::mat4 adjust = {1.0f,  0.0f,  0.0f, 0.0f,
+						0.0f,  0.0f, -1.0f, 0.0f,
+						0.0f,  1.0f,  0.0f, 0.0f,
+						0.0f,  0.0f,  0.0f, 1.0f};
 
 	// Loop through each mesh along the node and load it to the framebuffer
 	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
@@ -315,9 +343,9 @@ void FBXMesh::processNode(const aiNode* node, const aiScene* scene)
 	}
 }
 
-shared_ptr<VertexBuffer> FBXMesh::processBuffer(const aiMesh* mesh, const aiScene* scene, const string& name, mat4& m)
+shared_ptr<VertexBuffer> FBXMesh::processBuffer(const aiMesh* mesh, const aiScene* scene, const string& name, glm::mat4& m)
 {
-	cout << " Process fbx Buffer: " << name << endl;
+	cout << "  Process fbx Buffer: " << name << endl;
 
 	vector<info::VertexLayout> layouts;
 	vector<unsigned int> indices;
@@ -335,7 +363,7 @@ shared_ptr<VertexBuffer> FBXMesh::processBuffer(const aiMesh* mesh, const aiScen
 
 	for (unsigned int i = 0; i < num_vertices; ++i)
 	{
-		vec3 position;
+		glm::vec3 position;
 		// Convert Assimp::vec3 to glm::vec3
 		position.x = mesh->mVertices[i].x;
 		position.y = mesh->mVertices[i].y;
@@ -347,7 +375,7 @@ shared_ptr<VertexBuffer> FBXMesh::processBuffer(const aiMesh* mesh, const aiScen
 		//  Set normal of each vertex
 		if (mesh->HasNormals())
 		{
-			vec3 normal;
+			glm::vec3 normal;
 			normal.x = mesh->mNormals[i].x;
 			normal.y = mesh->mNormals[i].y;
 			normal.z = mesh->mNormals[i].z;
@@ -357,14 +385,14 @@ shared_ptr<VertexBuffer> FBXMesh::processBuffer(const aiMesh* mesh, const aiScen
 		// set texture coordinate of each vertex
 		if (mesh->mTextureCoords[0])
 		{
-			vec2 texCoord;
+			glm::vec2 texCoord;
 			texCoord.x = mesh->mTextureCoords[0][i].x;
 			texCoord.y = mesh->mTextureCoords[0][i].y;
 			texCoords.push_back(texCoord);
 		}
 		else
 		{
-			texCoords.push_back(vec2(0.0f, 0.0f));
+			texCoords.push_back(glm::vec2(0.0f, 0.0f));
 		}
 	}
 
@@ -513,28 +541,37 @@ vector<shared_ptr<Texture>> FBXMesh::loadTexture(shared_ptr<aiMaterial> mat,
 	return textures;
 }
 
-void FBXMesh::draw(Shader& shader)
+void FBXMesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 {
 	for (unsigned int i = 0; i < m_meshes.size(); ++i)
-		m_meshes[i]->draw(shader);
+		m_meshes[i]->draw(P, V, shader);
 }
 
 bool FBXMesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 {
 	//cout << "Intersect in FBX Mesh" << endl;
+	bool inter = false;
 	for (auto& it : m_meshes)
 	{
 		//cout << "Intersect with mesh " << it->getName() << endl;
 		if (it->intersect(ray_dir, ray_pos))
-			return true;
+			inter = true;
 	}
 
-	return false;
+	return inter;
 }
 
-mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& aiMat)
+inline void FBXMesh::setTransform(glm::mat4& t)
 {
-	mat4 mat;
+	for (auto& it : m_meshes)
+	{
+		it->setTransform(t);
+	}
+};
+
+glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& aiMat)
+{
+	glm::mat4 mat;
 
 	mat[0][0] = aiMat.a1;
 	mat[1][0] = aiMat.a2;
@@ -557,4 +594,34 @@ mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& aiMat)
 	mat[3][3] = aiMat.d4;
 
 	return mat;
+}
+
+ostream& operator<<(ostream& os, const glm::vec2& v)
+{
+	return os << v.x << " " << v.y;
+}
+
+ostream& operator<<(ostream& os, const glm::vec3& v)
+{
+	return os << v.x << " " << v.y << " " << v.z;
+}
+
+ostream& operator<<(ostream& os, const glm::vec4& v)
+{
+	return os << v.x << " " << v.y << " " << v.z << " " << v.w;
+}
+
+ostream& operator<<(ostream& os, const glm::mat3& m)
+{
+	return os << "\n" << m[0] << "\n" << m[1] << "\n" << m[2];
+}
+
+#include <iomanip> 
+ostream& operator<<(ostream& os, const glm::mat4& m)
+{
+	return os << fixed << setprecision(1) 
+		<< m[0][0] << " " << m[1][0] << " " << m[2][0] << " " << m[3][0] << "\n"
+		<< m[0][1] << " " << m[1][1] << " " << m[2][1] << " " << m[3][1] << "\n"
+		<< m[0][2] << " " << m[1][2] << " " << m[2][2] << " " << m[3][2] << "\n"
+		<< m[0][3] << " " << m[1][3] << " " << m[2][3] << " " << m[3][3];
 }

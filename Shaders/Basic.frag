@@ -7,20 +7,16 @@ in vec3 frag_norm;
 struct DirLight
 {
 	vec3 direction;
-
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
 };
 
-uniform vec3 light_pos;
 uniform DirLight dir_light;
 uniform vec3 object_color;
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 light_dir)
 {
-	// vec3 light_dir = normalize(-light.direction);
-
 	// Ambient
 	float amb = 0.2f;
 	vec3 ambient = light.ambient * amb;
@@ -42,7 +38,7 @@ void main()
 {
 	// Phong Lighting Model -> light Intensity * (Specular + diffuse + ambient)
 	vec3 norm = normalize(frag_norm);
-	vec3 light_dir = normalize(light_pos - frag_pos);
+	vec3 light_dir = normalize(-dir_light.direction);
 	vec3 result = CalcDirLight(dir_light, norm, light_dir) * object_color;
 
 	frag_color = vec4(result, 1.0);

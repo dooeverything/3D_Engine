@@ -2,10 +2,9 @@
 
 Renderer::Renderer() :
 	m_sdl_window(make_unique<SDL_GL_Window>()), m_camera(unique_ptr<Camera>()),
-	m_framebuffer(make_unique<FrameBuffer>()),
-	m_objects({}), m_is_running(true), m_ticks(0), m_start_time(0),
-	m_scene_min(0.0f, 0.0f), m_scene_max(0.0f, 0.0f), 
-	m_is_mouse_clicked(false), m_pick(false), m_axis(false)
+	m_framebuffer(make_unique<FrameBuffer>()), m_scene_objects({}), 
+	m_is_running(true), m_ticks(0), m_start_time(0), m_is_mouse_down(false),
+	m_is_click_gizmo(false)
 {}
 
 Renderer::~Renderer() {}
@@ -16,57 +15,32 @@ bool Renderer::init()
 
 	int width = 1024;
 	int height = 720;
+	m_sdl_window->init(width, height, "OpenGL Engine");
+	m_grid = make_unique<Grid>();
 
-	m_sdl_window->init(width, height, "Refractoring & ImGui");
+	vector<string> shader_path = { "Shaders/Basic.vert", "Shaders/Basic.frag" };
+	vector<string> shader_link = { "Shaders/Link.vert", "Shaders/Link.frag" };
+	addObject("Models/Cube.txt", shader_path);
+	addObject("Models/Link/Link.fbx", shader_link);
 
-	loadFile("Models/Cube.txt");
-	loadFile("Models/Arrow.fbx");
-	loadFile("Models/Arrow.fbx");
-	loadFile("Models/Arrow.fbx");
-
-	loadFile("Models/Plane.txt");
-
-	cout << "Number of objects in scene: " << m_objects.size() << endl;
-
-	//m_shader->loadShaderFile("Shaders/Link.vert", "Shaders/Link.frag");
-	m_shader->loadShaderFile("Shaders/Basic.vert", "Shaders/Basic.frag");
-	m_shader_grid->loadShaderFile("Shaders/Grid.vert", "Shaders/Grid.frag");
+	cout << "Number of objects in scene: " << m_scene_objects.size() << endl;
 
 	m_framebuffer->createBuffers(width, height);
-
-	m_camera = make_unique<Camera>(glm::vec3(0.0f, 5.0f, 20.0f), -90.0f, 0.0f );
-
+	m_camera = make_unique<Camera>(glm::vec3(0.0f, 0.5f, 20.0f), -90.0f, 0.0f );
 	m_start_time = SDL_GetTicks64();
 
 	return true;
 }
 
-void Renderer::addObject(const string& mesh_path, const vector<string>& shader_path)
+void Renderer::addObject(const string& mesh_path, const vector<string> shader_path)
 {
-	shared_ptr<Object> object;
-	string::size_type pos = mesh_path.find_last_of('.');
-	if (pos != mesh_path.length())
-	{
-		string file_type = mesh_path.substr(pos + 1, mesh_path.length());
-		cout << "Loaded file type : " << file_type << endl;
-		if (file_type == "txt")
-		{
-			object = make_unique<GameObject>(mesh_path, shader_path);
-			m_objects.push_back(object);
-		}
-		else if (file_type == "fbx")
-		{
-			file = make_unique<FBXLoader>();
-			file->loadMesh(path);
-			m_files.push_back(file);
-		}
-	}
+	shared_ptr<GameObject> object = make_shared<GameObject>(mesh_path, shader_path);
+	m_scene_objects.push_back(object);
 }
 
 void Renderer::run()
 {
-	cout << "Run" << endl;
-
+	cout << "Render" << endl;
 	while (m_is_running)
 	{
 		render();
@@ -81,13 +55,12 @@ void Renderer::render()
 	m_camera->setLastFrame(current_frame);
 	m_camera->processInput();
 
-	if(!m_axis) 
+	if (!m_is_click_gizmo)
 		handleInput();
 
 	m_sdl_window->clearWindow();
 	renderDocking();
 	m_sdl_window->swapWindow();
-	
 }
 
 void Renderer::handleInput()
@@ -117,7 +90,6 @@ void Renderer::handleInput()
 
 				default:
 					break;
-
 			}
 		}
 		else
@@ -125,11 +97,14 @@ void Renderer::handleInput()
 			int x, y;
 			SDL_GetGlobalMouseState(&x, &y);
 
-			if (x < m_scene_min.x || y < m_scene_min.y+30) continue;
-			if (x > m_scene_max.x || y > m_scene_max.y) continue;
+			if (x < m_sdl_window->getSceneMin().x || 
+				y < m_sdl_window->getSceneMin().y+30) 
+				continue;
+			
+			if (x > m_sdl_window->getSceneMax().x || 
+				y > m_sdl_window->getSceneMax().y) 
+				continue;
 
-			int mouse_x = x - m_scene_min.x;
-			int mouse_y = y - m_scene_min.y;
 			switch (event.type)
 			{
 				case SDL_MOUSEBUTTONUP:
@@ -137,7 +112,8 @@ void Renderer::handleInput()
 					break;
 
 				case SDL_MOUSEBUTTONDOWN:
-					m_is_mouse_clicked = true;
+					cout << "Mouse down" << endl;
+					m_is_mouse_down = true;
 					m_camera->processMouseDown(event);
 					break;
 
@@ -149,110 +125,98 @@ void Renderer::handleInput()
 	}
 }
 
-void Renderer::handleTransform(int axis)
+void Renderer::moveObject(GameObject& go)
 {
 	SDL_Event event;
 	ImGuiIO& io = ImGui::GetIO();
-	float moveCellSize = 0.05;
+	float moveCellSize = 0.05f;
 	while (SDL_PollEvent(&event))
 	{
 		switch (event.type)
 		{
 		case SDL_MOUSEBUTTONUP:
-			cout << "Up" << endl;
-			m_axis = false;
-			m_click = false;
+			m_is_click_gizmo = false;
+			go.getGizmo(go.m_move_axis)->setIsClick(false);
 			break;
 
 		case SDL_MOUSEBUTTONDOWN:
-			cout << "Down" << endl;
-			m_click = true;
-			SDL_GetGlobalMouseState(&m_x, &m_y);
-			cout << m_x << " " << m_y << endl;
+			m_is_click_gizmo = true;
+			cout << "move object along axis-" << go.m_move_axis << endl;
+			go.getGizmo(go.m_move_axis)->setIsClick(true);
+			SDL_GetGlobalMouseState(&go.m_x, &go.m_y);
 			break;
 
 		case SDL_MOUSEMOTION:
-			if (m_click)
+			if (m_is_click_gizmo)
 			{
-				cout << "Motion at " << axis  << endl;
-				SDL_GetGlobalMouseState(&m_final_x, &m_final_y);
-				cout << m_final_x << " " << m_final_y << endl;
-
+				int final_x;
+				int final_y;
+				SDL_GetGlobalMouseState(&final_x, &final_y);
+				
 				glm::vec3 pos = glm::vec3(0.0, 0.0, 0.0);
-				if (axis-1 == 0)
+				if (go.m_move_axis == 0)
 				{
-					if ((m_final_x - m_x) < 0)
-						pos[axis-1] = -moveCellSize;
+					if (m_camera->getForward().z <= 0)
+					{
+						if ((final_x - go.m_x) < 0)
+							pos[go.m_move_axis] = -moveCellSize;
+						else
+							pos[go.m_move_axis] = moveCellSize;
+					}
 					else
-						pos[axis-1] = moveCellSize;
+					{
+						if((final_x - go.m_x) > 0)
+							pos[go.m_move_axis] = -moveCellSize;
+						else
+							pos[go.m_move_axis] = moveCellSize;
+					}
 				}
-				else if (axis - 1 == 1)
+				else if (go.m_move_axis == 1)
 				{
-					if ((m_final_y - m_y) < 0)
-						pos[axis - 1] = moveCellSize;
+					if ((final_y - go.m_y) < 0)
+						pos[go.m_move_axis] = moveCellSize;
 					else
-						pos[axis - 1] = -moveCellSize;
+						pos[go.m_move_axis] = -moveCellSize;
 				}
 				else
 				{
-					if ((m_final_y - m_y) < 0)
-						pos[axis-1] = -moveCellSize;
+					cout << m_camera->getForward() << endl;
+					if (m_camera->getForward().x >= -0.9f)
+					{
+						if ((final_x - go.m_x) < 0)
+							pos[go.m_move_axis] = -moveCellSize;
+						else
+							pos[go.m_move_axis] = moveCellSize;
+					}
+					else if (m_camera->getForward().x <= -0.9f)
+					{
+						if ((final_x - go.m_x) > 0)
+							pos[go.m_move_axis] = -moveCellSize;
+						else
+							pos[go.m_move_axis] = moveCellSize;
+
+					}
+					else if (m_camera->getForward().x <= 0)
+					{
+						if ( (final_y - go.m_y) < 0)
+							pos[go.m_move_axis] = -moveCellSize;
+						else
+							pos[go.m_move_axis] = moveCellSize;					
+					}
 					else
-						pos[axis-1] = moveCellSize;
+					{
+						if ((final_y - go.m_y) > 0)
+							pos[go.m_move_axis] = -moveCellSize;
+						else
+							pos[go.m_move_axis] = moveCellSize;
+					}
 				}
-
-
-				cout << pos.x << " " << pos.y << " " << pos.z << endl;
-
-				m_files.at(0)->getMesh()->setPosition(pos);
+				glm::mat4 t = go.getMesh()->getTransform();
+				t = glm::translate(t, pos);
+				go.getMesh()->setTransform(t);
+				break;
 			}
-			break;
 		}
-	}
-}
-
-bool Renderer::handlePicking(int w, int h, int index)
-{
-	int x, y;
-	SDL_GetGlobalMouseState(&x, &y);
-	int mouse_x = x - m_scene_min.x;
-	int mouse_y = y - m_scene_min.y;
-	m_camera->processPicker(w, h, mouse_x, mouse_y);
-
-	glm::vec3 ray_dir = m_camera->getRay();
-	glm::vec3 ray_pos = m_camera->getPos();
-
-	return (m_files.at(index)->getMesh()->intersect(ray_dir, ray_pos));
-}
-
-void Renderer::renderImGui()
-{
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplSDL2_NewFrame();
-	ImGui::NewFrame();
-
-	static float f = 0.0f;
-	static int counter = 0;
-
-	//if (m_show_demo)
-	//	ImGui::ShowDemoWindow(&m_show_demo);
-	
-	//ImGui::Begin("Setting");                          
-	//{
-	//	ImGui::Checkbox("Good", &m_show_demo);
-	//	ImGui::End();
-	//}
-
-	// Rendering
-	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-	{
-		SDL_GLContext backup_current_context = SDL_GL_GetCurrentContext();
-		SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
-		ImGui::UpdatePlatformWindows();
-		ImGui::RenderPlatformWindowsDefault();
-		SDL_GL_MakeCurrent(backup_current_window,backup_current_context);
 	}
 }
 
@@ -263,11 +227,15 @@ void Renderer::renderDocking()
 	ImGui::NewFrame();
 	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
-	bool show_demo = false;
-
-	ImGui::Begin("Settings");
+	ImGui::Begin("Hierarchy");
 	{
-		ImGui::Checkbox("Demo window", &show_demo);
+		ImGui::Text("Scene Objects ");
+	}
+	ImGui::End();
+
+	ImGui::Begin("Property");
+	{
+		ImGui::Text("Transform");
 	}
 	ImGui::End();
 
@@ -276,16 +244,17 @@ void Renderer::renderDocking()
 	{
 		ImGui::BeginChild("SceneRender");
 		{
-			m_scene_min = ImGui::GetWindowContentRegionMin();
-			m_scene_max = ImGui::GetWindowContentRegionMax();
+			ImVec2 scene_min = ImGui::GetWindowContentRegionMin();
+			ImVec2 scene_max = ImGui::GetWindowContentRegionMax();
 			
-			m_scene_min.x += ImGui::GetWindowPos().x;
-			m_scene_min.y += ImGui::GetWindowPos().y;
-			m_scene_max.x += ImGui::GetWindowPos().x;
-			m_scene_max.y += ImGui::GetWindowPos().y;
+			scene_min.x += ImGui::GetWindowPos().x;
+			scene_min.y += ImGui::GetWindowPos().y;
+			scene_max.x += ImGui::GetWindowPos().x;
+			scene_max.y += ImGui::GetWindowPos().y;
+
+			m_sdl_window->setScene(scene_min, scene_max);
 
 			ImVec2 wsize = ImGui::GetWindowSize();
-
 			m_framebuffer->bind();
 			m_sdl_window->clearWindow();
 			m_framebuffer->rescaleFrame((int)wsize.x, (int)wsize.y);
@@ -312,159 +281,81 @@ void Renderer::renderDocking()
 
 void Renderer::renderScene(int width, int height)
 {
+	glm::vec3 cam_pos = m_camera->getPos();
+
 	// Setup light
-	vec3 dir = { -0.2f, -1.0f, -0.3f };
-	vec3 amb = { 1.0f, 1.0f, 1.0f };
-	vec3 diff = { 1.0f, 1.0f, 1.0f };
-	vec3 spec = { 0.5f, 0.5f, 0.5f };
+	glm::vec3 dir = { -0.2f, -1.0f, -0.3f };
+	glm::vec3 amb = { 1.0f, 1.0f, 1.0f };
+	glm::vec3 diff = { 1.0f, 1.0f, 1.0f };
+	glm::vec3 spec = { 0.5f, 0.5f, 0.5f };
 	unique_ptr<Light> light = make_unique<Light>(dir, amb, diff, spec);
 
 	// Setup world to pixel coordinate transformation 
 	float aspect = static_cast<float>(width) / static_cast<float>(height);
-	mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
-	mat4 V = m_camera->camera2pixel();
-	mat4 M = mat4(1.0f);
+	glm::mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+	glm::mat4 V = m_camera->camera2pixel();
+	glm::mat4 M = glm::mat4(1.0f);
 	
-	//M = mat4(1.0f);
-	m_shader_grid->load();
-	m_shader_grid->setPVM(P, V, M);
-	m_shader_grid->setVec3("cam_pos", m_camera->getPos());
-	m_files.at(4)->getMesh()->draw(*m_shader_grid.get());
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	glClear(GL_DEPTH_BUFFER_BIT);
-	// #1 Draw a original model
-	// glStencilFunc -> stencil test, it always pass the stencil test
-	// Set stencil buffer with 1 / 1 & (operation)0xFF -> 1
-	glStencilFunc(GL_ALWAYS, 1, 0xFF);
-	// Enable modifying stencil buffer
-	glStencilMask(0xFF);
+	// Calculate a ray to check whether object is clicked
+	int x, y;
+	SDL_GetGlobalMouseState(&x, &y);
+	int mouse_x = x - m_sdl_window->getSceneMin().x;
+	int mouse_y = y - m_sdl_window->getSceneMin().y;
+	m_camera->processPicker(width, height, mouse_x, mouse_y);
 
-	M = mat4(1.0f);
-	glm::vec3 pos = m_files.at(0)->getMesh()->getPosition();
-	M = glm::translate(M, pos);
-	m_shader->load();
-	m_shader->setPVM(P, V, M);
-	m_files.at(0)->getMesh()->setTransform(M);
-	m_shader->setVec3("light_pos", vec3(10.0f, 10.0f, 10.0f));
-	m_shader->setVec3("object_color", vec3(1.0f, 0.5f, 0.31f));
-	m_shader->setLight(*light);
-	m_files.at(0)->getMesh()->draw();
-	
-	// Handling picking object
-	if (m_is_mouse_clicked)
+	glm::vec3 ray_dir = m_camera->getRay();
+	glm::vec3 ray_pos = m_camera->getPos();
+
+	// Check whether object is clicked 
+	if (m_is_mouse_down && !m_is_click_gizmo)
 	{
-		m_is_mouse_clicked = false;
-		m_pick = handlePicking(width, height, 0);
-	}
-
-	if (m_pick)
-	{
-		renderGizmo(width, height);
-	}
-
-	//Enable depth test
-	glEnable(GL_DEPTH_TEST);
-}
-
-void Renderer::renderGizmo(int width, int height)
-{
-	float aspect = static_cast<float>(width) / static_cast<float>(height);
-	mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
-	mat4 V = m_camera->camera2pixel();
-	mat4 M = mat4(1.0f);
-
-	unique_ptr<Shader> m_shader_outline = make_unique<Shader>();
-	m_shader_outline->loadShaderFile("Shaders/Outline.vert", "Shaders/Outline.frag");
-
-	// #2 Draw a larger model with white color
-	// The pixel that is NOT equal to 1  will be passed
-	// --> It will only draw a object where the stencil buffer is equal to 0
-	// --> hence, it will only draw border of a model
-	glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-	// Disable modifying stencil buffer
-	// Stencil buffer will not be updated when drawing larger model
-	glStencilMask(0x00);
-	// Disable depth test
-	glDisable(GL_DEPTH_TEST);
-
-	m_shader_outline->load();
-	M = m_files.at(0)->getMesh()->getTransform();
-	m_shader_outline->setPVM(P, V, M);
-	m_shader_outline->setFloat("outline", 0.025f);
-	m_files.front()->getMesh()->draw();
-
-	// #3 Enable modifying stencil buffer
-	glStencilMask(0xFF);
-	// Set stencil buffer with 0 --> clear stencil buffer
-	glStencilFunc(GL_ALWAYS, 0, 0xFF);
-
-	unique_ptr<Shader> m_shader_arrow = make_unique<Shader>();
-	m_shader_arrow->loadShaderFile("Shaders/Arrow.vert", "Shaders/Arrow.frag");
-	
-	if (!m_click)
-	{
-		for (int i=1; i < 4; i++)
+		for (auto& it : m_scene_objects)
 		{
-			m_axis = handlePicking(width, height, i);
-			if (m_axis)
+			if (it->isClick(ray_dir, ray_pos))
 			{
-				cout << "Pick: " << i << endl;
-				m_axis_selected = i;
-				break;
+				cout << " Clicked object: " << it->getName() << endl;
+				it->setIsClick(true);
+			}
+			else 
+			{
+				cout << " missed object: " << it->getName() << endl;
+				it->setIsClick(false);
+			}
+		}
+		m_is_mouse_down = false;
+	}
+
+	// Check whether any gizmos is clicked
+	for (auto& it : m_scene_objects)
+	{
+		if (it->getIsClick())
+		{
+			if (!m_is_click_gizmo)
+			{
+				if (it->isGizmoClick(ray_dir, ray_pos))
+				{
+					//cout << "First click axis-" << it->m_move_axis << endl;
+					moveObject(*it);
+					break;
+				}
+			}
+			else
+			{
+				moveObject(*it);
 			}
 		}
 	}
 
-	if (m_axis)
-	{
-		cout << "Axis : " << m_axis_selected << endl;
-		handleTransform(m_axis_selected);
-		if (m_click)
-		{
-			color[m_axis_selected -1] = 0.5f;
-			cout << "Color: " << color.r << " " << color.g << " " << color.b << endl;
-		}
-	}
+	// Draw objects
+	for (auto& it : m_scene_objects)
+		it->draw(P, V, *light, cam_pos);
 
-	// Draw x-axis(red) gizmo
-	m_shader_arrow->load();
-	M = mat4(1.0f);
-	M = m_files.at(0)->getMesh()->getTransform();
-	M = glm::translate(M, vec3(1.0f, 0.0f, 0.0f));
-	M = glm::scale(M, vec3(0.5f));
-	m_files.at(1)->getMesh()->setTransform(M);
-	m_shader_arrow->setPVM(P, V, M);
-	m_shader_arrow->setVec3("object_color", glm::vec3(color.r, 0.0f, 0.0f));
-	m_files.at(1)->getMesh()->draw(*m_shader_arrow.get());
-
-	// Draw y-axis(green) gizmo
-	m_shader_arrow->load();
-	M = mat4(1.0f);
-	M = m_files.at(0)->getMesh()->getTransform();
-	M = glm::translate(M, vec3(0.0f, 1.0f, 0.0f));
-	M = glm::rotate(M, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	M = glm::scale(M, vec3(0.5f));
-	m_files.at(2)->getMesh()->setTransform(M);
-	m_shader_arrow->setPVM(P, V, M);
-	m_shader_arrow->setVec3("object_color", glm::vec3(0.0f, color.g, 0.0f));
-	m_files.at(2)->getMesh()->draw(*m_shader_arrow.get());
-
-	// Draw a z-axis(blue) gizmo
-	m_shader_arrow->load();
-	M = mat4(1.0f);
-	M = m_files.at(0)->getMesh()->getTransform();
-	M = glm::translate(M, vec3(0.0f, 0.0f, 1.0f));
-	M = glm::rotate(M, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	M = glm::scale(M, vec3(0.5f));
-	m_files.at(3)->getMesh()->setTransform(M);
-	m_shader_arrow->setPVM(P, V, M);
-	m_shader_arrow->setVec3("object_color", glm::vec3(0.0f, 0.0, color.b));
-	m_files.at(3)->getMesh()->draw(*m_shader_arrow.get());
+	m_grid->draw(P, V, cam_pos);
 }
 
 void Renderer::end()
 {
-	m_shader.release();
-	/*m_model.release();*/
 	m_sdl_window->unload();
 }

@@ -1,26 +1,19 @@
 #include "Buffer.h"
 
-VertexBuffer::VertexBuffer() : m_VAO(0), m_VBO(0), m_EBO(0), n_layouts(0), n_indices(0) {}
+VertexBuffer::VertexBuffer() : 
+	m_VAO(0), m_VBO(0), m_EBO(0), 
+	m_layouts({}), n_layouts(0), n_indices(0) {}
 
 void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts, const vector<unsigned int>& indices)
-{
-	cout << "Create vertex buffers " <<  indices.size() << endl;
-	cout << "Size of vertex layout: " << layouts.size() << endl;
-	
+{	
 	m_layouts = layouts;
-
-	//for (int i = 0; i < layouts.size(); ++i)
-	//{
-	//	info::VertexLayout layout;
-	//	layout.position = layouts[i].position;
-	//	layout.normal = layouts[i].normal;
-	//	layout.texCoord = layouts[i].texCoord;
-
-	//	m_layouts.push_back(layout);
-	//}
-
 	n_layouts = static_cast<unsigned int>(layouts.size());
 	n_indices = static_cast<unsigned int>(indices.size());
+
+	cout << " Generate buffer" << endl;
+	cout << "  -Create vertex buffers " << m_layouts.size() << endl;
+	cout << "  -Size of vertex layout: " << n_layouts << endl;
+	cout << "  -Size of indices: " << n_indices << endl;
 
 	// Generate buffers: VAO, VBO, EBO
 	glGenVertexArrays(1, &m_VAO);

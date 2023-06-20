@@ -6,20 +6,23 @@
 Shader::Shader() : m_shader_ID(0), m_paths({})
 {}
 
-Shader::Shader(const vector<string>& paths) : m_shader_ID(0),  m_paths(paths)
+Shader::Shader(const vector<string> paths) 
+	: m_shader_ID(0),  m_paths(paths)
 {}
 
 Shader::~Shader() 
 {}
 
-bool Shader::loadShaderFile()
+bool Shader::processShader()
 {
+	cout << "Load shader file: " << endl;
+
 	GLuint vert_shader = 0;
 	GLuint frag_shader = 0;
 	GLuint geom_shader = 0;
 
-	if (!CompileShader(m_paths.at(0), GL_VERTEX_SHADER, vert_shader) || 
-		!CompileShader(m_paths.at(1), GL_FRAGMENT_SHADER, frag_shader))
+	if (!compileShader(m_paths.at(0), GL_VERTEX_SHADER, vert_shader) || 
+		!compileShader(m_paths.at(1), GL_FRAGMENT_SHADER, frag_shader))
 		return false;
 
 	m_shader_ID = glCreateProgram();
@@ -27,7 +30,7 @@ bool Shader::loadShaderFile()
 	glAttachShader(m_shader_ID, vert_shader);
 	glAttachShader(m_shader_ID, frag_shader);
 
-	if (m_paths.at(2) != "")
+	if (m_paths.size() > 2)
 		glAttachShader(m_shader_ID, geom_shader);
 
 	glLinkProgram(m_shader_ID);
@@ -46,37 +49,36 @@ bool Shader::loadShaderFile()
 	glDeleteShader(vert_shader);
 	glDeleteShader(frag_shader);
 
-	if (m_paths.at(2) != "")
+	if (m_paths.size() > 2)
 		glDeleteShader(geom_shader);
 
 	return true;
 }
 
-bool Shader::CompileShader(const string& filePath, GLenum shaderType, GLuint& outShader)
+bool Shader::compileShader(const string& filePath, GLenum shaderType, GLuint& outShader)
 {
-	//printf("Compile %s \n", filePath.c_str());
+	printf("  -Compile %s \n", filePath.c_str());
 
-	ifstream shaderFile(filePath);
-	if (shaderFile.is_open())
+	ifstream shader_file(filePath);
+	if (shader_file.is_open())
 	{
 		stringstream sstream;
-		sstream << shaderFile.rdbuf();
+		sstream << shader_file.rdbuf();
 
 		string contents = sstream.str();
-		const char* contentsChar = contents.c_str();
+		const char* contents_char = contents.c_str();
 
 		outShader = glCreateShader(shaderType);
-
-		glShaderSource(outShader, 1, &contentsChar, nullptr);
+		glShaderSource(outShader, 1, &contents_char, nullptr);
 		glCompileShader(outShader);
 
-		if (!IsCompiled(outShader))
+		if (!isCompiled(outShader))
 		{
 			printf("Failed to compile shader %s \n", filePath.c_str());
 			return false;
 		}
 
-		shaderFile.close();
+		shader_file.close();
 	}
 	else
 	{
@@ -87,7 +89,7 @@ bool Shader::CompileShader(const string& filePath, GLenum shaderType, GLuint& ou
 	return true;
 }
 
-bool Shader::IsCompiled(GLuint& shader)
+bool Shader::isCompiled(GLuint& shader)
 {
 	GLint status;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
@@ -120,7 +122,7 @@ void Shader::setFloat(const string& name, float value) const
 	glUniform1f(glGetUniformLocation(m_shader_ID, name.c_str()), value);
 }
 
-void Shader::setVec3(const string& name, vec3 vector) const
+void Shader::setVec3(const string& name, glm::vec3& vector) const
 {
 	glUniform3fv(glGetUniformLocation(m_shader_ID, name.c_str()), 1, &vector[0]);
 }
@@ -130,7 +132,7 @@ void Shader::setVec3(const string& name, float x, float y, float z) const
 	glUniform3f(glGetUniformLocation(m_shader_ID, name.c_str()), x, y, z);
 }
 
-void Shader::setMat4(const string& name, mat4& matrix) const
+void Shader::setMat4(const string& name, glm::mat4& matrix) const
 {
 	glUniformMatrix4fv(glGetUniformLocation(m_shader_ID, name.c_str()), 1, GL_FALSE, value_ptr(matrix));
 }
@@ -144,10 +146,15 @@ void Shader::setPVM(glm::mat4& p, glm::mat4& v, glm::mat4& m) const
 
 void Shader::setLight(Light& light)
 {
-	setVec3("dir_light.direction", light.getDir());
-	setVec3("dir_light.ambient", light.getAmb());
-	setVec3("dir_light.diffuse", light.getDiff());
-	setVec3("dir_light.specular", light.getSpec());
+	glm::vec3 dir = light.getDir();
+	glm::vec3 amb = light.getAmb();
+	glm::vec3 diff = light.getDiff();
+	glm::vec3 spec = light.getSpec();
+
+	setVec3("dir_light.direction", dir);
+	setVec3("dir_light.ambient", amb);
+	setVec3("dir_light.diffuse", diff);
+	setVec3("dir_light.specular", spec);
 }
 
 void Shader::unload()

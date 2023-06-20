@@ -32,12 +32,13 @@ private:
 	glm::vec3 m_max;
 
 public:
-	BoundingBox();
 	BoundingBox(glm::vec3 min, glm::vec3 max);
 	~BoundingBox();
 
 	bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
 	void draw();
+	inline glm::vec3 getMin() { return m_min; };
+	inline glm::vec3 getMax() { return m_max; };
 };
 
 class Mesh
@@ -63,30 +64,31 @@ public:
 		 vector<shared_ptr<Texture>> textures,
 		 shared_ptr<Material> material);
 
-	void processMesh();
+	virtual void processMesh();
 
 	void draw();
-	virtual void draw(Shader& shader);
-
-	void bind() const;
-	void unbind() const;
-
+	virtual void draw(glm::mat4& P, glm::mat4& V, Shader& shader);
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
 
 	virtual inline void setDirectory(string directory) { m_directory = directory; };
-	virtual inline void setTransform(glm::mat4& t) 
-	{ 
-		m_transform += t; 
-	};
-	
+	virtual void setTransform(glm::mat4& t);
+	inline void setName(string name) { m_name = name; };
+	inline shared_ptr<BoundingBox> getBox() { return m_bbox; };
 	inline string getName() { return m_name; };
 	inline glm::vec3 getCenter() { return m_center; };
-	inline glm::mat4 getTransform() { return m_transform; };
+	virtual inline glm::mat4 getTransform() { return m_transform; };
+	virtual inline glm::vec3 getSize()
+	{ 
+		return abs(m_bbox->getMax() - m_bbox->getMin()); 
+	};
 };
 
 class FBXMesh : public Mesh
 {
 private:	
+	const aiScene* m_aiScene;
+	Assimp::Importer m_importer;
+	
 	vector<shared_ptr<Mesh>> m_meshes;
 	vector<shared_ptr<Texture>> m_textures_loaded;
 	string m_path;
@@ -96,29 +98,59 @@ public:
 	FBXMesh(const string& path);
 	~FBXMesh();
 
+	virtual void processMesh();
 	void processNode(const aiNode* node, const aiScene* scene);
-	shared_ptr<VertexBuffer> processBuffer(const aiMesh* mesh, const aiScene* scene, const string& name, mat4& m);
+	shared_ptr<VertexBuffer> processBuffer(const aiMesh* mesh, const aiScene* scene, const string& name, glm::mat4& m);
 	shared_ptr<Material> processMaterial(const aiMesh* mesh, const aiScene* scene); // Object material handling functions
 	vector<shared_ptr<Texture>> processTextures(const aiMesh* mesh, const aiScene* scene);
 	vector<shared_ptr<Texture>> loadTexture(shared_ptr<aiMaterial> mat, aiTextureType type, string typeName); 	// Texture handling functions
 
-	virtual void draw(Shader& shader);
+	virtual void draw(glm::mat4& P, glm::mat4& V, Shader& shader);
 
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
 	
 	virtual inline string getPath() { return m_path; };
-	virtual inline void setTransform(glm::mat4& t)
+	virtual void setTransform(glm::mat4& t);
+	virtual inline glm::vec3 getSize()
 	{
-		//cout << "Set position in FBX Mesh" << endl;
+		glm::vec3 min = glm::vec3(FLT_MAX);
+		glm::vec3 max = glm::vec3(FLT_MIN);
+
+
 		for (auto& it : m_meshes)
 		{
-			it->setTransform(t);
+			//cout << "Get size of " << it->getName() << endl;
+			glm::vec3 box_min = it->getBox()->getMin();
+			glm::vec3 box_max = it->getBox()->getMax();
+			for (int i = 0; i < 3; ++i)
+			{
+				if (box_min[i] < min[i])
+				{
+					min[i] = box_min[i];
+				}
+
+				if (box_max[i] > max[i])
+				{
+					max[i] = box_max[i];
+				}
+			}
 		}
+		//cout << "Final: "  << endl;
+		return glm::abs(max-min);
+	}
+	virtual inline glm::mat4 getTransform() 
+	{ 
+		return m_meshes.at(1)->getTransform(); 
 	};
-
-
 };
 
-mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& aiMat);
+glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& aiMat);
+
+ostream& operator<<(ostream& os, const glm::vec2& v);
+ostream& operator<<(ostream& os, const glm::vec3& v);
+ostream& operator<<(ostream& os, const glm::vec4& v);
+ostream& operator<<(ostream& os, const glm::mat3& m);
+ostream& operator<<(ostream& os, const glm::mat4& m);
 
 #endif // !MESH_H
+

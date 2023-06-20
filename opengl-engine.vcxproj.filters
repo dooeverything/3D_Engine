@@ -14,7 +14,7 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
     <Filter Include="리소스 파일\imgui">
-      <UniqueIdentifier>{f8a97d9a-00b4-49c6-aa56-56f64bdd19f8}</UniqueIdentifier>
+      <UniqueIdentifier>{2eef7ad1-bc09-4c58-886d-5974430b3322}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -58,31 +58,31 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imconfig.h">
-      <Filter>리소스 파일\imgui</Filter>
+      <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imgui.h">
-      <Filter>리소스 파일\imgui</Filter>
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\imgui-docking\imgui_impl_opengl3.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\imgui-docking\imgui_impl_opengl3_loader.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\imgui-docking\imgui_impl_sdl2.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imgui_internal.h">
-      <Filter>리소스 파일\imgui</Filter>
+      <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imstb_rectpack.h">
-      <Filter>리소스 파일\imgui</Filter>
+      <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imstb_textedit.h">
-      <Filter>리소스 파일\imgui</Filter>
+      <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imstb_truetype.h">
-      <Filter>리소스 파일\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\vclib\imgui-docking\backends\imgui_impl_opengl3.h">
-      <Filter>리소스 파일\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\vclib\imgui-docking\backends\imgui_impl_opengl3_loader.h">
-      <Filter>리소스 파일\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\vclib\imgui-docking\backends\imgui_impl_sdl2.h">
-      <Filter>리소스 파일\imgui</Filter>
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -123,25 +123,25 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui.cpp">
-      <Filter>리소스 파일\imgui</Filter>
+      <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui_demo.cpp">
-      <Filter>리소스 파일\imgui</Filter>
+      <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui_draw.cpp">
-      <Filter>리소스 파일\imgui</Filter>
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\vclib\imgui-docking\imgui_impl_opengl3.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\vclib\imgui-docking\imgui_impl_sdl2.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui_tables.cpp">
-      <Filter>리소스 파일\imgui</Filter>
+      <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui_widgets.cpp">
-      <Filter>리소스 파일\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\vclib\imgui-docking\backends\imgui_impl_opengl3.cpp">
-      <Filter>리소스 파일\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\vclib\imgui-docking\backends\imgui_impl_sdl2.cpp">
-      <Filter>리소스 파일\imgui</Filter>
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
