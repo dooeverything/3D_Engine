@@ -1,7 +1,7 @@
 # OpenGL_Engine
 
 ### Screen Shot
-![Screenshot](https://github.com/dooeverything/OpenGL_Engine/ScreenShots/Screenshot-1.png)
+![Screenshot](https://github.com/dooeverything/OpenGL_Engine/blob/main/ScreenShots/Screenshot-1.png)
 
 ### Features include
  1. 3D model loading (fbx)
