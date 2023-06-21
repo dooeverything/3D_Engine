@@ -39,6 +39,17 @@ bool Object::isClick(glm::vec3& ray_dir, glm::vec3& ray_pos)
 	return m_mesh->intersect(ray_dir, ray_pos);
 }
 
+void Object::setPosition(glm::vec3 pos)
+{
+	m_position += pos;
+	cout << "Set position : " << m_position << endl;
+	glm::mat4 t = glm::mat4(1.0f);
+	t = glm::translate(t, m_position);
+	cout << t << endl;
+	m_mesh->setTransform(t);
+};
+
+
 Gizmo::Gizmo(GameObject& root, int axis) : 
 	m_root(root), m_axis(axis)
 {
@@ -60,10 +71,10 @@ void Gizmo::draw(glm::mat4& P, glm::mat4& V, glm::mat4& M)
 {
 	glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f);
 
-	M = glm::translate(M, *m_root.getPosition());
-	//M = m_root.getMesh()->getTransform() * M;
+	//M = glm::translate(M, *m_root.getPosition());
+	M = m_root.getMesh()->getTransform() * M;
 	
-	glm::vec3 pos = glm::vec3(0.0, 0.0, 0.0);
+	glm::vec3 pos = glm::vec3(0.0f);
 	pos[m_axis] = 1.8f;
 	M = glm::translate(M, pos);
 
@@ -170,7 +181,6 @@ void GameObject::draw(glm::mat4& P, glm::mat4& V, Light& light, glm::vec3& view_
 		glStencilMask(0xFF);
 
 		m_shader->load();
-		//glm::mat4 M = m_mesh->getTransform();
 		m_shader->setVec3("object_color", m_color);
 		m_shader->setLight(light);
 		m_mesh->draw(P, V, *m_shader);
@@ -209,8 +219,6 @@ void GameObject::draw(glm::mat4& P, glm::mat4& V, Light& light, glm::vec3& view_
 	{
 		m_move_axis = -1;
 		m_shader->load();
-		glm::mat4 M = m_mesh->getTransform();
-		m_shader->setPVM(P, V, M);
 		m_shader->setFloat("animation", 0);
 		m_shader->setVec3("object_color", m_color);
 		m_shader->setVec3("viewPos", view_pos);

@@ -46,6 +46,7 @@ private:
 	bool m_is_running;
 	bool m_is_mouse_down;
 	bool m_is_click_gizmo;
+	bool m_is_drag;
 };
 
 #endif

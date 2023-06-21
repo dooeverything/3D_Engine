@@ -4,7 +4,7 @@ Renderer::Renderer() :
 	m_sdl_window(make_unique<SDL_GL_Window>()), m_camera(unique_ptr<Camera>()),
 	m_framebuffer(make_unique<FrameBuffer>()), m_scene_objects({}), 
 	m_is_running(true), m_ticks(0), m_start_time(0), m_is_mouse_down(false),
-	m_is_click_gizmo(false)
+	m_is_click_gizmo(false), m_is_drag(false)
 {}
 
 Renderer::~Renderer() {}
@@ -20,8 +20,8 @@ bool Renderer::init()
 
 	vector<string> shader_path = { "Shaders/Basic.vert", "Shaders/Basic.frag" };
 	addObject("Models/Cube.txt", shader_path);
-	//vector<string> shader_link = { "Shaders/Link.vert", "Shaders/Link.frag" };
-	//addObject("Models/Link/Link.fbx", shader_link);
+	vector<string> shader_link = { "Shaders/Link.vert", "Shaders/Link.frag" };
+	addObject("Models/Link/Link.fbx", shader_link);
 
 	cout << "Number of objects in scene: " << m_scene_objects.size() << endl;
 
@@ -96,6 +96,8 @@ void Renderer::handleInput()
 		{
 			int x, y;
 			SDL_GetGlobalMouseState(&x, &y);
+			if (ImGui::IsMouseDragging(0, 10.0f) && !m_is_mouse_down)
+				continue;
 
 			if (x < m_sdl_window->getSceneMin().x || 
 				y < m_sdl_window->getSceneMin().y+30) 
@@ -105,16 +107,12 @@ void Renderer::handleInput()
 				y > m_sdl_window->getSceneMax().y) 
 				continue;
 
-			if (ImGui::IsMouseDragging(0, 10.0f) && !m_is_mouse_down)
-			{
-				cout << "No input: " << endl;
-				continue;
-			}
 
 			switch (event.type)
 			{
 				case SDL_MOUSEBUTTONUP:
 					m_is_mouse_down = false;
+					m_is_drag = false;
 					m_camera->processMouseUp(event, m_sdl_window.get());
 					break;
 
@@ -125,6 +123,8 @@ void Renderer::handleInput()
 					break;
 
 				case SDL_MOUSEMOTION:
+					if(m_is_mouse_down)
+						m_is_drag = true;
 					m_camera->processMouseDrag(event);
 					break;
 			}
@@ -219,9 +219,9 @@ void Renderer::moveObject(GameObject& go)
 					}
 				}
 				go.setPosition(pos);
-				glm::mat4 t = go.getMesh()->getTransform();
-				t = glm::translate(t, pos);
-				go.getMesh()->setTransform(t);
+				//glm::mat4 t = go.getMesh()->getTransform();
+				//t = glm::translate(t, pos);
+				//go.getMesh()->setTransform(t);
 				break;
 			}
 		}
@@ -246,11 +246,9 @@ void Renderer::renderImGui()
 			string name = m_scene_objects[i]->getName();
 			const char* object_name = name.c_str();
 			ImGui::Selectable(object_name, &click_object);
-
 			if (click_object)
 			{
 				cout << name << " is clicked" << endl;
-
 				if (!m_scene_objects.at(i)->getIsClick())
 					m_scene_objects.at(i)->setIsClick(true);
 				else
@@ -271,7 +269,6 @@ void Renderer::renderImGui()
 				const char* object_name = name.c_str();
 				ImGui::Text(object_name);
 				bool expand = ImGui::TreeNode("Transform");
-
 				if (expand)
 				{
 					static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
@@ -284,30 +281,44 @@ void Renderer::renderImGui()
 					{
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn();
-
 						ImGui::AlignTextToFramePadding();
 						ImGui::Text("Position");
 						ImGui::TableNextColumn();
 						
 						ImGui::Text("X");
 						ImGui::SameLine();
-						(ImGui::DragFloat("##x", &(m_scene_objects[i]->getPosition()->x), 0.005f));
+						if (ImGui::DragFloat("##x", &(m_scene_objects[i]->getPosition()->x), 0.005f))
+						{
+							glm::mat4 t = glm::mat4(1.0f);
+							t = glm::translate(t, *m_scene_objects[i]->getPosition());
+							//cout << t << endl;
+							m_scene_objects[i]->getMesh()->setTransform(t);
+						}
 						ImGui::TableNextColumn();
 						
 						ImGui::Text("Y");
 						ImGui::SameLine();
-						(ImGui::DragFloat("##y", &(m_scene_objects[i]->getPosition()->y), 0.005f));
+						if (ImGui::DragFloat("##y", &(m_scene_objects[i]->getPosition()->y), 0.005f))
+						{
+							glm::mat4 t = glm::mat4(1.0f);
+							t = glm::translate(t, *m_scene_objects[i]->getPosition());
+							//cout << t << endl;
+							m_scene_objects[i]->getMesh()->setTransform(t);
+						}
 						ImGui::TableNextColumn();
-
 						ImGui::Text("Z");
 						ImGui::SameLine();
-						(ImGui::DragFloat("##z", &(m_scene_objects[i]->getPosition()->z), 0.005f));
-						
+						if (ImGui::DragFloat("##z", &(m_scene_objects[i]->getPosition()->z), 0.005f))
+						{
+							glm::mat4 t = glm::mat4(1.0f);
+							t = glm::translate(t, *m_scene_objects[i]->getPosition());
+							//cout << t << endl;
+							m_scene_objects[i]->getMesh()->setTransform(t);
+						}
 						ImGui::TableNextColumn();
 					}
 					ImGui::EndTable();
 					ImGui::PopStyleVar();
-
 					ImGui::TreePop();
 				}
 			}
@@ -386,15 +397,15 @@ void Renderer::renderScene(int width, int height)
 	glm::vec3 ray_pos = m_camera->getPos();
 
 	// Check whether object is clicked 
-	if (m_is_mouse_down && !m_is_click_gizmo && !ImGui::IsMouseDragging(0, 5.0f))
+	//bool drag = ImGui::IsMouseDragging(0, 5.0f);
+	//cout << "Is dragging?: " << m_is_drag << endl;
+	if (m_is_mouse_down && !m_is_click_gizmo && !m_is_drag)
 	{
-		cout << "Checking" << endl;
 		for (auto& it : m_scene_objects)
 		{
 			if (it->isClick(ray_dir, ray_pos))
 			{
 				cout << " Clicked object: " << it->getName() << endl;
-				cout << it->getMesh()->getTransform() << endl;
 				it->setIsClick(true);
 			}
 			else 

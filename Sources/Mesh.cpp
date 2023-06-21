@@ -10,10 +10,6 @@ BoundingBox::~BoundingBox() {}
 
 bool BoundingBox::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 {
-	//glm::vec4 p = glm::vec4(m_min, 1.0f);
-	//p = m_transform * p;
-	//m_min = glm::vec3(p.x, p.y, p.z);
-
 	float temp;
 	float tmin = -1.0e10;
 	float tmax = 1.0e10;
@@ -34,7 +30,6 @@ bool BoundingBox::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 
 		float t1 = v1 / rd;
 		float t2 = v2 / rd;
-
 
 		if (t1 > t2)
 		{

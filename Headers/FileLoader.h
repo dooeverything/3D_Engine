@@ -30,9 +30,8 @@ public:
 	virtual inline bool getIsClick() { return m_click; };
 	virtual inline string getName() { return m_name; };
 	virtual inline glm::vec3* getPosition() { return &m_position; };
-
+	virtual void setPosition(glm::vec3 pos);
 	virtual inline void setIsClick(bool click) { m_click = click; };
-	virtual inline void setPosition(glm::vec3 pos) { m_position += pos; };
 protected:
 	shared_ptr<Mesh> m_mesh;
 	shared_ptr<Shader> m_shader;
