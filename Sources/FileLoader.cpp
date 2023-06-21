@@ -2,11 +2,11 @@
 
 Object::Object() :
 	m_mesh(nullptr), m_shader(nullptr), 
-	m_click(false), m_name("")
+	m_click(false), m_name(""), m_position(glm::vec3(0.0f))
 {}
 
 Object::Object(const string& mesh_path, const vector<string>& shader) :
-	m_click(false), m_name("")
+	m_click(false), m_name(""), m_position(glm::vec3(0.0f))
 {
 	string::size_type pos = mesh_path.find_last_of('.');
 	if (pos != mesh_path.length())
@@ -60,8 +60,8 @@ void Gizmo::draw(glm::mat4& P, glm::mat4& V, glm::mat4& M)
 {
 	glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f);
 
-	//glm::mat4 M = glm::translate(glm::mat4(1.0f), m_root.getMesh()->getCenter());
-	M = m_root.getMesh()->getTransform() * M;
+	M = glm::translate(M, *m_root.getPosition());
+	//M = m_root.getMesh()->getTransform() * M;
 	
 	glm::vec3 pos = glm::vec3(0.0, 0.0, 0.0);
 	pos[m_axis] = 1.8f;
@@ -191,10 +191,14 @@ void GameObject::draw(glm::mat4& P, glm::mat4& V, Light& light, glm::vec3& view_
 		glm::vec3 scale_factor = glm::vec3(m_mesh->getSize().x*0.1f, 
 			m_mesh->getSize().y * 0.1f, m_mesh->getSize().z * 0.1f);
 
+		//cout << m_name << "'s position: " << m_position << endl;
+		//cout << glm::length(m_position-view_pos) << endl;
+		glm::vec3 scale_factor2 = glm::vec3(glm::length(m_position - view_pos)*0.2f);
 		for (int axis = 0; axis < 3; ++axis)
 		{
 			glm::mat4 M = glm::mat4(1.0f);
 			M = glm::scale(glm::mat4(1.0f), scale_factor);
+			M = glm::scale(M, scale_factor2);
 			m_gizmos[axis]->draw(P, V, M);
 		}
 

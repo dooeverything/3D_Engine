@@ -13,15 +13,15 @@ bool Renderer::init()
 {
 	cout << "Initialize Renderer" << endl;
 
-	int width = 1024;
-	int height = 720;
+	int width = 1400;
+	int height = 800;
 	m_sdl_window->init(width, height, "OpenGL Engine");
 	m_grid = make_unique<Grid>();
 
 	vector<string> shader_path = { "Shaders/Basic.vert", "Shaders/Basic.frag" };
-	vector<string> shader_link = { "Shaders/Link.vert", "Shaders/Link.frag" };
 	addObject("Models/Cube.txt", shader_path);
-	addObject("Models/Link/Link.fbx", shader_link);
+	//vector<string> shader_link = { "Shaders/Link.vert", "Shaders/Link.frag" };
+	//addObject("Models/Link/Link.fbx", shader_link);
 
 	cout << "Number of objects in scene: " << m_scene_objects.size() << endl;
 
@@ -59,7 +59,7 @@ void Renderer::render()
 		handleInput();
 
 	m_sdl_window->clearWindow();
-	renderDocking();
+	renderImGui();
 	m_sdl_window->swapWindow();
 }
 
@@ -75,7 +75,7 @@ void Renderer::handleInput()
 			switch (event.type)
 			{
 				case SDL_QUIT:
-					m_is_running = 0;
+					m_is_running = false;
 					break;
 				
 				case SDL_WINDOWEVENT:
@@ -105,9 +105,16 @@ void Renderer::handleInput()
 				y > m_sdl_window->getSceneMax().y) 
 				continue;
 
+			if (ImGui::IsMouseDragging(0, 10.0f) && !m_is_mouse_down)
+			{
+				cout << "No input: " << endl;
+				continue;
+			}
+
 			switch (event.type)
 			{
 				case SDL_MOUSEBUTTONUP:
+					m_is_mouse_down = false;
 					m_camera->processMouseUp(event, m_sdl_window.get());
 					break;
 
@@ -180,9 +187,9 @@ void Renderer::moveObject(GameObject& go)
 				}
 				else
 				{
-					cout << m_camera->getForward() << endl;
-					if (m_camera->getForward().x >= -0.9f)
+					if (m_camera->getForward().x >= 0.85f)
 					{
+						cout << m_camera->getForward() << endl;
 						if ((final_x - go.m_x) < 0)
 							pos[go.m_move_axis] = -moveCellSize;
 						else
@@ -196,7 +203,7 @@ void Renderer::moveObject(GameObject& go)
 							pos[go.m_move_axis] = moveCellSize;
 
 					}
-					else if (m_camera->getForward().x <= 0)
+					else if (m_camera->getForward().z < 0)
 					{
 						if ( (final_y - go.m_y) < 0)
 							pos[go.m_move_axis] = -moveCellSize;
@@ -211,6 +218,7 @@ void Renderer::moveObject(GameObject& go)
 							pos[go.m_move_axis] = moveCellSize;
 					}
 				}
+				go.setPosition(pos);
 				glm::mat4 t = go.getMesh()->getTransform();
 				t = glm::translate(t, pos);
 				go.getMesh()->setTransform(t);
@@ -220,22 +228,91 @@ void Renderer::moveObject(GameObject& go)
 	}
 }
 
-void Renderer::renderDocking()
+void Renderer::renderImGui()
 {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();
 	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
-	ImGui::Begin("Hierarchy");
+	//bool demo = true;
+	//ImGui::ShowDemoWindow(&demo);
+
+	bool click_object = false;
+	ImGui::Begin("Scene Objects");
 	{
-		ImGui::Text("Scene Objects ");
+		for (int i = 0; i < m_scene_objects.size(); ++i)
+		{
+			string name = m_scene_objects[i]->getName();
+			const char* object_name = name.c_str();
+			ImGui::Selectable(object_name, &click_object);
+
+			if (click_object)
+			{
+				cout << name << " is clicked" << endl;
+
+				if (!m_scene_objects.at(i)->getIsClick())
+					m_scene_objects.at(i)->setIsClick(true);
+				else
+					m_scene_objects.at(i)->setIsClick(false);
+			}
+			click_object = false;
+		}
 	}
 	ImGui::End();
 
 	ImGui::Begin("Property");
 	{
-		ImGui::Text("Transform");
+		for (int i = 0; i < m_scene_objects.size(); ++i)
+		{ 
+			if (m_scene_objects[i]->getIsClick())
+			{
+				string name = m_scene_objects[i]->getName();
+				const char* object_name = name.c_str();
+				ImGui::Text(object_name);
+				bool expand = ImGui::TreeNode("Transform");
+
+				if (expand)
+				{
+					static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
+					ImVec2 cell_padding(0.0f, 2.0f);
+					ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
+					ImGui::BeginTable("Transform", 4);
+					ImU32 cell_bg_color = ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.7f, 0.65f));
+					glm::vec3 pos = glm::vec3(0.0f);
+					for (int row = 0; row < 1; ++row)
+					{
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn();
+
+						ImGui::AlignTextToFramePadding();
+						ImGui::Text("Position");
+						ImGui::TableNextColumn();
+						
+						ImGui::Text("X");
+						ImGui::SameLine();
+						(ImGui::DragFloat("##x", &(m_scene_objects[i]->getPosition()->x), 0.005f));
+						ImGui::TableNextColumn();
+						
+						ImGui::Text("Y");
+						ImGui::SameLine();
+						(ImGui::DragFloat("##y", &(m_scene_objects[i]->getPosition()->y), 0.005f));
+						ImGui::TableNextColumn();
+
+						ImGui::Text("Z");
+						ImGui::SameLine();
+						(ImGui::DragFloat("##z", &(m_scene_objects[i]->getPosition()->z), 0.005f));
+						
+						ImGui::TableNextColumn();
+					}
+					ImGui::EndTable();
+					ImGui::PopStyleVar();
+
+					ImGui::TreePop();
+				}
+			}
+		}
+		
 	}
 	ImGui::End();
 
@@ -309,13 +386,15 @@ void Renderer::renderScene(int width, int height)
 	glm::vec3 ray_pos = m_camera->getPos();
 
 	// Check whether object is clicked 
-	if (m_is_mouse_down && !m_is_click_gizmo)
+	if (m_is_mouse_down && !m_is_click_gizmo && !ImGui::IsMouseDragging(0, 5.0f))
 	{
+		cout << "Checking" << endl;
 		for (auto& it : m_scene_objects)
 		{
 			if (it->isClick(ray_dir, ray_pos))
 			{
 				cout << " Clicked object: " << it->getName() << endl;
+				cout << it->getMesh()->getTransform() << endl;
 				it->setIsClick(true);
 			}
 			else 
@@ -324,7 +403,6 @@ void Renderer::renderScene(int width, int height)
 				it->setIsClick(false);
 			}
 		}
-		m_is_mouse_down = false;
 	}
 
 	// Check whether any gizmos is clicked

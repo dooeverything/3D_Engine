@@ -10,6 +10,10 @@ BoundingBox::~BoundingBox() {}
 
 bool BoundingBox::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 {
+	//glm::vec4 p = glm::vec4(m_min, 1.0f);
+	//p = m_transform * p;
+	//m_min = glm::vec3(p.x, p.y, p.z);
+
 	float temp;
 	float tmin = -1.0e10;
 	float tmax = 1.0e10;
@@ -77,7 +81,8 @@ Mesh::Mesh(const string& path)
 	: m_directory(path), m_name(""), m_buffer(make_unique<VertexBuffer>()),
 	  m_textures({}), m_material(make_unique<Material>()), 
 	  m_center(glm::vec3(0.0f)), m_transform(glm::mat4(1.0f))
-{}
+{
+}
 
 Mesh::Mesh(string name, shared_ptr<VertexBuffer> buffer, 
 		   vector<shared_ptr<Texture>> textures, 
@@ -85,7 +90,9 @@ Mesh::Mesh(string name, shared_ptr<VertexBuffer> buffer,
 	: m_directory(""), m_name(name), 
 	  m_buffer(buffer), m_textures(textures), m_material(material), 
 	  m_center(glm::vec3(0.0f)), m_transform(glm::mat4(1.0f))
-{}
+{
+	m_bbox = computeBoundingBox();
+}
 
 void Mesh::processMesh()
 {
@@ -171,6 +178,7 @@ void Mesh::processMesh()
 	}
 
 	m_buffer->createBuffers(layouts, indices);
+	m_bbox = computeBoundingBox();
 }
 
 void Mesh::draw()
@@ -225,17 +233,13 @@ void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 bool Mesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 {
 	//cout << "Intersect with mesh: " << m_name << endl;
+	
 	m_bbox = computeBoundingBox();
 	return m_bbox->intersect(ray_dir, ray_pos);
 }
 
-inline void Mesh::setTransform(glm::mat4& t)
+inline void Mesh::setTransform(glm::mat4 t)
 {
-	if (m_name != "Arrow")
-	{
-		//cout << "Set position in Mesh: " << m_name << endl;
-		//cout << t << endl;
-	}
 	m_transform = t;
 };
 
@@ -561,7 +565,7 @@ bool FBXMesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 	return inter;
 }
 
-inline void FBXMesh::setTransform(glm::mat4& t)
+inline void FBXMesh::setTransform(glm::mat4 t)
 {
 	for (auto& it : m_meshes)
 	{

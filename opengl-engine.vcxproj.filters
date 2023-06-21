@@ -84,6 +84,9 @@
     <ClInclude Include="C:\vclib\imgui-docking\imstb_truetype.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Headers\ImGuiPanel.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Sources\Buffer.cpp">
@@ -141,6 +144,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui_widgets.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\ImGuiPanel.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

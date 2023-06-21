@@ -154,6 +154,7 @@
     <ClInclude Include="Headers\FileDialog.h" />
     <ClInclude Include="Headers\FileLoader.h" />
     <ClInclude Include="Headers\FrameBuffer.h" />
+    <ClInclude Include="Headers\ImGuiPanel.h" />
     <ClInclude Include="Headers\Light.h" />
     <ClInclude Include="Headers\Mesh.h" />
     <ClInclude Include="Headers\Picker.h" />
@@ -175,6 +176,7 @@
     <ClCompile Include="Sources\Camera.cpp" />
     <ClCompile Include="Sources\FileDialog.cpp" />
     <ClCompile Include="Sources\FileLoader.cpp" />
+    <ClCompile Include="Sources\ImGuiPanel.cpp" />
     <ClCompile Include="Sources\Light.cpp" />
     <ClCompile Include="Sources\main.cpp" />
     <ClCompile Include="Sources\Mesh.cpp" />

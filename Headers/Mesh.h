@@ -71,7 +71,7 @@ public:
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
 
 	virtual inline void setDirectory(string directory) { m_directory = directory; };
-	virtual void setTransform(glm::mat4& t);
+	virtual void setTransform(glm::mat4 t);
 	inline void setName(string name) { m_name = name; };
 	inline shared_ptr<BoundingBox> getBox() { return m_bbox; };
 	inline string getName() { return m_name; };
@@ -110,7 +110,7 @@ public:
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
 	
 	virtual inline string getPath() { return m_path; };
-	virtual void setTransform(glm::mat4& t);
+	virtual void setTransform(glm::mat4 t);
 	virtual inline glm::vec3 getSize()
 	{
 		glm::vec3 min = glm::vec3(FLT_MAX);

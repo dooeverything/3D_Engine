@@ -27,7 +27,6 @@ public:
 	void moveObject(GameObject& go);
 
 	void renderImGui();
-	void renderDocking();
 	void renderScene(int width, int height);
 	
 	void end();
