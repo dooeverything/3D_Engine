@@ -152,7 +152,7 @@
     <ClInclude Include="Headers\Buffer.h" />
     <ClInclude Include="Headers\Camera.h" />
     <ClInclude Include="Headers\FileDialog.h" />
-    <ClInclude Include="Headers\FileLoader.h" />
+    <ClInclude Include="Headers\Object.h" />
     <ClInclude Include="Headers\FrameBuffer.h" />
     <ClInclude Include="Headers\ImGuiPanel.h" />
     <ClInclude Include="Headers\Light.h" />
@@ -175,7 +175,7 @@
     <ClCompile Include="Sources\Buffer.cpp" />
     <ClCompile Include="Sources\Camera.cpp" />
     <ClCompile Include="Sources\FileDialog.cpp" />
-    <ClCompile Include="Sources\FileLoader.cpp" />
+    <ClCompile Include="Sources\Object.cpp" />
     <ClCompile Include="Sources\ImGuiPanel.cpp" />
     <ClCompile Include="Sources\Light.cpp" />
     <ClCompile Include="Sources\main.cpp" />

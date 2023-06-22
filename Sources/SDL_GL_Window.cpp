@@ -90,7 +90,6 @@ void SDL_GL_Window::init(const int width, const int height, string title)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-
 	printf("%s \n", glGetString(GL_VERSION));
 }
 

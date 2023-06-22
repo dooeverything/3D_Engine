@@ -16,6 +16,12 @@
     <Filter Include="리소스 파일\imgui">
       <UniqueIdentifier>{2eef7ad1-bc09-4c58-886d-5974430b3322}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\ImGui">
+      <UniqueIdentifier>{977d3059-cb19-41b4-9a3f-9b88c1928253}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\ImGui">
+      <UniqueIdentifier>{9d4d64a8-d56c-4a47-a536-b4b32dcae09c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Headers\Buffer.h">
@@ -27,7 +33,7 @@
     <ClInclude Include="Headers\FileDialog.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Headers\FileLoader.h">
+    <ClInclude Include="Headers\Object.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Headers\FrameBuffer.h">
@@ -58,34 +64,34 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imconfig.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imgui.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imgui_impl_opengl3.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imgui_impl_opengl3_loader.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imgui_impl_sdl2.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imgui_internal.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\vclib\imgui-docking\imstb_rectpack.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\vclib\imgui-docking\imstb_textedit.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\vclib\imgui-docking\imstb_truetype.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="Headers\ImGuiPanel.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\imgui-docking\imstb_rectpack.h">
+      <Filter>헤더 파일\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\imgui-docking\imstb_textedit.h">
+      <Filter>헤더 파일\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\imgui-docking\imstb_truetype.h">
+      <Filter>헤더 파일\ImGui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -98,7 +104,7 @@
     <ClCompile Include="Sources\FileDialog.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\FileLoader.cpp">
+    <ClCompile Include="Sources\Object.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Sources\Light.cpp">
@@ -126,28 +132,28 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui_demo.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui_draw.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui_impl_opengl3.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui_impl_sdl2.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui_tables.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui_widgets.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="Sources\ImGuiPanel.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\ImGui</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

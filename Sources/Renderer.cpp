@@ -18,13 +18,6 @@ bool Renderer::init()
 	m_sdl_window->init(width, height, "OpenGL Engine");
 	m_grid = make_unique<Grid>();
 
-	vector<string> shader_path = { "Shaders/Basic.vert", "Shaders/Basic.frag" };
-	addObject("Models/Cube.txt", shader_path);
-	vector<string> shader_link = { "Shaders/Link.vert", "Shaders/Link.frag" };
-	addObject("Models/Link/Link.fbx", shader_link);
-
-	cout << "Number of objects in scene: " << m_scene_objects.size() << endl;
-
 	m_framebuffer->createBuffers(width, height);
 	m_camera = make_unique<Camera>(glm::vec3(0.0f, 0.5f, 20.0f), -90.0f, 0.0f );
 	m_start_time = SDL_GetTicks64();
@@ -32,9 +25,9 @@ bool Renderer::init()
 	return true;
 }
 
-void Renderer::addObject(const string& mesh_path, const vector<string> shader_path)
+void Renderer::addObject(const string& mesh_path)
 {
-	shared_ptr<GameObject> object = make_shared<GameObject>(mesh_path, shader_path);
+	shared_ptr<GameObject> object = make_shared<GameObject>(mesh_path);
 	m_scene_objects.push_back(object);
 }
 
@@ -238,6 +231,47 @@ void Renderer::renderImGui()
 	//bool demo = true;
 	//ImGui::ShowDemoWindow(&demo);
 
+	ImGui::BeginMainMenuBar();
+	if (ImGui::BeginMenu("GameObject"))
+	{
+		if (ImGui::MenuItem("Create Empty", NULL)) {}
+					
+		if (ImGui::BeginMenu("3D Object"))
+		{
+			if (ImGui::MenuItem("Cube"))
+			{
+				addObject("Models/Cube.txt");
+			}
+
+			if (ImGui::MenuItem("Plane"))
+			{
+				addObject("Models/Plane.txt");
+			}
+			if (ImGui::MenuItem("Sphere"))
+			{
+				shared_ptr<Sphere> sphere = make_shared<Sphere>();
+				m_scene_objects.push_back(sphere);
+			}
+			ImGui::EndMenu();
+		}
+
+		ImGui::Separator();
+
+		if (ImGui::MenuItem("Import..."))
+		{
+			fd = make_unique<FileDialog>();
+			string path =  fd->OpenFile(".fbx");
+			if (path != "")
+			{
+				cout << "open: " << path << endl;
+				addObject(path);
+			}
+		}
+
+		ImGui::EndMenu();
+	}
+	ImGui::EndMainMenuBar();
+
 	bool click_object = false;
 	ImGui::Begin("Scene Objects");
 	{
@@ -268,8 +302,8 @@ void Renderer::renderImGui()
 				string name = m_scene_objects[i]->getName();
 				const char* object_name = name.c_str();
 				ImGui::Text(object_name);
-				bool expand = ImGui::TreeNode("Transform");
-				if (expand)
+				bool expand_transform = ImGui::TreeNode("Transform");
+				if (expand_transform)
 				{
 					static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
 					ImVec2 cell_padding(0.0f, 2.0f);
@@ -319,6 +353,13 @@ void Renderer::renderImGui()
 					}
 					ImGui::EndTable();
 					ImGui::PopStyleVar();
+					ImGui::TreePop();
+				}
+			
+				bool expand_material = ImGui::TreeNode("Material");
+				if (expand_material)
+				{
+					static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
 					ImGui::TreePop();
 				}
 			}
@@ -397,8 +438,6 @@ void Renderer::renderScene(int width, int height)
 	glm::vec3 ray_pos = m_camera->getPos();
 
 	// Check whether object is clicked 
-	//bool drag = ImGui::IsMouseDragging(0, 5.0f);
-	//cout << "Is dragging?: " << m_is_drag << endl;
 	if (m_is_mouse_down && !m_is_click_gizmo && !m_is_drag)
 	{
 		for (auto& it : m_scene_objects)
@@ -425,15 +464,14 @@ void Renderer::renderScene(int width, int height)
 			{
 				if (it->isGizmoClick(ray_dir, ray_pos))
 				{
-					//cout << "First click axis-" << it->m_move_axis << endl;
 					moveObject(*it);
-					break;
 				}
 			}
 			else
 			{
 				moveObject(*it);
 			}
+			break;
 		}
 	}
 

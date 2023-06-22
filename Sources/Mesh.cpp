@@ -72,11 +72,21 @@ Mesh::Mesh()
 	m_center(glm::vec3(0.0f)), m_transform(glm::mat4(1.0f))
 {}
 
-Mesh::Mesh(const string& path) 
-	: m_directory(path), m_name(""), m_buffer(make_unique<VertexBuffer>()),
-	  m_textures({}), m_material(make_unique<Material>()), 
-	  m_center(glm::vec3(0.0f)), m_transform(glm::mat4(1.0f))
+Mesh::Mesh(string name, const string& path) : 
+	m_directory(path), m_name(name), m_buffer(make_unique<VertexBuffer>()),
+	m_textures({}), m_material(make_unique<Material>()), 
+	m_center(glm::vec3(0.0f)), m_transform(glm::mat4(1.0f))
 {
+}
+
+Mesh::Mesh(string name, vector<info::VertexLayout> layouts, vector<unsigned int> indices) :
+	m_directory(""), m_name(name), m_buffer(make_unique<VertexBuffer>()),
+	m_textures({}), m_material(make_unique<Material>()),
+	m_center(glm::vec3(0.0f)), m_transform(glm::mat4(1.0f))
+{
+	cout << "Create a mesh: " << name << endl;
+	m_buffer->createBuffers(layouts, indices);
+	m_bbox = computeBoundingBox();
 }
 
 Mesh::Mesh(string name, shared_ptr<VertexBuffer> buffer, 
@@ -199,6 +209,15 @@ void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 	shader.setFloat("mat.shininess", m_material->shininess);
 	shader.setPVM(P, V, m_transform);
 
+	if (m_textures.size() == 0)
+	{
+		shader.setInt("has_texture", 0);
+	}
+	else
+	{
+		shader.setInt("has_texture", 1);
+	}
+
 	// Set texture before draw a mesh
 	for (int i = 0; i < m_textures.size(); ++i)
 	{
@@ -302,7 +321,13 @@ void FBXMesh::processMesh()
 	}
 
 	// The directory path of the fbx file 
-	m_directory = m_path.substr(0, m_path.find_last_of('/'));
+	int last = m_path.find_last_of('/');
+	if (last == -1)
+	{
+		last = m_path.find_last_of("\\");
+	}
+	m_directory = m_path.substr(0, last);
+	cout << "Process mesh: " << m_directory.size() << " last: " << last << endl;
 	// Process ASSIMP's root node, and then recursively process its child node
 	aiNode* root_node = m_aiScene->mRootNode;
 	processNode(root_node, m_aiScene);
@@ -515,7 +540,7 @@ vector<shared_ptr<Texture>> FBXMesh::loadTexture(shared_ptr<aiMaterial> mat,
 		mat->GetTexture(type, i, &str);
 		bool skip = false;
 		string path = m_directory + '/' + str.C_Str();
-
+		cout << "Path: " << m_directory << endl;
 		// Check if the texture was loaded before
 		for (unsigned int j = 0; j < m_textures_loaded.size(); ++j)
 		{

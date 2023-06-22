@@ -6,7 +6,8 @@
 #include <list>
 
 #include "SDL_GL_Window.h"
-#include "FileLoader.h"
+#include "FileDialog.h"
+#include "Object.h"
 #include "Camera.h"
 #include "Light.h"
 
@@ -19,7 +20,7 @@ public:
 	~Renderer();
 
 	bool init();
-	void addObject(const string& mesh_path, const vector<string> shader_path);
+	void addObject(const string& mesh_path);
 	void run();
 	void render();
 
@@ -39,6 +40,8 @@ private:
 	
 	vector<shared_ptr<GameObject>> m_scene_objects;
 	unique_ptr<Grid> m_grid;
+
+	unique_ptr<FileDialog> fd;
 
 	long long m_start_time;
 	float m_ticks;

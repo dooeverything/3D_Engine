@@ -18,10 +18,10 @@ using namespace std;
 struct Material
 {
 	string type = "";
-	glm::vec3 ambient = { 0.0f, 0.0f, 0.0f };
-	glm::vec3 diffuse = { 0.0f, 0.0f, 0.0f };
-	glm::vec3 specular = { 0.0f, 0.0f, 0.0f };
-	float shininess = 0.0f;
+	glm::vec3 ambient = { 1.0f, 1.0f, 1.0f };
+	glm::vec3 diffuse = { 1.0f, 1.0f, 1.0f };
+	glm::vec3 specular = { 1.0f, 1.0f, 1.0f };
+	float shininess = 64.0f;
 };
 
 // Inspired and modified from https://en.wikibooks.org/wiki/OpenGL_Programming/Bounding_box
@@ -59,7 +59,9 @@ private:
 
 public:
 	Mesh();
-	Mesh(const string& path);
+	Mesh(string name, const string& path);
+	Mesh(string name, vector<info::VertexLayout> layouts, 
+		 vector<unsigned int> indices);
 	Mesh(string name, shared_ptr<VertexBuffer> buffer,
 		 vector<shared_ptr<Texture>> textures,
 		 shared_ptr<Material> material);
