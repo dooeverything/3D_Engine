@@ -3,8 +3,9 @@
 Renderer::Renderer() :
 	m_sdl_window(make_unique<SDL_GL_Window>()), m_camera(unique_ptr<Camera>()),
 	m_framebuffer(make_unique<FrameBuffer>()), m_scene_objects({}), 
+	m_frame_events({}),
 	m_is_running(true), m_ticks(0), m_start_time(0), m_is_mouse_down(false),
-	m_is_click_gizmo(false), m_is_drag(false)
+	m_is_click_gizmo(false), m_is_drag(false), m_is_moving_gizmo(false)
 {}
 
 Renderer::~Renderer() {}
@@ -17,7 +18,6 @@ bool Renderer::init()
 	int height = 800;
 	m_sdl_window->init(width, height, "OpenGL Engine");
 	m_grid = make_unique<Grid>();
-
 	m_framebuffer->createBuffers(width, height);
 	m_camera = make_unique<Camera>(glm::vec3(0.0f, 0.5f, 20.0f), -90.0f, 0.0f );
 	m_start_time = SDL_GetTicks64();
@@ -48,12 +48,41 @@ void Renderer::render()
 	m_camera->setLastFrame(current_frame);
 	m_camera->processInput();
 
-	if (!m_is_click_gizmo)
-		handleInput();
+	handleInput();
 
 	m_sdl_window->clearWindow();
 	renderImGui();
 	m_sdl_window->swapWindow();
+}
+
+void Renderer::handleSimple()
+{
+	SDL_Event event;
+	ImGuiIO& io = ImGui::GetIO();
+	while (SDL_PollEvent(&event))
+	{
+		//ImGui_ImplSDL2_ProcessEvent(&event);
+		switch (event.type)
+		{
+			case SDL_MOUSEBUTTONUP:
+				m_is_mouse_down = false;
+				m_is_drag = false;
+				m_camera->processMouseUp(event, m_sdl_window.get());
+				break;
+
+			case SDL_MOUSEBUTTONDOWN:
+				cout << "Mouse down" << endl;
+				m_is_mouse_down = true;
+				m_camera->processMouseDown(event);
+				break;
+
+			case SDL_MOUSEMOTION:
+				if (m_is_mouse_down)
+					m_is_drag = true;
+				m_camera->processMouseDrag(event);
+				break;
+		}
+	}
 }
 
 void Renderer::handleInput()
@@ -63,6 +92,7 @@ void Renderer::handleInput()
 	while (SDL_PollEvent(&event))
 	{
 		ImGui_ImplSDL2_ProcessEvent(&event);
+		m_frame_events.push_back(event);
 		if (!io.WantCaptureMouse)
 		{
 			switch (event.type)
@@ -84,8 +114,9 @@ void Renderer::handleInput()
 				default:
 					break;
 			}
+			m_frame_events.clear();
 		}
-		else
+		else if(!m_is_click_gizmo)
 		{
 			int x, y;
 			SDL_GetGlobalMouseState(&x, &y);
@@ -100,7 +131,6 @@ void Renderer::handleInput()
 				y > m_sdl_window->getSceneMax().y) 
 				continue;
 
-
 			switch (event.type)
 			{
 				case SDL_MOUSEBUTTONUP:
@@ -110,7 +140,6 @@ void Renderer::handleInput()
 					break;
 
 				case SDL_MOUSEBUTTONDOWN:
-					cout << "Mouse down" << endl;
 					m_is_mouse_down = true;
 					m_camera->processMouseDown(event);
 					break;
@@ -121,6 +150,7 @@ void Renderer::handleInput()
 					m_camera->processMouseDrag(event);
 					break;
 			}
+			m_frame_events.clear();
 		}
 	}
 }
@@ -130,95 +160,95 @@ void Renderer::moveObject(GameObject& go)
 	SDL_Event event;
 	ImGuiIO& io = ImGui::GetIO();
 	float moveCellSize = 0.05f;
-	while (SDL_PollEvent(&event))
+	for(auto& it : m_frame_events)
 	{
+		event = it;
+		ImGui_ImplSDL2_ProcessEvent(&event);
+		//cout << "Event: " << event.type << endl;
 		switch (event.type)
 		{
-		case SDL_MOUSEBUTTONUP:
-			m_is_click_gizmo = false;
-			go.getGizmo(go.m_move_axis)->setIsClick(false);
-			break;
-
-		case SDL_MOUSEBUTTONDOWN:
-			m_is_click_gizmo = true;
-			cout << "move object along axis-" << go.m_move_axis << endl;
-			go.getGizmo(go.m_move_axis)->setIsClick(true);
-			SDL_GetGlobalMouseState(&go.m_x, &go.m_y);
-			break;
-
-		case SDL_MOUSEMOTION:
-			if (m_is_click_gizmo)
-			{
-				int final_x;
-				int final_y;
-				SDL_GetGlobalMouseState(&final_x, &final_y);
-				
-				glm::vec3 pos = glm::vec3(0.0, 0.0, 0.0);
-				if (go.m_move_axis == 0)
-				{
-					if (m_camera->getForward().z <= 0)
-					{
-						if ((final_x - go.m_x) < 0)
-							pos[go.m_move_axis] = -moveCellSize;
-						else
-							pos[go.m_move_axis] = moveCellSize;
-					}
-					else
-					{
-						if((final_x - go.m_x) > 0)
-							pos[go.m_move_axis] = -moveCellSize;
-						else
-							pos[go.m_move_axis] = moveCellSize;
-					}
-				}
-				else if (go.m_move_axis == 1)
-				{
-					if ((final_y - go.m_y) < 0)
-						pos[go.m_move_axis] = moveCellSize;
-					else
-						pos[go.m_move_axis] = -moveCellSize;
-				}
-				else
-				{
-					if (m_camera->getForward().x >= 0.85f)
-					{
-						cout << m_camera->getForward() << endl;
-						if ((final_x - go.m_x) < 0)
-							pos[go.m_move_axis] = -moveCellSize;
-						else
-							pos[go.m_move_axis] = moveCellSize;
-					}
-					else if (m_camera->getForward().x <= -0.9f)
-					{
-						if ((final_x - go.m_x) > 0)
-							pos[go.m_move_axis] = -moveCellSize;
-						else
-							pos[go.m_move_axis] = moveCellSize;
-
-					}
-					else if (m_camera->getForward().z < 0)
-					{
-						if ( (final_y - go.m_y) < 0)
-							pos[go.m_move_axis] = -moveCellSize;
-						else
-							pos[go.m_move_axis] = moveCellSize;					
-					}
-					else
-					{
-						if ((final_y - go.m_y) > 0)
-							pos[go.m_move_axis] = -moveCellSize;
-						else
-							pos[go.m_move_axis] = moveCellSize;
-					}
-				}
-				go.setPosition(pos);
-				//glm::mat4 t = go.getMesh()->getTransform();
-				//t = glm::translate(t, pos);
-				//go.getMesh()->setTransform(t);
+			case SDL_MOUSEBUTTONUP:
+				cout << "UP" << endl;
+				m_is_moving_gizmo = false;
+				go.getGizmo(go.m_move_axis)->setIsClick(false);
 				break;
+
+			case SDL_MOUSEBUTTONDOWN:
+				cout << "move object along axis-" << go.m_move_axis << endl;
+				go.getGizmo(go.m_move_axis)->setIsClick(true);
+				m_is_moving_gizmo = true;
+				break;
+
+			case SDL_MOUSEMOTION:
+				if (go.getGizmo(go.m_move_axis)->getIsClick())
+				{
+					int final_x;
+					int final_y;
+					SDL_GetRelativeMouseState(&final_x, &final_y);
+					glm::vec3 pos = glm::vec3(0.0, 0.0, 0.0);
+					if (go.m_move_axis == 0)
+					{
+						if (m_camera->getForward().z <= 0)
+						{
+							if (final_x < -1.0)
+								pos[go.m_move_axis] = -moveCellSize;
+							else if(final_x > 1.0)
+								pos[go.m_move_axis] = moveCellSize;
+						}
+						else
+						{
+							if(final_x > 1.0)
+								pos[go.m_move_axis] = -moveCellSize;
+							else if(final_x < -1.0)
+								pos[go.m_move_axis] = moveCellSize;
+						}
+					}
+					else if (go.m_move_axis == 1)
+					{
+						if (final_y < -1.0)
+							pos[go.m_move_axis] = moveCellSize;
+						else if(final_y > 1.0)
+							pos[go.m_move_axis] = -moveCellSize;
+					}
+					else
+					{
+						if (m_camera->getForward().x >= 0.85f)
+						{
+							cout << m_camera->getForward() << endl;
+							if (final_x < -1.0)
+								pos[go.m_move_axis] = -moveCellSize;
+							else if (final_x > 1.0)
+								pos[go.m_move_axis] = moveCellSize;
+						}
+						else if (m_camera->getForward().x <= -0.9f)
+						{
+							if (final_x > 1.0)
+								pos[go.m_move_axis] = -moveCellSize;
+							else if (final_x < -1.0)
+								pos[go.m_move_axis] = moveCellSize;
+						}
+						else if (m_camera->getForward().z < 0)
+						{
+							if (final_y < -1.0)
+								pos[go.m_move_axis] = -moveCellSize;
+							else if (final_y > 1.0)
+								pos[go.m_move_axis] = moveCellSize;					
+						}
+						else
+						{
+							if (final_y > 1.0)
+								pos[go.m_move_axis] = -moveCellSize;
+							else if (final_y < -1.0)
+								pos[go.m_move_axis] = moveCellSize;
+						}
+					}
+					go.setPosition(pos);
+					break;
 			}
 		}
 	}
+
+	m_frame_events.clear();
 }
 
 void Renderer::renderImGui()
@@ -385,11 +415,55 @@ void Renderer::renderImGui()
 
 			ImVec2 wsize = ImGui::GetWindowSize();
 			m_framebuffer->bind();
-			m_sdl_window->clearWindow();
-			m_framebuffer->rescaleFrame((int)wsize.x, (int)wsize.y);
-			glViewport(0,0,(GLsizei)wsize.x, (GLsizei)wsize.y);
 			renderScene((int)wsize.x, (int)wsize.y);
 			m_framebuffer->unbind();
+			ImGui::Image((ImTextureID)m_framebuffer->getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
+		}
+		ImGui::EndChild();
+	}
+	ImGui::End();
+
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		SDL_GLContext backup_current_context = SDL_GL_GetCurrentContext();
+		SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+		SDL_GL_MakeCurrent(backup_current_window, backup_current_context);
+	}
+}
+
+void Renderer::renderFrame()
+{
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplSDL2_NewFrame();
+	ImGui::NewFrame();
+	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+
+	ImGui::Begin("Scenes");
+	{
+		ImGui::BeginChild("SceneRender");
+		{
+			ImVec2 scene_min = ImGui::GetWindowContentRegionMin();
+			ImVec2 scene_max = ImGui::GetWindowContentRegionMax();
+
+			scene_min.x += ImGui::GetWindowPos().x;
+			scene_min.y += ImGui::GetWindowPos().y;
+			scene_max.x += ImGui::GetWindowPos().x;
+			scene_max.y += ImGui::GetWindowPos().y;
+
+			m_sdl_window->setScene(scene_min, scene_max);
+
+			ImVec2 wsize = ImGui::GetWindowSize();
+			m_framebuffer->bind();
+			//m_sdl_window->clearWindow();
+			//m_framebuffer->rescaleFrame((int)wsize.x, (int)wsize.y);
+			//glViewport(0, 0, (GLsizei)wsize.x, (GLsizei)wsize.y);
+			renderScene((int)wsize.x, (int)wsize.y);
+			m_framebuffer->unbind();
+			
 			ImGui::Image((ImTextureID)m_framebuffer->getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
 		}
 		ImGui::EndChild();
@@ -433,7 +507,6 @@ void Renderer::renderScene(int width, int height)
 	int mouse_x = x - m_sdl_window->getSceneMin().x;
 	int mouse_y = y - m_sdl_window->getSceneMin().y;
 	m_camera->processPicker(width, height, mouse_x, mouse_y);
-
 	glm::vec3 ray_dir = m_camera->getRay();
 	glm::vec3 ray_pos = m_camera->getPos();
 
@@ -444,12 +517,12 @@ void Renderer::renderScene(int width, int height)
 		{
 			if (it->isClick(ray_dir, ray_pos))
 			{
-				cout << " Clicked object: " << it->getName() << endl;
+				cout << "Clicked object: " << it->getName() << endl;
 				it->setIsClick(true);
 			}
 			else 
 			{
-				cout << " missed object: " << it->getName() << endl;
+				//cout << "missed object: " << it->getName() << endl;
 				it->setIsClick(false);
 			}
 		}
@@ -460,18 +533,21 @@ void Renderer::renderScene(int width, int height)
 	{
 		if (it->getIsClick())
 		{
-			if (!m_is_click_gizmo)
+			if (m_is_moving_gizmo)
 			{
-				if (it->isGizmoClick(ray_dir, ray_pos))
-				{
-					moveObject(*it);
-				}
+				moveObject(*it);
+				continue;
+			}
+
+			if (it->isGizmoClick(ray_dir, ray_pos))
+			{
+				m_is_click_gizmo = true;
+				moveObject(*it);
 			}
 			else
 			{
-				moveObject(*it);
+				m_is_click_gizmo = false;
 			}
-			break;
 		}
 	}
 

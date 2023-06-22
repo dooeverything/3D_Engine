@@ -77,10 +77,10 @@ bool Object::isClick(glm::vec3& ray_dir, glm::vec3& ray_pos)
 void Object::setPosition(glm::vec3 pos)
 {
 	m_position += pos;
-	cout << "Set position : " << m_position << endl;
+	//cout << "Set position : " << m_position << endl;
 	glm::mat4 t = glm::mat4(1.0f);
 	t = glm::translate(t, m_position);
-	cout << t << endl;
+	//cout << t << endl;
 	m_mesh->setTransform(t);
 };
 
@@ -158,13 +158,13 @@ void Grid::draw(glm::mat4& P, glm::mat4& V, glm::vec3 cam_pos)
 
 GameObject::GameObject() :
 	Object(), m_gizmos({}), m_color(glm::vec3(1.0f, 0.5f, 0.31f)),
-	m_x(0), m_y(0), m_move_axis(-1)
+	m_move_axis(-1)
 {}
 
 GameObject::GameObject(const string& mesh_path) :
 	Object(mesh_path),
 	m_gizmos({}), m_color(glm::vec3(1.0f, 0.5f, 0.31f)),
-	m_x(0), m_y(0), m_move_axis(-1)
+	m_move_axis(-1)
 {
 	loadMesh();
 	loadShader();
@@ -185,7 +185,7 @@ GameObject::GameObject(const string& mesh_path) :
 GameObject::GameObject(const string& mesh_path, const vector<string>& shader_path) :
 	Object(mesh_path, shader_path),
 	m_gizmos({}), m_color(glm::vec3(1.0f, 0.5f, 0.31f)),
-	m_x(0), m_y(0), m_move_axis(-1)
+	m_move_axis(-1)
 {
 	loadMesh();
 	loadShader();

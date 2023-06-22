@@ -85,8 +85,6 @@ class GameObject : public Object
 
 	public:
 		int m_move_axis;
-		int m_x;
-		int m_y;
 };
 
 class Geometry : public GameObject

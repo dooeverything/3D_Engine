@@ -12,7 +12,7 @@ Camera::~Camera() {}
 
 void Camera::processInput()
 {
-	const float speed = 7.5f * m_delta_time;
+	const float speed = 4.5f * m_delta_time;
 	const Uint8* state = SDL_GetKeyboardState(NULL);
 
 	glm::vec3 right = normalize(cross(m_forward, m_up));
@@ -36,7 +36,7 @@ void Camera::processMouseDrag(SDL_Event event)
 
 		int x, y;
 		SDL_GetRelativeMouseState(&x, &y);
-		float sensitivity = 0.5f;
+		float sensitivity = 0.1f;
 		float offset_x = static_cast<float>(x) * sensitivity;
 		float offset_y = -static_cast<float>(y) * sensitivity;
 		
