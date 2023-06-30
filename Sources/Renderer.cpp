@@ -295,16 +295,16 @@ void Renderer::renderImGui()
 	ImGui::End();
 
 
-	ImGui::Begin("Debug");
-	{
-		ImGui::BeginChild("DebugRenderer");
-		{
-			ImVec2 wsize = ImGui::GetWindowSize();
-			ImGui::Image((ImTextureID)m_outline->getOutlineFrame(), wsize, ImVec2(0, 1), ImVec2(1, 0));
-		}
-		ImGui::EndChild();
-	}
-	ImGui::End();
+	//ImGui::Begin("Debug");
+	//{
+	//	ImGui::BeginChild("DebugRenderer");
+	//	{
+	//		ImVec2 wsize = ImGui::GetWindowSize();
+	//		ImGui::Image((ImTextureID)m_outline->getOutlineFrame(), wsize, ImVec2(0, 1), ImVec2(1, 0));
+	//	}
+	//	ImGui::EndChild();
+	//}
+	//ImGui::End();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
