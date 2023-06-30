@@ -24,6 +24,10 @@ private:
 	ImVec2 m_scene_max;
 
 public:
+	int m_x;
+	int m_y;
+
+public:
 	SDL_GL_Window();
 	
 	inline SDL_Window* getWindow() { return m_window; };

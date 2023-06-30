@@ -69,20 +69,23 @@ void BoundingBox::draw()
 Mesh::Mesh()
 	: m_directory(""), m_name(""), m_buffer(make_unique<VertexBuffer>()),
 	m_textures({}), m_material(make_unique<Material>()),
-	m_center(glm::vec3(0.0f)), m_transform(glm::mat4(1.0f))
+	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
+	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f))
 {}
 
 Mesh::Mesh(string name, const string& path) : 
 	m_directory(path), m_name(name), m_buffer(make_unique<VertexBuffer>()),
 	m_textures({}), m_material(make_unique<Material>()), 
-	m_center(glm::vec3(0.0f)), m_transform(glm::mat4(1.0f))
+	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
+	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f))
 {
 }
 
 Mesh::Mesh(string name, vector<info::VertexLayout> layouts, vector<unsigned int> indices) :
 	m_directory(""), m_name(name), m_buffer(make_unique<VertexBuffer>()),
 	m_textures({}), m_material(make_unique<Material>()),
-	m_center(glm::vec3(0.0f)), m_transform(glm::mat4(1.0f))
+	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
+	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f))
 {
 	cout << "Create a mesh: " << name << endl;
 	m_buffer->createBuffers(layouts, indices);
@@ -91,10 +94,11 @@ Mesh::Mesh(string name, vector<info::VertexLayout> layouts, vector<unsigned int>
 
 Mesh::Mesh(string name, shared_ptr<VertexBuffer> buffer, 
 		   vector<shared_ptr<Texture>> textures, 
-		   shared_ptr<Material> material)
-	: m_directory(""), m_name(name), 
-	  m_buffer(buffer), m_textures(textures), m_material(material), 
-	  m_center(glm::vec3(0.0f)), m_transform(glm::mat4(1.0f))
+		   shared_ptr<Material> material) :
+	m_directory(""), m_name(name), 
+	m_buffer(buffer), m_textures(textures), m_material(material), 
+	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
+	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f))
 {
 	m_bbox = computeBoundingBox();
 }
@@ -207,7 +211,8 @@ void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 	shader.setVec3("mat.diffuse", m_material->diffuse);
 	shader.setVec3("mat.specular", m_material->specular);
 	shader.setFloat("mat.shininess", m_material->shininess);
-	shader.setPVM(P, V, m_transform);
+	glm::mat4 M = m_transform_pos * m_transform_rot * m_transform_scale;
+	shader.setPVM(P, V, M);
 
 	if (m_textures.size() == 0)
 	{
@@ -221,7 +226,7 @@ void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 	// Set texture before draw a mesh
 	for (int i = 0; i < m_textures.size(); ++i)
 	{
-		glActiveTexture(GL_TEXTURE0 + i);
+		glActiveTexture(GL_TEXTURE0 + i + 1);
 
 		string index;
 		string type = m_textures[i]->getType();
@@ -232,9 +237,9 @@ void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 		else if (type == "texture_normal")
 			index = to_string(normal_index++);
 		else if (type == "texture_height")
-			index = to_string(height_index);
+			index = to_string(height_index++);
 
-		shader.setInt(("tex." + type + index).c_str(), i);
+		shader.setInt(("tex." + type + index).c_str(), i+1);
 		m_textures[i]->setActive();
 	}
 
@@ -252,10 +257,20 @@ bool Mesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 	return m_bbox->intersect(ray_dir, ray_pos);
 }
 
-inline void Mesh::setTransform(glm::mat4 t)
+void Mesh::setPosition(glm::mat4 t)
 {
-	m_transform = t;
-};
+	m_transform_pos = t;
+}
+
+void Mesh::setRotation(glm::mat4 t)
+{
+	m_transform_rot = t;
+}
+
+void Mesh::setScale(glm::mat4 t)
+{
+	m_transform_scale = t;
+}
 
 shared_ptr<BoundingBox> Mesh::computeBoundingBox()
 {
@@ -263,10 +278,11 @@ shared_ptr<BoundingBox> Mesh::computeBoundingBox()
 	glm::vec3 max;
 
 	vector<glm::vec3> positions;
+	glm::mat4 t = m_transform_pos * m_transform_rot * m_transform_scale;
 	for (auto& it : m_buffer->getLayouts())
 	{
 		glm::vec4 p = glm::vec4(it.position, 1.0f);
-		p = m_transform * p;
+		p = t * p;
 		positions.push_back(glm::vec3(p.x, p.y, p.z));
 	}
 
@@ -585,13 +601,23 @@ bool FBXMesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 	return inter;
 }
 
-inline void FBXMesh::setTransform(glm::mat4 t)
+void FBXMesh::setPosition(glm::mat4 t)
 {
 	for (auto& it : m_meshes)
-	{
-		it->setTransform(t);
-	}
-};
+		it->setPosition(t);
+}
+
+void FBXMesh::setRotation(glm::mat4 t)
+{
+	for (auto& it : m_meshes)
+		it->setRotation(t);
+}
+
+void FBXMesh::setScale(glm::mat4 t)
+{
+	for (auto& it : m_meshes)
+		it->setScale(t);
+}
 
 glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& aiMat)
 {

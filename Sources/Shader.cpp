@@ -108,7 +108,7 @@ bool Shader::isCompiled(GLuint& shader)
 
 void Shader::load()
 {
-	//cout << "Shader SetActive " << m_shader_ID << endl;
+	//cout << "Shader SetActive " << m_shader_ID << " from " << m_paths.at(0) << endl;
 	glUseProgram(m_shader_ID);
 }
 
@@ -150,11 +150,10 @@ void Shader::setLight(Light& light)
 	glm::vec3 amb = light.getAmb();
 	glm::vec3 diff = light.getDiff();
 	glm::vec3 spec = light.getSpec();
-
-	setVec3("dir_light.direction", dir);
-	setVec3("dir_light.ambient", amb);
-	setVec3("dir_light.diffuse", diff);
-	setVec3("dir_light.specular", spec);
+	setVec3("light.direction", dir);
+	setVec3("light.ambient", amb);
+	setVec3("light.diffuse", diff);
+	setVec3("light.specular", spec);
 }
 
 void Shader::unload()

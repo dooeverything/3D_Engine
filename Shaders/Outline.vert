@@ -1,19 +1,19 @@
 #version 330 core
 layout (location = 0) in vec3 in_pos;
-layout (location = 0) in vec3 in_norm;
+layout (location = 1) in vec3 in_normal;
+layout (location = 3) in vec2 in_texCoord;
 
-out vec3 frag_pos;
-out vec3 frag_norm;
+out vec4 frag_frame_proj;
+out vec2 frag_texCoords; 
 
-uniform float outline;
 uniform mat4 projection;
 uniform mat4 model;
 uniform mat4 view;
 
 void main()
 {
-	frag_pos = vec3(model * vec4(in_pos, 1.0));
-	frag_norm = mat3(transpose(inverse(model))) * in_norm;
-
-	gl_Position = projection * view * model * vec4(in_pos + in_norm * outline, 1.0);
+	frag_texCoords = in_texCoord;
+	frag_frame_proj = projection *  view * model * vec4(in_pos, 1.0);
+	//gl_Position = frag_frame_proj;	
+	gl_Position = vec4(in_pos.x, in_pos.y, in_pos.z, 1.0);
 }

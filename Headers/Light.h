@@ -2,6 +2,9 @@
 
 #include <string>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/norm.hpp>
 
 using namespace std;
 
@@ -12,13 +15,11 @@ public:
 	Light(glm::vec3 direction, glm::vec3 ambient, 
 		  glm::vec3 diffuse, glm::vec3 specular);
 
-	// Getter	
 	inline glm::vec3 getDir() { return m_direction; };
 	inline glm::vec3 getAmb() { return m_ambient; };
 	inline glm::vec3 getDiff() { return m_diffuse; };
 	inline glm::vec3 getSpec() { return m_specular; };
 
-	// Setter
 	inline void SetDir(glm::vec3 direction) { m_direction = direction; };
 
 	~Light();
@@ -34,11 +35,9 @@ class PointLight : public Light
 {
 public:
 	PointLight();
-
-	PointLight(glm::vec3 ambient, glm::vec3 diffusion, 
-			   glm::vec3 specular, glm::vec3 position,
-			   float constant, float linear, float quadratic,
-			   glm::vec3 direction = { 0.0f, 0.0f, 0.0f });
+	PointLight( glm::vec3 direction, glm::vec3 ambient, 
+				glm::vec3 diffusion, glm::vec3 specular, 
+				glm::vec3 position, float constant, float linear, float quadratic );
 	~PointLight();
 
 

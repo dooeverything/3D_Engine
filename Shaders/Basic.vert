@@ -9,12 +9,16 @@ layout (location = 5) in vec4 in_weights;
 const int max_bones = 200;
 const int max_bone_weights = 4;
 
-out vec3 frag_pos;
-out vec3 frag_norm;
-out vec2 frag_texCoord;
-flat out ivec4 boneIDs;
-out vec4 weights;
-out vec3 pose_pos;
+out VS_OUT
+{
+	vec3 frag_pos;
+	vec3 frag_norm;
+	vec2 frag_texCoord;
+	flat ivec4 boneIDs;
+	vec4 weights;
+	vec3 pose_pos;
+	vec4 frag_pos_light;
+} vs_out;
 
 uniform mat4 bone_matrices[max_bones];
 
@@ -23,6 +27,10 @@ uniform mat4 adjust; // Transformation matrix that transforms the vertex from or
 uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
+uniform mat4 light_matrix;
+uniform mat4 frame_matrix;
+
+out vec4 frag_frame_proj;
 
 void main()
 {
@@ -43,21 +51,22 @@ void main()
 
 		vec4 pose_position = bone_transform * vec4(in_pos, 1.0);
 
-		pose_pos = vec3(pose_position.xyz);
-		frag_pos = vec3(model * pose_position);
-		frag_norm = mat3(transpose(inverse(model))) * in_normal; 
+		vs_out.pose_pos = vec3(pose_position.xyz);
+		vs_out.frag_pos = vec3(model * pose_position);
+		vs_out.frag_norm = mat3(transpose(inverse(model))) * in_normal; 
 
 		gl_Position = projection * view * model * pose_position;
 	}
 	else
 	{
-		frag_pos = vec3(model * vec4(in_pos, 1.0));
-		frag_norm = mat3(transpose(inverse(model))) * in_normal;
-		
+		vs_out.frag_pos = vec3(model * vec4(in_pos, 1.0));
+		vs_out.frag_norm = mat3(transpose(inverse(model))) * in_normal;
 		gl_Position = projection * view * model  * vec4(in_pos, 1.0);
 	}
 
-	frag_texCoord = in_texCoord;
-	weights = in_weights;
-	boneIDs = in_boneIDs;
+	vs_out.frag_texCoord = in_texCoord;
+	vs_out.weights = in_weights;
+	vs_out.boneIDs = in_boneIDs;
+	vs_out.frag_pos_light = light_matrix * vec4(vs_out.frag_pos, 1.0);
+	frag_frame_proj = projection * view * model  * vec4(in_pos, 1.0);
 }

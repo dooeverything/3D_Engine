@@ -38,24 +38,38 @@ public:
 	inline unsigned int getSizeOfIndices() { return n_indices; };
 };
 
-class FrameBuffer : private VertexBuffer
+class FrameBuffer
 {
-private:
-	GLuint m_RBO;
+protected:
 	GLuint m_FBO;
+	GLuint m_RBO;
 	GLuint m_framebuffer_texture;
-
 public:
+
 	FrameBuffer();
-	void createBuffers(int width, int height);
-	void bind() const;
-	void unbind() const;
+	virtual void createBuffers(int width, int height);
+	virtual void bind();
+	virtual void unbind();
 	void rescaleFrame(int width, int height);
+	virtual void bindFrameTexture();
 
-	GLuint getTextureID() { return m_framebuffer_texture; };
-
+	virtual GLuint& getTextureID() { return m_framebuffer_texture; };
 };
 
+class ShadowBuffer : protected FrameBuffer
+{
+private:
+	GLuint m_shadow_map;
 
+public:
+	ShadowBuffer();
+	~ShadowBuffer();
+
+	virtual void createBuffers(int width, int height);
+	virtual void bind();
+	virtual void unbind();
+	virtual void bindFrameTexture();
+	virtual GLuint& getTextureID() { return m_shadow_map; };
+};
 
 #endif

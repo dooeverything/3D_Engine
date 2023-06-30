@@ -2,7 +2,9 @@
 
 VertexBuffer::VertexBuffer() : 
 	m_VAO(0), m_VBO(0), m_EBO(0), 
-	m_layouts({}), n_layouts(0), n_indices(0) {}
+	m_layouts({}), n_layouts(0), n_indices(0)
+{
+}
 
 void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts, const vector<unsigned int>& indices)
 {	
@@ -60,7 +62,9 @@ void VertexBuffer::unbind() const
 	glBindVertexArray(0);
 }
 
-FrameBuffer::FrameBuffer() : m_RBO(0), m_FBO(0), m_framebuffer_texture(0) {}
+FrameBuffer::FrameBuffer() : m_RBO(0), m_FBO(0), m_framebuffer_texture(0) 
+{
+}
 
 void FrameBuffer::createBuffers(int width, int height)
 {
@@ -74,8 +78,8 @@ void FrameBuffer::createBuffers(int width, int height)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_framebuffer_texture, 0);
 
 	// Create a renderbuffer object for depth and stencil attachment
@@ -93,16 +97,16 @@ void FrameBuffer::createBuffers(int width, int height)
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	//glBindTexture(GL_TEXTURE_2D, 0);
+	//glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
 
-void FrameBuffer::bind() const
+void FrameBuffer::bind()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
 }
 
-void FrameBuffer::unbind() const
+void FrameBuffer::unbind()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -121,4 +125,68 @@ void FrameBuffer::rescaleFrame(int width, int height)
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_RBO);
 }
 
+void FrameBuffer::bindFrameTexture()
+{
+	glBindTexture(GL_TEXTURE_2D, m_framebuffer_texture);
+}
 
+ShadowBuffer::ShadowBuffer() : m_shadow_map(0)
+{}
+
+ShadowBuffer::~ShadowBuffer()
+{}
+
+void ShadowBuffer::createBuffers(int width, int height)
+{
+	cout << "Create a shadow buffer" << endl;
+	
+	// Create a texture to store shadow values 
+	glGenTextures(1, &m_shadow_map);
+	glBindTexture(GL_TEXTURE_2D, m_shadow_map);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	float border_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
+
+	// Framebuffer to store depth values(shadow map)
+	glGenFramebuffers(1, &m_FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_shadow_map, 0);
+	
+	// Disable writes to color buffer, as shadow map will not output the color
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+
+	// Check any errors
+	if (glGetError() != GL_NO_ERROR)
+	{
+		cerr << "Error " << glGetError() << endl;
+		assert(0);
+	}
+	auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE)
+	{
+		cerr << "Framebuffer error " << status << endl;
+		assert(0);
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void ShadowBuffer::bind()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+}
+
+void ShadowBuffer::unbind()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void ShadowBuffer::bindFrameTexture()
+{
+	glBindTexture(GL_TEXTURE_2D, m_shadow_map);
+}

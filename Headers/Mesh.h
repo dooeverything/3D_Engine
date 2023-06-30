@@ -18,10 +18,10 @@ using namespace std;
 struct Material
 {
 	string type = "";
-	glm::vec3 ambient = { 1.0f, 1.0f, 1.0f };
-	glm::vec3 diffuse = { 1.0f, 1.0f, 1.0f };
+	glm::vec3 ambient = { 0.8f, 0.8f, 0.8f };
+	glm::vec3 diffuse = { 0.5f, 0.5f, 0.5f };
 	glm::vec3 specular = { 1.0f, 1.0f, 1.0f };
-	float shininess = 64.0f;
+	float shininess = 128.0f;
 };
 
 // Inspired and modified from https://en.wikibooks.org/wiki/OpenGL_Programming/Bounding_box
@@ -53,9 +53,10 @@ private:
 	shared_ptr<VertexBuffer> m_buffer;
 	vector<shared_ptr<Texture>> m_textures;
 	shared_ptr<Material> m_material;
-	
+	glm::mat4 m_transform_pos;
+	glm::mat4 m_transform_rot;
+	glm::mat4 m_transform_scale;
 	glm::vec3 m_center;
-	glm::mat4 m_transform;
 
 public:
 	Mesh();
@@ -72,17 +73,23 @@ public:
 	virtual void draw(glm::mat4& P, glm::mat4& V, Shader& shader);
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
 
-	virtual inline void setDirectory(string directory) { m_directory = directory; };
-	virtual void setTransform(glm::mat4 t);
 	inline void setName(string name) { m_name = name; };
+	virtual inline void setDirectory(string directory) { m_directory = directory; };
+	virtual void setPosition(glm::mat4 t);
+	virtual void setRotation(glm::mat4 t);
+	virtual void setScale(glm::mat4 t);
+
 	inline shared_ptr<BoundingBox> getBox() { return m_bbox; };
 	inline string getName() { return m_name; };
 	inline glm::vec3 getCenter() { return m_center; };
-	virtual inline glm::mat4 getTransform() { return m_transform; };
-	virtual inline glm::vec3 getSize()
-	{ 
-		return abs(m_bbox->getMax() - m_bbox->getMin()); 
+	virtual inline glm::mat4 getTransform()
+	{
+		return (m_transform_pos * m_transform_rot * m_transform_scale);
 	};
+	virtual inline glm::mat4* getPosition() { return &m_transform_pos; };
+	virtual inline glm::mat4* getRotation() { return &m_transform_rot; };
+	virtual inline glm::mat4* getScale() { return &m_transform_scale; };
+	virtual inline glm::vec3 getSize() { return abs(m_bbox->getMax() - m_bbox->getMin()); };
 };
 
 class FBXMesh : public Mesh
@@ -111,8 +118,11 @@ public:
 
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
 	
+	virtual void setPosition(glm::mat4 t);
+	virtual void setRotation(glm::mat4 t);
+	virtual void setScale(glm::mat4 t);
+
 	virtual inline string getPath() { return m_path; };
-	virtual void setTransform(glm::mat4 t);
 	virtual inline glm::vec3 getSize()
 	{
 		glm::vec3 min = glm::vec3(FLT_MAX);
@@ -140,10 +150,10 @@ public:
 		//cout << "Final: "  << endl;
 		return glm::abs(max-min);
 	}
-	virtual inline glm::mat4 getTransform() 
-	{ 
-		return m_meshes.at(1)->getTransform(); 
-	};
+	virtual inline glm::mat4* getPosition() { return m_meshes.at(1)->getPosition(); };
+	virtual inline glm::mat4* getRotation() { return m_meshes.at(1)->getRotation(); };
+	virtual inline glm::mat4* getScale() { return m_meshes.at(1)->getScale(); };
+
 };
 
 glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& aiMat);

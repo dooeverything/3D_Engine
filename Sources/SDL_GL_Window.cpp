@@ -4,7 +4,8 @@
 SDL_GL_Window::SDL_GL_Window() :
 	m_window(nullptr), m_context(0), 
 	m_width(0), m_height(0), 
-	m_scene_min(ImVec2(0.0f, 0.0f)), m_scene_max(ImVec2(0.0f, 0.0f))
+	m_scene_min(ImVec2(0.0f, 0.0f)), m_scene_max(ImVec2(0.0f, 0.0f)),
+	m_x(0), m_y(0)
 {}
 
 void SDL_GL_Window::init(const int width, const int height, string title)
