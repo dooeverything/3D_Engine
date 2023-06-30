@@ -1,14 +1,14 @@
 # OpenGL_Engine
 
 ### Screen Shot
-![Screenshot](https://github.com/dooeverything/OpenGL_Engine/blob/main/ScreenShots/Screenshot-1.png)
+![Screenshot](https://github.com/dooeverything/OpenGL_Engine/blob/main/ScreenShots/Screenshot-2.png)
 
 ### Features include
- 1. 3D model loading (fbx)
+ 1. 3D model loading (.fbx)
  2. 3D game engine like gui (by using ImGui)
  3. Phong Shading Model
  4. 3D Gizmos (translation)
- 5. Outline for picking (by using [jump flood algorithm](https://www.comp.nus.edu.sg/~tants/jfa.html)
+ 5. Outline for picking (by using [jump flood algorithm](https://www.comp.nus.edu.sg/~tants/jfa.html))
  6. Shadow (Directional light)
 
 ### References
