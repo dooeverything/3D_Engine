@@ -47,7 +47,7 @@ protected:
 
 class GameObject;
 
-class Outline : public Object
+class Outline
 {
 public:
 	Outline(int width, int height);
@@ -56,7 +56,7 @@ public:
 	void draw(GameObject& go, glm::mat4& P, glm::mat4& V);
 
 	inline GLuint& getOutlineFrame() { return m_outline_buffers.back()->getTextureID(); };
-	void clearOutlineFrame() {}
+	void clearOutlineFrame();
 
 private:
 	vector<unique_ptr<FrameBuffer>> m_outline_buffers;

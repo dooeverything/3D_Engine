@@ -125,7 +125,7 @@ void main()
 
 	if(has_texture == 0)
 	{
-		
+		// Texture map of outline
 		vec3 result = CalcDirLight(light, norm, view_dir, shadow);
 		fragColor = vec4(result, 1.0);
 

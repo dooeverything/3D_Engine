@@ -36,15 +36,15 @@ private:
 	vector<SDL_Event> m_frame_events;
 	
 	vector<shared_ptr<GameObject>> m_scene_objects;
+	shared_ptr<GameObject> m_click_object;
 	unique_ptr<Grid> m_grid;
 	
 	vector<shared_ptr<ImGuiPanel>> m_panels;
 	
 	unique_ptr<FrameBuffer> m_framebuffer;
-	unique_ptr<Outline> m_outline;
 	unique_ptr<ShadowMap> m_shadow_map;
+	unique_ptr<Outline> m_outline;
 	
-	unique_ptr<GameObject> m_debug;
 	unique_ptr<Camera> m_camera;
 
 	long long m_start_time;

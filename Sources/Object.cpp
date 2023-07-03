@@ -487,10 +487,11 @@ void Outline::setupBuffers(GameObject& go, glm::mat4 & P, glm::mat4 & V)
 {
 	m_outline_buffers.at(0)->bind();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		m_mask_shader->load();
+		m_mask_shader->load();  
 		go.getMesh()->draw(P, V, *m_mask_shader);
 	m_outline_buffers.at(0)->unbind();
-	m_debug->setProperty(2, glm::vec3(1.0f));
+
+	m_debug->setProperty(2, go.getMesh()->getSize());
 	m_outline_buffers.at(1)->bind();
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -510,10 +511,8 @@ void Outline::setupBuffers(GameObject& go, glm::mat4 & P, glm::mat4 & V)
 		m_outline_shader->setFloat("width", 1400);
 		m_outline_shader->setFloat("height", 800);
 		m_outline_shader->setInt("pass", 0);
-		m_outline_shader->setFloat("jump", 1.0);
+		m_outline_shader->setFloat("jump", 1.0f);
 		m_debug->getMesh()->draw();
-		//go.setProperty(2, glm::vec3(1.05f, 1.05f, 1.05f));
-		//go.getMesh()->draw(P, V, *m_outline_shader);
 	m_outline_buffers.at(2)->unbind();
 
 	m_outline_buffers.at(3)->bind();
@@ -525,7 +524,7 @@ void Outline::setupBuffers(GameObject& go, glm::mat4 & P, glm::mat4 & V)
 		m_outline_shader->setFloat("width", 1400);
 		m_outline_shader->setFloat("height", 800);
 		m_outline_shader->setInt("pass", 1);
-		m_outline_shader->setFloat("jump", 2);
+		m_outline_shader->setFloat("jump", 2.0f);
 		m_debug->getMesh()->draw();
 	m_outline_buffers.at(3)->unbind();
 }
@@ -542,7 +541,14 @@ void Outline::draw(GameObject& go, glm::mat4& P, glm::mat4& V)
 	m_outline_shader->setFloat("width", 1400);
 	m_outline_shader->setFloat("height", 800);
 	m_outline_shader->setInt("pass", 2);
-	m_debug->setProperty(2, go.getMesh()->getSize());
 	m_debug->getMesh()->draw();
+}
+
+void Outline::clearOutlineFrame()
+{
+	m_outline_buffers.back()->bind();
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	m_debug->getMesh()->draw();
+	m_outline_buffers.back()->unbind();
 }
 

@@ -3,7 +3,7 @@
 Renderer::Renderer() :
 	m_sdl_window(make_unique<SDL_GL_Window>()), m_camera(unique_ptr<Camera>()),
 	m_framebuffer(make_unique<FrameBuffer>()), 
-	m_scene_objects({}), m_shadow_map(nullptr),
+	m_scene_objects({}), m_click_object(nullptr), m_shadow_map(nullptr),
 	m_frame_events({}), m_is_running(true), m_ticks(0), m_start_time(0), m_is_mouse_down(false),
 	m_is_click_gizmo(false), m_mouse_in_panel(false), m_is_moving_gizmo(false), m_is_drag(false)
 {}
@@ -273,15 +273,12 @@ void Renderer::renderImGui()
 			m_sdl_window->setScene(scene_min, scene_max);
 			ImVec2 wsize = ImGui::GetWindowSize();
 
-			for (auto& it : m_scene_objects)
+			if (m_click_object != nullptr)
 			{
-				if (it->getIsClick())
-				{
-					float aspect = static_cast<float>(wsize.x) / static_cast<float>(wsize.y);
-					glm::mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
-					glm::mat4 V = m_camera->camera2pixel();
-					m_outline->setupBuffers(*it, P, V);
-				}
+				float aspect = static_cast<float>(wsize.x) / static_cast<float>(wsize.y);
+				glm::mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+				glm::mat4 V = m_camera->camera2pixel();
+				m_outline->setupBuffers(*m_click_object, P, V);
 			}
 
 			m_framebuffer->bind();
@@ -320,6 +317,11 @@ void Renderer::renderImGui()
 
 void Renderer::renderScene(int width, int height)
 {
+	for (int i = 0; i < m_scene_objects.size(); ++i)
+	{
+		m_scene_objects.at(i)->setIsClick(false);
+	}
+
 	glm::vec3 cam_pos = m_camera->getPos();
 
 	// Setup light
@@ -351,23 +353,29 @@ void Renderer::renderScene(int width, int height)
 			return d1 < d2;
 		});
 
+	
 	// Check whether any object is clicked 
 	if (m_is_mouse_down && !m_is_click_gizmo && !m_mouse_in_panel && !m_is_drag)
 	{
-		for (auto& it : m_scene_objects)
+		for (int i = 0; i < m_scene_objects.size(); ++i)
 		{
-			if (it->isClick(ray_dir, ray_pos))
+			if (m_scene_objects.at(i)->isClick(ray_dir, ray_pos))
 			{
-				cout << "Clicked object: " << it->getName() << endl;
+				cout << "Clicked object: " << m_scene_objects.at(i)->getName() << endl;
 				m_is_mouse_down = false;
-				it->setIsClick(true);
+				m_click_object = m_scene_objects.at(i);
 				break;
 			}
 			else
 			{
-				it->setIsClick(false);
+				m_click_object = nullptr;
 			}
 		}
+	}
+
+	if (m_click_object != nullptr)
+	{
+		m_click_object->setIsClick(true);
 	}
 
 	// Check whether any gizmos is clicked
@@ -395,26 +403,26 @@ void Renderer::renderScene(int width, int height)
 		}
 	}
 
-	// Draw not-clicked-objects in reverse order
 	for (auto it = m_scene_objects.rbegin(); it != m_scene_objects.rend(); ++it)
 	{
-		if(!it->get()->getIsClick())
-			it->get()->draw(P, V, *directional_light, cam_pos, *m_shadow_map);
-	}
-
-	// Draw clicked object with outline
-	for (auto& it : m_scene_objects)
-	{
-		if (it->getIsClick())
+		if (!it->get()->getIsClick())
 		{
-			glDisable(GL_DEPTH_TEST);
-			m_outline->draw(*it, P, V);
-			glEnable(GL_DEPTH_TEST);
-
-			it->draw(P, V, *directional_light, cam_pos, *m_shadow_map);
+			it->get()->draw(P, V, *directional_light, cam_pos, *m_shadow_map);
 		}
 	}
-	
+
+	if (m_click_object != nullptr)
+	{
+		glDisable(GL_DEPTH_TEST);
+		m_outline->draw(*m_click_object, P, V);
+		glEnable(GL_DEPTH_TEST);
+		m_click_object->draw(P, V, *directional_light, cam_pos, *m_shadow_map);
+	}
+	else
+	{
+		m_outline->clearOutlineFrame();
+	}
+
 	// Draw Grid
 	m_grid->draw(P, V, cam_pos);
 	
