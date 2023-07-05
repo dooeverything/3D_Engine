@@ -207,10 +207,10 @@ void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 	glm::mat4 adjust = glm::mat4(1.0f);
 	shader.load();
 	shader.setMat4("adjust", adjust);
-	shader.setVec3("mat.ambient", m_material->ambient);
-	shader.setVec3("mat.diffuse", m_material->diffuse);
-	shader.setVec3("mat.specular", m_material->specular);
-	shader.setFloat("mat.shininess", m_material->shininess);
+	shader.setVec3("mat.ambient", m_material->getAmbient());
+	shader.setVec3("mat.diffuse", m_material->getDiffuse());
+	shader.setVec3("mat.specular", m_material->getSpecular());
+	shader.setFloat("mat.shininess", m_material->getShininess());
 	glm::mat4 M = m_transform_pos * m_transform_rot * m_transform_scale;
 	shader.setPVM(P, V, M);
 
@@ -221,6 +221,16 @@ void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 	else
 	{
 		shader.setInt("has_texture", 1);
+	}
+
+	if (m_material->getTexture() != nullptr)
+	{
+		//cout << "Add texture to the object" << endl;
+		//cout << m_buffer->getLayouts().at(0).texCoord << endl;
+		shader.setInt("texture_map", 1);
+		shader.setInt("has_texture", 2);
+		glActiveTexture(GL_TEXTURE0 + 1);
+		m_material->getTexture()->setActive();
 	}
 
 	// Set texture before draw a mesh
@@ -239,7 +249,7 @@ void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 		else if (type == "texture_height")
 			index = to_string(height_index++);
 
-		shader.setInt(("tex." + type + index).c_str(), i+1);
+		shader.setInt(("tex_fbx." + type + index).c_str(), i+1);
 		m_textures[i]->setActive();
 	}
 
@@ -480,39 +490,39 @@ shared_ptr<Material> FBXMesh::processMaterial(const aiMesh* mesh, const aiScene*
 	shared_ptr<Material> material = make_shared<Material>();
 	if (AI_SUCCESS == ai_material->Get(AI_MATKEY_COLOR_AMBIENT, color))
 	{
-		material->ambient = { color.r, color.g, color.b };
+		material->setAmbient({ color.r, color.g, color.b });
 		//cout << "Set ambient " << material.ambient.x << endl;
 	}
 	else
 	{
-		material->ambient = { 0.0f, 0.0f, 0.0f };
+		material->setAmbient(glm::vec3(0.0f));
 	}
 
 	if (AI_SUCCESS == ai_material->Get(AI_MATKEY_COLOR_DIFFUSE, color))
 	{
-		material->diffuse = { color.r, color.g, color.b };
+		material->setDiffuse({ color.r, color.g, color.b });
 		//cout << "Set Diffuse" << material.diffuse.x << endl;
 	}
 	else
 	{
-		material->diffuse = { 0.0f, 0.0f, 0.0f };
+		material->setDiffuse(glm::vec3(0.0f));
 	}
 
 	if (AI_SUCCESS == ai_material->Get(AI_MATKEY_COLOR_SPECULAR, color))
 	{
-		material->specular = { color.r, color.g, color.b };
+		material->setSpecular({ color.r, color.g, color.b });
 		//cout << "Set specular" << material.specular.x << endl;
 	}
 	else
 	{
-		material->specular = { 0.0f, 0.0f, 0.0f };
+		material->setSpecular(glm::vec3(0.0f));
 	}
 
 	float metal_factor = 0.0;
 
 	if (AI_SUCCESS == ai_material->Get(AI_MATKEY_SHININESS, metal_factor))
 	{
-		material->shininess = metal_factor;
+		material->setShininess(metal_factor);
 		//cout << "Metallic Factor is " << material.shininess << endl;
 	}
 

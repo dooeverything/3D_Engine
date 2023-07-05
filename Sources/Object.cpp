@@ -2,7 +2,7 @@
 
 Object::Object() :
 	m_mesh(nullptr), m_shader(nullptr), 
-	m_click(false), m_name(""), m_property({})
+	m_click(false), m_name(""), m_property({}), m_path(""), m_id(0)
 {
 	m_property.push_back(glm::vec3(0.0f)); // Position
 	m_property.push_back(glm::vec3(0.0f)); // Rotation
@@ -10,15 +10,15 @@ Object::Object() :
 }
 
 Object::Object(const string& mesh_path) :
-	m_click(false), m_name(""), m_property({})
+	m_click(false), m_name(""), m_property({}), m_path(mesh_path), m_id(0)
 {
-	int last = mesh_path.find_last_of('/');
-	if (last == -1)
-	{
-		last = mesh_path.find_last_of('\\');
-	}
-	string temp = mesh_path.substr(last + 1, mesh_path.length());
-	m_name = temp.substr(0, temp.find_last_of('.'));
+	//int last = mesh_path.find_last_of('/');
+	//if (last == -1)
+	//{
+	//	last = mesh_path.find_last_of('\\');
+	//}
+	//string temp = mesh_path.substr(last + 1, mesh_path.length());
+	//m_name = temp.substr(0, temp.find_last_of('.'));
 
 	string::size_type pos = mesh_path.find_last_of('.');
 	if (pos != mesh_path.length())
@@ -49,7 +49,7 @@ Object::Object(const string& mesh_path) :
 }
 
 Object::Object(const string& mesh_path, const vector<string>& shader) :
-	m_click(false), m_name(""), m_property({})
+	m_click(false), m_name(""), m_property({}), m_path(mesh_path), m_id(0)
 {
 	int last = mesh_path.find_last_of('/');
 	if (last == -1)
@@ -297,7 +297,6 @@ void GameObject::draw(glm::mat4& P, glm::mat4& V,
 	if(!m_click)
 	{
 		m_move_axis = -1;
-		//m_outline_buffer = nullptr;
 	}
 	
 	m_shader->load();
@@ -547,7 +546,9 @@ void Outline::draw(GameObject& go, glm::mat4& P, glm::mat4& V)
 void Outline::clearOutlineFrame()
 {
 	m_outline_buffers.back()->bind();
-	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	m_outline_shader->load();
+	m_outline_shader->setInt("pass", 3);
 	m_debug->getMesh()->draw();
 	m_outline_buffers.back()->unbind();
 }

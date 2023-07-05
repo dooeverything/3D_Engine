@@ -32,10 +32,6 @@ bool Renderer::init()
 	m_panels.push_back(make_shared<ObjectPanel>());
 	m_panels.push_back(make_shared<PropertyPanel>());
 
-	m_scene_objects.push_back(make_shared<GameObject>("Models/Cube.txt"));
-
-	//m_scene_objects.at(0)->setProperty(0, glm::vec3(0.0f, 0.5f, 0.0f));
-
 	return true;
 }
 
@@ -61,9 +57,6 @@ void Renderer::render()
 
 	// Draw a shadow map first to get shadows
 	m_shadow_map->draw(m_scene_objects);
-	
-	glViewport(0, 0, 1400, 800);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	renderImGui();
 	m_sdl_window->swapWindow();
@@ -75,8 +68,8 @@ void Renderer::handleInput()
 	ImGuiIO& io = ImGui::GetIO();
 	while (SDL_PollEvent(&event))
 	{
-		ImGui_ImplSDL2_ProcessEvent(&event);
 		m_frame_events.push_back(event);
+
 		if (!io.WantCaptureMouse)
 		{
 			switch (event.type)
@@ -105,15 +98,19 @@ void Renderer::handleInput()
 			ImVec2 pos = io.MousePos;
 			for (auto& it : m_panels)
 			{
-				if (it->mouseInPanel(pos.x, pos.y))
+				if (it->mouseInPanel(pos.x, pos.y) && !m_is_mouse_down)
 				{
+					cout << "Mouse in panel" << endl;
 					m_mouse_in_panel = true;
-					break;
+					return;
 				}
 				else
+				{
 					m_mouse_in_panel = false;
+				}
 			}
 
+			ImGui_ImplSDL2_ProcessEvent(&event);
 			switch (event.type)
 			{
 				case SDL_MOUSEBUTTONUP:
@@ -131,7 +128,7 @@ void Renderer::handleInput()
 					}
 					m_camera->processMouseDown(event);
 					m_frame_events.clear();
-					return; // To avoid dragging right after mouse clicked
+					return; // To avoid dragging when mouse is clicked
 
 				case SDL_MOUSEMOTION:
 					if (m_is_mouse_down)
@@ -252,11 +249,32 @@ void Renderer::renderImGui()
 	bool demo = true;
 	ImGui::ShowDemoWindow(&demo);
 
+	for (int i = 0; i < m_scene_objects.size(); ++i)
+	{
+		m_scene_objects.at(i)->setIsClick(false);
+	}
+
+	if (m_mouse_in_panel)
+	{
+		SDL_Event event;
+		ImGuiIO& io = ImGui::GetIO();
+		float moveCellSize = 0.1f;
+		for (auto& it : m_frame_events)
+		{
+			event = it;
+			ImGui_ImplSDL2_ProcessEvent(&event);
+		}
+		m_frame_events.clear();
+	}
+
 	// Draw panels
 	for (auto& it : m_panels)
 	{
-		it->render(m_scene_objects);
+		it->render(m_scene_objects, m_click_object);
 	}
+
+	glViewport(0, 0, 1400, 800);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Slightly modified from https://www.codingwiththomas.com/blog/rendering-an-opengl-framebuffer-into-a-dear-imgui-window
 	ImGui::Begin("Scenes");
@@ -280,6 +298,10 @@ void Renderer::renderImGui()
 				glm::mat4 V = m_camera->camera2pixel();
 				m_outline->setupBuffers(*m_click_object, P, V);
 			}
+			else
+			{
+				m_outline->clearOutlineFrame();
+			}
 
 			m_framebuffer->bind();
 			m_sdl_window->clearWindow();
@@ -290,7 +312,6 @@ void Renderer::renderImGui()
 		ImGui::EndChild();
 	}
 	ImGui::End();
-
 
 	//ImGui::Begin("Debug");
 	//{
@@ -317,9 +338,10 @@ void Renderer::renderImGui()
 
 void Renderer::renderScene(int width, int height)
 {
-	for (int i = 0; i < m_scene_objects.size(); ++i)
+	vector<shared_ptr<GameObject>> render_objects;
+	for (auto& it : m_scene_objects)
 	{
-		m_scene_objects.at(i)->setIsClick(false);
+		render_objects.push_back(it);
 	}
 
 	glm::vec3 cam_pos = m_camera->getPos();
@@ -345,7 +367,7 @@ void Renderer::renderScene(int width, int height)
 	glm::vec3 ray_dir = m_camera->getRay();
 	glm::vec3 ray_pos = m_camera->getPos();
 
-	std::sort(m_scene_objects.begin(), m_scene_objects.end(),
+	std::sort(render_objects.begin(), render_objects.end(),
 		[cam_pos](const shared_ptr<GameObject>& lhs, const shared_ptr<GameObject>& rhs)
 		{
 			float d1 = glm::length(cam_pos - *(lhs->getProperty(0)));
@@ -353,17 +375,16 @@ void Renderer::renderScene(int width, int height)
 			return d1 < d2;
 		});
 
-	
 	// Check whether any object is clicked 
 	if (m_is_mouse_down && !m_is_click_gizmo && !m_mouse_in_panel && !m_is_drag)
 	{
-		for (int i = 0; i < m_scene_objects.size(); ++i)
+		for (int i = 0; i < render_objects.size(); ++i)
 		{
-			if (m_scene_objects.at(i)->isClick(ray_dir, ray_pos))
+			if (render_objects.at(i)->isClick(ray_dir, ray_pos))
 			{
-				cout << "Clicked object: " << m_scene_objects.at(i)->getName() << endl;
+				cout << "Clicked object: " << render_objects.at(i)->getName() << endl;
 				m_is_mouse_down = false;
-				m_click_object = m_scene_objects.at(i);
+				m_click_object = render_objects.at(i);
 				break;
 			}
 			else
@@ -378,8 +399,24 @@ void Renderer::renderScene(int width, int height)
 		m_click_object->setIsClick(true);
 	}
 
+	//	if (m_is_moving_gizmo)
+	//	{
+	//		moveObject(*m_click_object);
+	//	}
+
+	//	if (m_click_object->isGizmoClick(ray_dir, ray_pos))
+	//	{
+	//		moveObject(*m_click_object);
+	//		m_is_click_gizmo = true;
+	//	}
+	//	else
+	//	{
+	//		m_is_click_gizmo = false;
+	//	}
+	//}
+
 	// Check whether any gizmos is clicked
-	for (auto& it : m_scene_objects)
+	for (auto& it : render_objects)
 	{
 		if (it->getIsClick())
 		{
@@ -388,7 +425,6 @@ void Renderer::renderScene(int width, int height)
 				moveObject(*it);
 				continue;
 			}
-
 			if (it->isGizmoClick(ray_dir, ray_pos) )
 			{
 				moveObject(*it);
@@ -398,12 +434,11 @@ void Renderer::renderScene(int width, int height)
 			{
 				m_is_click_gizmo = false;
 			}
-
 			break;
 		}
 	}
 
-	for (auto it = m_scene_objects.rbegin(); it != m_scene_objects.rend(); ++it)
+	for (auto it = render_objects.rbegin(); it != render_objects.rend(); ++it)
 	{
 		if (!it->get()->getIsClick())
 		{
@@ -418,23 +453,23 @@ void Renderer::renderScene(int width, int height)
 		glEnable(GL_DEPTH_TEST);
 		m_click_object->draw(P, V, *directional_light, cam_pos, *m_shadow_map);
 	}
-	else
-	{
-		m_outline->clearOutlineFrame();
-	}
 
 	// Draw Grid
 	m_grid->draw(P, V, cam_pos);
 	
 	// Draw gizmos for clicked objects
 	glDisable(GL_DEPTH_TEST);
-	for (auto& it : m_scene_objects)
+	for (auto& it : render_objects)
 	{
 		if (it->getIsClick())
 		{
 			it->drawGizmos(P, V, cam_pos);
 		}
 	}
+	//if (m_click_object != nullptr)
+	//{
+	//	m_click_object->drawGizmos(P, V, cam_pos);
+	//}
 	glEnable(GL_DEPTH_TEST);
 
 }

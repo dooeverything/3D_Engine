@@ -6,6 +6,7 @@
 #include "Buffer.h"
 #include "Texture.h"
 #include "Shader.h"
+#include "Material.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -14,15 +15,6 @@
 const int max_bone_per_vertex = 4;
 
 using namespace std;
-
-struct Material
-{
-	string type = "";
-	glm::vec3 ambient = { 0.8f, 0.8f, 0.8f };
-	glm::vec3 diffuse = { 0.5f, 0.5f, 0.5f };
-	glm::vec3 specular = { 1.0f, 1.0f, 1.0f };
-	float shininess = 128.0f;
-};
 
 // Inspired and modified from https://en.wikibooks.org/wiki/OpenGL_Programming/Bounding_box
 class BoundingBox
@@ -79,6 +71,7 @@ public:
 	virtual void setRotation(glm::mat4 t);
 	virtual void setScale(glm::mat4 t);
 
+	inline shared_ptr<Material> getMaterial() { return m_material; };
 	inline shared_ptr<BoundingBox> getBox() { return m_bbox; };
 	inline string getName() { return m_name; };
 	inline glm::vec3 getCenter() { return m_center; };

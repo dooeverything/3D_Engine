@@ -115,7 +115,7 @@ void main()
         float g = getFlood(proj_coords, jump);
         frag_color = vec4(g, 0.0, 0.0, 1.0);
     }
-    else
+    else if(pass == 2)
     {
         vec3 color = (texture2D(mask_map, frag_texCoords.xy).rgb);
         if(color == vec3(1.0))
@@ -132,5 +132,9 @@ void main()
             else
                 frag_color = vec4(g, 0.0, 0.0, 1.0);
         }
+    }
+    else
+    {
+        frag_color = vec4(0.0,0.0,0.0, 1.0);
     }
 }

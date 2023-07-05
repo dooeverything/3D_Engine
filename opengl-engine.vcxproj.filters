@@ -36,9 +36,6 @@
     <ClInclude Include="Headers\Object.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Headers\FrameBuffer.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Headers\Light.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -92,6 +89,9 @@
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imstb_truetype.h">
       <Filter>헤더 파일\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Material.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -154,6 +154,9 @@
     </ClCompile>
     <ClCompile Include="Sources\ImGuiPanel.cpp">
       <Filter>소스 파일\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Material.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

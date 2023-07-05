@@ -28,10 +28,24 @@ public:
 	virtual inline shared_ptr<Mesh> getMesh() { return m_mesh; };
 	virtual inline bool getIsClick() { return m_click; };
 	virtual inline string getName() { return m_name; };
+	virtual inline int getId() { return m_id; };
+	virtual inline string getIdName()
+	{
+		string id = "";
+		if (m_id)
+		{
+			id = to_string(m_id);
+		}
+
+		return (m_name + id);
+	}
+	virtual inline string getPath() { return m_path; };
 	virtual inline glm::vec3* getProperty(int index) { return &m_property[index]; };
 	virtual void setProperty(int index, glm::vec3 t);
 	virtual inline void setIsClick(bool click) { m_click = click; };
-	
+	virtual inline void setName(string& name) { m_name = name; };
+	virtual inline void setId(int id) { m_id = id; };
+
 private:
 	virtual void setPosition(glm::vec3 pos);
 	virtual void setRotation(glm::vec3 rot);
@@ -42,6 +56,8 @@ protected:
 	shared_ptr<Shader> m_shader;
 	vector<glm::vec3> m_property;
 	string m_name;
+	string m_path;
+	int m_id;
 	bool m_click;
 };
 

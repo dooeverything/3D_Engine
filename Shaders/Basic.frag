@@ -35,9 +35,10 @@ in VS_OUT
 } fs_in;
 
 uniform sampler2D shadow_map;
+uniform sampler2D texture_map;
 
 uniform Material mat;
-uniform Texture tex;
+uniform Texture tex_fbx;
 uniform vec3 view_pos;
 uniform vec3 light_pos;
 uniform Light light;
@@ -58,7 +59,7 @@ vec3 CalcDirLight(Light light, vec3 normal, vec3 view_dir, float shadow)
 	// Specular
 	vec3 reflect_dir = 2 * dot(normal, light_dir) * normal - light_dir;
 	vec3 h = normalize(light_dir + view_dir);
-	float spec = pow(max(dot(view_dir, reflect_dir), 0.0), mat.shininess);	
+	float spec = pow(max(dot(view_dir, h), 0.0), mat.shininess);	
 	vec3 specular = light.specular * spec * mat.specular;
 
 	return (ambient + (1.0-shadow)*(diffuse + specular) );
@@ -80,7 +81,7 @@ vec3 CalcDirLightTexture(Light light, vec3 normal, vec3 view_dir, vec3 color, fl
 	float spec = pow(max(dot(view_dir, reflect_dir), 0.0), mat.shininess);	
 	vec3 specular = light.specular * spec * mat.specular;
 
-	return (ambient + diffuse + specular);
+	return (ambient + (1.0-shadow)*(diffuse + specular) );
 }
 
 float ShadowCalculation(vec4 light_space, float cos_theta)
@@ -130,9 +131,15 @@ void main()
 		fragColor = vec4(result, 1.0);
 
 	}
+	else if(has_texture == 1)
+	{
+		vec3 texture_color = vec3(texture(tex_fbx.texture_diffuse1, fs_in.frag_texCoord));
+		vec3 result = CalcDirLightTexture(light, norm, view_dir, texture_color, shadow);
+		fragColor = vec4(result, 1.0);
+	}
 	else
 	{
-		vec3 texture_color = vec3(texture(tex.texture_diffuse1, fs_in.frag_texCoord));
+		vec3 texture_color = vec3(texture(texture_map, fs_in.frag_texCoord));
 		vec3 result = CalcDirLightTexture(light, norm, view_dir, texture_color, shadow);
 		fragColor = vec4(result, 1.0);
 	}
