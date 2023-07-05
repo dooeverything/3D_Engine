@@ -12,7 +12,7 @@
  6. Shadow (Directional light)
  7. Load and apply texture to a game object
 
-### References
+### References/Dependencies
  1. C++17
  2. OpenGl 3.3
  3. [ImGui](https://github.com/ocornut/imgui)
