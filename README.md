@@ -12,13 +12,15 @@
  6. Shadow (Directional light)
  7. Load and apply texture to a game object
 
-### References/Dependencies
+### References/Used libraries
  1. C++17
  2. OpenGl 3.3
  3. [ImGui](https://github.com/ocornut/imgui)
  4. [Learn OpenGL](learnopengl.com)
  5. [Game Programming in C++](https://www.amazon.com/Game-Programming-Creating-Games-Design/dp/0134597206)
  6. [stb library](https://github.com/nothings/stb)
+
+### 
 
 ### Features to be added
  1. Shadow (Point light)
