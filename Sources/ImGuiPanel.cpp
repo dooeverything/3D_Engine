@@ -17,10 +17,19 @@ void ImGuiPanel::calculatePanelSize()
 	m_scene_min = ImGui::GetWindowContentRegionMin();
 	m_scene_max = ImGui::GetWindowContentRegionMax();
 
+	//cout << "Menu min:  " << m_scene_min.x << " " << m_scene_min.y << endl;
+	//cout << "Menu max: " << m_scene_max.x << " " << m_scene_max.y << endl;
+
+
+	//cout << "After" << endl;
+
 	m_scene_min.x += ImGui::GetWindowPos().x;
 	m_scene_min.y += ImGui::GetWindowPos().y;
 	m_scene_max.x += ImGui::GetWindowPos().x;
 	m_scene_max.y += ImGui::GetWindowPos().y;
+
+	//cout << "Menu min:  " << m_scene_min.x << " " << m_scene_min.y << endl;
+	//cout << "Menu max: " << m_scene_max.x << " " << m_scene_max.y << endl;
 }
 
 bool ImGuiPanel::mouseInPanel(int x, int y)
@@ -28,10 +37,10 @@ bool ImGuiPanel::mouseInPanel(int x, int y)
 	if (m_scene_min.x == 0 && m_scene_max.y == 0)
 		return false;
 
-	if (x < m_scene_min.x-10 || y < m_scene_min.y-50)
+	if (x < m_scene_min.x|| y < m_scene_min.y)
 		return false;
 
-	if (x > m_scene_max.x || y > m_scene_max.y)
+	if (x > m_scene_max.x+10 || y > m_scene_max.y)
 		return false;
 
 	return true;
@@ -46,9 +55,12 @@ ImGuiMenuBar::~ImGuiMenuBar()
 void ImGuiMenuBar::render(vector<shared_ptr<GameObject>>& scene_objects, shared_ptr<GameObject>& clicked_object)
 {
 	ImGui::BeginMainMenuBar();
+	m_scene_min = ImVec2(1 + ImGui::GetWindowPos().x, 10 + ImGui::GetWindowPos().y);
+	m_scene_max = ImVec2(1400+ ImGui::GetWindowPos().x, 30+ ImGui::GetWindowPos().y);
+	//cout << m_scene_min.x << " " << m_scene_min.y << endl;
+	//cout << "Win pos: " << ImGui::GetWindowPos().x << " " << ImGui::GetWindowPos().y << endl;
 	if (ImGui::BeginMenu("GameObject"))
 	{
-		calculatePanelSize();
 		if (ImGui::MenuItem("Create Empty", NULL)) {}
 
 		if (ImGui::BeginMenu("3D Object"))

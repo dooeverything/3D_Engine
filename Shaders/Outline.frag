@@ -125,10 +125,8 @@ void main()
         else
         {
             float g = blur(proj_coords);
-            if(g < 0.01)
-            {
+            if(g < 0.1)
                 frag_color = vec4(0.0);
-            }
             else
                 frag_color = vec4(g, 0.0, 0.0, 1.0);
         }

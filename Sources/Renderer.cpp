@@ -57,7 +57,6 @@ void Renderer::render()
 
 	// Draw a shadow map first to get shadows
 	m_shadow_map->draw(m_scene_objects);
-
 	renderImGui();
 	m_sdl_window->swapWindow();
 }
@@ -96,19 +95,34 @@ void Renderer::handleInput()
 		else if(!m_is_click_gizmo)
 		{
 			ImVec2 pos = io.MousePos;
+
+			//cout << "Mouse Position " << pos.x << " " << pos.y << endl;
 			for (auto& it : m_panels)
 			{
 				if (it->mouseInPanel(pos.x, pos.y) && !m_is_mouse_down)
 				{
-					cout << "Mouse in panel" << endl;
+					//cout << "Mouse in panel" << endl;
 					m_mouse_in_panel = true;
-					return;
+					break;
 				}
 				else
 				{
 					m_mouse_in_panel = false;
 				}
 			}
+
+			ImVec2 min = m_sdl_window->getSceneMin();
+			ImVec2 max = m_sdl_window->getSceneMax();
+
+			int x, y, w, h;
+			SDL_GetWindowPosition(m_sdl_window->getWindow(), &x, &y);
+			SDL_GetWindowSize(m_sdl_window->getWindow(), &w, &h);
+			if (pos.x < x || pos.y < y || pos.x > x + w || pos.y > y + h)
+			{
+				m_mouse_in_panel = true;
+			}
+			
+			if (m_mouse_in_panel) continue;
 
 			ImGui_ImplSDL2_ProcessEvent(&event);
 			switch (event.type)
@@ -256,6 +270,7 @@ void Renderer::renderImGui()
 
 	if (m_mouse_in_panel)
 	{
+		//cout << "Hello " << m_frame_events.size() << endl;
 		SDL_Event event;
 		ImGuiIO& io = ImGui::GetIO();
 		float moveCellSize = 0.1f;
@@ -265,6 +280,8 @@ void Renderer::renderImGui()
 			ImGui_ImplSDL2_ProcessEvent(&event);
 		}
 		m_frame_events.clear();
+		
+		m_mouse_in_panel = false;
 	}
 
 	// Draw panels
@@ -398,22 +415,6 @@ void Renderer::renderScene(int width, int height)
 	{
 		m_click_object->setIsClick(true);
 	}
-
-	//	if (m_is_moving_gizmo)
-	//	{
-	//		moveObject(*m_click_object);
-	//	}
-
-	//	if (m_click_object->isGizmoClick(ray_dir, ray_pos))
-	//	{
-	//		moveObject(*m_click_object);
-	//		m_is_click_gizmo = true;
-	//	}
-	//	else
-	//	{
-	//		m_is_click_gizmo = false;
-	//	}
-	//}
 
 	// Check whether any gizmos is clicked
 	for (auto& it : render_objects)
