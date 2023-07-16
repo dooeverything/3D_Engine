@@ -32,6 +32,11 @@ bool Renderer::init()
 	m_panels.push_back(make_shared<ObjectPanel>());
 	m_panels.push_back(make_shared<PropertyPanel>());
 
+	shared_ptr<GameObject> test_brdf = make_shared<Sphere>();
+	string name = "Sphere-BRDF";
+	test_brdf->setName(name);
+	m_scene_objects.push_back(test_brdf);
+
 	return true;
 }
 
@@ -128,16 +133,19 @@ void Renderer::handleInput()
 			switch (event.type)
 			{
 				case SDL_MOUSEBUTTONUP:
-					cout << "Mouse Up" << endl;
 					m_is_mouse_down = false;
 					m_is_drag = false;
 					m_camera->processMouseUp(event, m_sdl_window.get());
 					break;
 
 				case SDL_MOUSEBUTTONDOWN:
-					if (!m_mouse_in_panel)
+					if (!m_mouse_in_panel && event.button.button == SDL_BUTTON_RIGHT)
 					{
-						cout << "Mouse Down" << endl;
+						//cout << "Mouse Down" << endl;
+						m_is_drag = true;
+					}
+					else if (!m_mouse_in_panel && event.button.button == SDL_BUTTON_LEFT)
+					{
 						m_is_mouse_down = true;
 					}
 					m_camera->processMouseDown(event);
@@ -145,9 +153,8 @@ void Renderer::handleInput()
 					return; // To avoid dragging when mouse is clicked
 
 				case SDL_MOUSEMOTION:
-					if (m_is_mouse_down)
+					if (m_is_drag)
 					{
-						m_is_drag = true;
 						m_camera->processMouseDrag(event);
 					}
 					break;
@@ -365,7 +372,7 @@ void Renderer::renderScene(int width, int height)
 
 	// Setup light
 	glm::vec3 dir = -(*m_shadow_map->getPosition());
-	glm::vec3 amb = { 1.0f, 1.0f, 1.0f };
+	glm::vec3 amb = { 100.0f, 100.0f, 100.0f };
 	glm::vec3 diff = { 0.8f, 0.8f, 0.8f };
 	glm::vec3 spec = { 0.5f, 0.5f, 0.5f };
 	unique_ptr<Light> directional_light = make_unique<Light>(dir, amb, diff, spec);
@@ -467,10 +474,6 @@ void Renderer::renderScene(int width, int height)
 			it->drawGizmos(P, V, cam_pos);
 		}
 	}
-	//if (m_click_object != nullptr)
-	//{
-	//	m_click_object->drawGizmos(P, V, cam_pos);
-	//}
 	glEnable(GL_DEPTH_TEST);
 
 }

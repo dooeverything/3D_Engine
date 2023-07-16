@@ -29,42 +29,35 @@ void Camera::processInput()
 
 void Camera::processMouseDrag(SDL_Event event)
 {
-	if (event.button.button == SDL_BUTTON_LEFT)
-	{
-		SDL_ShowCursor(SDL_FALSE);
-		SDL_SetRelativeMouseMode(SDL_TRUE);
+	SDL_ShowCursor(SDL_FALSE);
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 
-		int x, y;
-		SDL_GetRelativeMouseState(&x, &y);
-		float sensitivity = 0.1f;
-		float offset_x = static_cast<float>(x) * sensitivity;
-		float offset_y = -static_cast<float>(y) * sensitivity;
+	int x, y;
+	SDL_GetRelativeMouseState(&x, &y);
+	float sensitivity = 0.1f;
+	float offset_x = static_cast<float>(x) * sensitivity;
+	float offset_y = -static_cast<float>(y) * sensitivity;
 		
-		if (m_first_click)
-		{
-			offset_x = 0.0f;
-			offset_y = 0.0f;
-			m_first_click = false;
-		}
-
-		m_yaw += offset_x;
-		m_pitch += offset_y;
-
-		if (m_pitch > 89.0f)
-		{
-			m_pitch = 89.0f;
-		}
-		else if (m_pitch < -89.0f)
-		{
-			m_pitch = -89.0f;
-		}
-
-		updateCamera();
-	}
-	else
+	if (m_first_click)
 	{
-		return;
+		offset_x = 0.0f;
+		offset_y = 0.0f;
+		m_first_click = false;
 	}
+
+	m_yaw += offset_x;
+	m_pitch += offset_y;
+
+	if (m_pitch > 89.0f)
+	{
+		m_pitch = 89.0f;
+	}
+	else if (m_pitch < -89.0f)
+	{
+		m_pitch = -89.0f;
+	}
+
+	updateCamera();
 }
 
 void Camera::processPicker(int w, int h, int x, int y)
@@ -97,8 +90,9 @@ void Camera::processMouseUp(SDL_Event event, SDL_GL_Window* window)
 
 void Camera::processMouseDown(SDL_Event event)
 {
-	if (event.button.button == SDL_BUTTON_LEFT)
+	if (event.button.button == SDL_BUTTON_RIGHT)
 	{
+		cout << "Mouse Down" << endl;
 		SDL_GetMouseState(&m_mouse_x, &m_mouse_y);
 	}
 }

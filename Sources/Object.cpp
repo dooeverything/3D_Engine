@@ -182,7 +182,7 @@ void ShadowMap::draw(vector<shared_ptr<GameObject>>& gameobjects)
 Gizmo::Gizmo(GameObject& root, int axis) : 
 	m_root(root), m_axis(axis)
 {
-	m_mesh = make_shared<FBXMesh>("Models/Arrow.fbx");
+	m_mesh = make_shared<FBXMesh>("Models/Test.fbx");
 	m_mesh->processMesh();
 
 	vector<string> shader_paths = {"Shaders/Arrow.vert", "Shaders/Arrow.frag"};
@@ -203,7 +203,7 @@ void Gizmo::draw(glm::mat4& P, glm::mat4& V, glm::mat4& M)
 	M = *(m_root.getMesh()->getPosition()) * M;
 
 	glm::vec3 pos = glm::vec3(0.0f);
-	pos[m_axis] = 1.5f;
+	pos[m_axis] = 0.2f;
 	M = glm::translate(M, pos);
 
 	if (m_axis == 1)
@@ -259,6 +259,11 @@ GameObject::GameObject(const string& mesh_path) : Object(mesh_path),
 	loadMesh();
 	loadShader();
 
+	vector<string> shader_paths = { "Shaders/Arrow.vert", "Shaders/Arrow.frag" };
+	m_gizmo_center_shader = make_shared<Shader>(shader_paths);
+	m_gizmo_center_shader->processShader();
+
+	m_gizmo_center = make_shared<Sphere>();
 	for (int axis = 0; axis < 3; ++axis)
 	{
 		shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
@@ -319,11 +324,22 @@ void GameObject::draw(glm::mat4& P, glm::mat4& V,
 
 void GameObject::drawGizmos(glm::mat4& P, glm::mat4& V, glm::vec3& view_pos)
 {
-	glm::vec3 scale_factor2 = glm::vec3(glm::length(m_property[0] - view_pos) * 0.05f);
+
+	//glm::vec3 scale = glm::vec3(glm::length(m_property[0] - view_pos) * 0.0075f);
+	//M = glm::scale(M, scale);
+	//M = *(m_mesh->getPosition()) * M;
+	//glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
+	//m_gizmo_center_shader->load();
+	//m_gizmo_center_shader->setVec3("object_color", color);
+	//m_gizmo_center_shader->setPVM(P, V, M);
+	//m_gizmo_center->getMesh()->draw();
+
+	glm::mat4 M = glm::mat4(1.0f);
+	glm::vec3 scale = glm::vec3(glm::length(m_property[0] - view_pos) * 0.05f);
 	for (int axis = 0; axis < 3; ++axis)
 	{
-		glm::mat4 M = glm::mat4(1.0f);
-		M = glm::scale(M, scale_factor2);
+		M = glm::mat4(1.0f);
+		M = glm::scale(M, scale);
 		m_gizmos[axis]->draw(P, V, M);
 	}
 }
@@ -367,7 +383,8 @@ Sphere::Sphere() :
 	vector<unsigned int> indices = calculateIndex();
 	m_mesh = make_shared<Mesh>(m_name, layouts, indices);
 
-	vector<string> shader_path = { "Shaders/Basic.vert", "Shaders/Basic.frag" };
+	//vector<string> shader_path = { "Shaders/Basic.vert", "Shaders/Basic.frag" };
+	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	loadShader();
 

@@ -37,7 +37,7 @@ bool ImGuiPanel::mouseInPanel(int x, int y)
 	if (m_scene_min.x == 0 && m_scene_max.y == 0)
 		return false;
 
-	if (x < m_scene_min.x|| y < m_scene_min.y)
+	if (x < m_scene_min.x|| y < m_scene_min.y-20)
 		return false;
 
 	if (x > m_scene_max.x+10 || y > m_scene_max.y)
@@ -266,11 +266,23 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 			renderPreview(*mat);
 			//static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
 			ImGui::Image((ImTextureID)m_preview_fb->getTextureID(), ImVec2(100.0, 100.0), ImVec2(0, 1), ImVec2(1, 0));
+			
 			ImGuiColorEditFlags misc_flags = ImGuiColorEditFlags_NoOptions;
-			glm::vec3 color_mat = mat->getAmbient();
-			ImVec4 color = ImVec4(mat->getAmbient().x, mat->getAmbient().y, mat->getAmbient().z, 1.0);
+			glm::vec3 color_mat = mat->getBaseColor();
+			ImVec4 color = ImVec4(color_mat.x, color_mat.y, color_mat.z, 1.0);
 			ImGui::ColorEdit3("Select color", (float*)&color, misc_flags);
-			mat->setAmbient(glm::vec3(color.x, color.y, color.z));
+			mat->setBaseColor(glm::vec3(color.x, color.y, color.z));
+
+			static ImGuiSliderFlags flags = ImGuiSliderFlags_None;
+			float metallic = mat->getMetallic();
+			//static float slider_f = 0.5f;
+			ImGui::SliderFloat("Metallic", &metallic, 0.0f, 1.0f, "%.3f", flags);
+			mat->setMetallic(metallic);
+
+			float roughness = mat->getRoughness();
+			ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f, "%.3f", flags);
+			mat->setRoughness(roughness);
+
 			bool load_texture = ImGui::Button("Apply texture");
 			if (load_texture)
 			{
@@ -308,10 +320,10 @@ void PropertyPanel::renderPreview(Material& mat)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	m_preview_shader->load();
 	m_preview_shader->setPVM(P, V, M);
-	m_preview_shader->setVec3("mat.ambient", mat.getAmbient());
-	m_preview_shader->setVec3("mat.diffuse", mat.getDiffuse());
-	m_preview_shader->setVec3("mat.specular", mat.getSpecular());
-	m_preview_shader->setFloat("mat.shininess", mat.getShininess());
+	m_preview_shader->setVec3("mat.color", mat.getBaseColor());
+	//m_preview_shader->setVec3("mat.diffuse", mat.getDiffuse());
+	//m_preview_shader->setVec3("mat.specular", mat.getSpecular());
+	//m_preview_shader->setFloat("mat.shininess", mat.getShininess());
 	if (mat.getTexture() != nullptr)
 	{
 		m_preview_shader->setInt("has_texture", 1);

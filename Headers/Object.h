@@ -124,6 +124,7 @@ private:
 	int m_axis;
 };
 
+class Sphere;
 class GameObject : public Object
 {
 public:
@@ -145,6 +146,8 @@ private:
 
 protected:
 	vector<shared_ptr<Gizmo>> m_gizmos;
+	shared_ptr<Sphere> m_gizmo_center;
+	shared_ptr<Shader> m_gizmo_center_shader;
 
 public:
 	int m_move_axis;
@@ -170,7 +173,7 @@ class Sphere : public Geometry
 public:
 	Sphere();
 	~Sphere();
-	
+
 private:
 	virtual vector<info::VertexLayout> calculateVertex();
 	virtual vector<unsigned int> calculateIndex();

@@ -4,10 +4,9 @@ Material::Material() :
 	m_texture(nullptr)
 {
 	m_type = "";
-	m_ambient = { 0.8f, 0.8f, 0.8f };
-	m_diffuse = { 0.8f, 0.8f, 0.8f };
-	m_specular = { 0.8f, 0.8f, 0.8f };
-	m_shininess = 32.0f;
+	m_base_color = { 0.8f, 0.8f, 0.8f };
+	m_metallic = 1.0;
+	m_roughness = 0.5;
 }
 
 Material::~Material()

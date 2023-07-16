@@ -128,7 +128,7 @@ void main()
             if(g < 0.1)
                 frag_color = vec4(0.0);
             else
-                frag_color = vec4(g, 0.0, 0.0, 1.0);
+                frag_color = vec4(0.8, 0.6, 0.1, 1.0);
         }
     }
     else
