@@ -1,7 +1,7 @@
 # OpenGL_Engine
 
 ### Screen Shot
-![Screenshot](https://github.com/dooeverything/OpenGL_Engine/blob/main/ScreenShots/Screenshot-5.png)
+![Screenshot](https://github.com/dooeverything/OpenGL_Engine/blob/main/ScreenShots/screenshot-5.png)
 
 ### About the project 
 I am making this engine just for learning computer graphic stuffs, and it is not a serious engine program. 
