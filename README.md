@@ -11,6 +11,7 @@
  5. Outline for picking objects (by using [jump flood algorithm](https://www.comp.nus.edu.sg/~tants/jfa.html))
  6. Shadow (Directional light)
  7. Load and apply texture to a game object
+ 8. Physically Based Rendering (PBR)
 
 ### References/Used libraries
  1. C++17
