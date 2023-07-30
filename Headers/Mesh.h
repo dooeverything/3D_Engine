@@ -74,6 +74,7 @@ public:
 	inline shared_ptr<BoundingBox> getBox() { return m_bbox; };
 	inline string getName() { return m_name; };
 	inline glm::vec3 getCenter() { return m_center; };
+	virtual inline vector<shared_ptr<Texture>>& getTexture() { return m_textures; };
 	virtual inline glm::mat4 getTransform()
 	{
 		return (m_transform_pos * m_transform_rot * m_transform_scale);
@@ -107,6 +108,7 @@ public:
 	vector<shared_ptr<Texture>> loadTexture(shared_ptr<aiMaterial> mat, aiTextureType type, string typeName); 	// Texture handling functions
 
 	virtual void draw(glm::mat4& P, glm::mat4& V, Shader& shader);
+	virtual void draw();
 
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
 	
@@ -142,9 +144,10 @@ public:
 		//cout << "Final: "  << endl;
 		return glm::abs(max-min);
 	}
-	virtual inline glm::mat4* getPosition() { return m_meshes.at(1)->getPosition(); };
-	virtual inline glm::mat4* getRotation() { return m_meshes.at(1)->getRotation(); };
-	virtual inline glm::mat4* getScale() { return m_meshes.at(1)->getScale(); };
+	virtual inline vector<shared_ptr<Texture>>& getTexture() { return m_meshes.at(0)->getTexture(); };
+	virtual inline glm::mat4* getPosition() { return m_meshes.at(0)->getPosition(); };
+	virtual inline glm::mat4* getRotation() { return m_meshes.at(0)->getRotation(); };
+	virtual inline glm::mat4* getScale() { return m_meshes.at(0)->getScale(); };
 
 };
 

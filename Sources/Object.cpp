@@ -147,6 +147,7 @@ void Object::setScale(glm::vec3 scale)
 Gizmo::Gizmo(GameObject& root, int axis) : 
 	m_root(root), m_axis(axis)
 {
+	cout << "Gizmo constructor " << axis << " : " << root.getName() << endl;
 	m_mesh = make_shared<FBXMesh>("Models/Arrow.fbx");
 	m_mesh->processMesh();
 	vector<string> shader_paths = {"Shaders/Arrow.vert", "Shaders/Arrow.frag"};
@@ -161,8 +162,8 @@ void Gizmo::draw(glm::mat4& P, glm::mat4& V, glm::mat4& M)
 {
 	glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f);
 
+	//cout << "Draw gizmo inside " << m_root.getMesh()->getPosition() << endl;
 	M = *(m_root.getMesh()->getPosition()) * M;
-
 	glm::vec3 pos = glm::vec3(0.0f);
 	pos[m_axis] = 0.2f;
 	M = glm::translate(M, pos);
@@ -296,10 +297,50 @@ void GameObject::drawPreview(Material& mat)
 		glActiveTexture(GL_TEXTURE0 + 4);
 		mat.getTexture()->setActive();
 	}
-
 	m_mesh->draw();
 
 	glActiveTexture(GL_TEXTURE0);
+}
+
+void GameObject::drawPreview(vector<shared_ptr<Texture>>& tex)
+{
+	glm::mat4 P = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
+	glm::mat4 V = glm::lookAt(glm::vec3(1.0f, 0.5f, 2.5f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 M = glm::mat4(1.0f);
+
+	glm::vec3 dir = { -0.2f, -1.0f, -0.3f };
+	glm::vec3 amb = { 10.0f, 10.0f, 10.0f };
+	glm::vec3 diff = { 0.8f, 0.8f, 0.8f };
+	glm::vec3 spec = { 0.5f, 0.5f, 0.5f };
+	unique_ptr<Light> light = make_unique<Light>(dir, amb, diff, spec);
+	glm::vec3 view_pos = glm::vec3(0.0, 0.0, 4.0);
+
+	m_shader->load();
+	m_shader->setVec3("view_pos", view_pos);
+	m_shader->setLight(*light);
+	m_shader->setInt("preview", 1);
+	//m_shader->setMaterial(mat);
+
+	m_shader->setInt("shadow_map", 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	m_shader->setInt("irradiance_map", 1);
+	glActiveTexture(GL_TEXTURE0 + 1);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, m_irradiance);
+	m_shader->setInt("prefilter_map", 2);
+	glActiveTexture(GL_TEXTURE0 + 2);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, m_prefilter);
+	m_shader->setInt("lut_map", 3);
+	glActiveTexture(GL_TEXTURE0 + 3);
+	glBindTexture(GL_TEXTURE_2D, m_lut);
+
+	m_shader->setPVM(P, V, M);
+
+	m_shader->setInt("has_texture", 1);
+	m_shader->setInt("texture_map", 4);
+	glActiveTexture(GL_TEXTURE0 + 4);
+	tex[0]->setActive();
+	m_mesh->draw();
 }
 
 void GameObject::draw(glm::mat4& P, glm::mat4& V,
@@ -361,6 +402,7 @@ void GameObject::drawGizmos(glm::mat4& P, glm::mat4& V, glm::vec3& view_pos)
 	glm::vec3 scale = glm::vec3(glm::length(m_property[0] - view_pos) * 0.05f);
 	for (int axis = 0; axis < 3; ++axis)
 	{
+		//cout << "Draw " << axis << endl;
 		M = glm::mat4(1.0f);
 		M = glm::scale(M, scale);
 		m_gizmos[axis]->draw(P, V, M);

@@ -197,7 +197,7 @@ void Mesh::draw()
 
 void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 {
-	unsigned int diffuse_index = 1;
+	unsigned int color_index = 1;
 	unsigned int specular_index = 1;
 	unsigned int normal_index = 1;
 	unsigned int height_index = 1;
@@ -223,23 +223,28 @@ void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 	}
 
 	// Set texture before draw a mesh
-	for (int i = 0; i < m_textures.size(); ++i)
+	if (m_textures.size() > 0)
 	{
-		glActiveTexture(GL_TEXTURE0 + i + 3);
+		//cout << "FBX" << endl;
+		shader.setInt("has_texture", 2);
+		for (int i = 0; i < m_textures.size(); ++i)
+		{
+			glActiveTexture(GL_TEXTURE0 + i + 4);
 
-		string index;
-		string type = m_textures[i]->getType();
-		if (type == "texture_diffuse")
-			index = to_string(diffuse_index++);
-		else if (type == "texture_specular")
-			index = to_string(specular_index++);
-		else if (type == "texture_normal")
-			index = to_string(normal_index++);
-		else if (type == "texture_height")
-			index = to_string(height_index++);
+			string index;
+			string type = m_textures[i]->getType();
+			if (type == "color")
+				index = to_string(color_index++);
+			//else if (type == "texture_specular")
+			//	index = to_string(specular_index++);
+			//else if (type == "texture_normal")
+			//	index = to_string(normal_index++);
+			//else if (type == "texture_height")
+			//	index = to_string(height_index++);
 
-		shader.setInt(("tex_fbx." + type + index).c_str(), i+1);
-		m_textures[i]->setActive();
+			shader.setInt(("tex_fbx." + type + index).c_str(), i+4);
+			m_textures[i]->setActive();
+		}	
 	}
 
 	draw();
@@ -536,19 +541,19 @@ vector<shared_ptr<Texture>> FBXMesh::processTextures(const aiMesh* mesh, const a
 	vector<shared_ptr<Texture>> textures;
 	
 	// Load Diffuse from texture
-	vector<shared_ptr<Texture>> diffuse_maps = loadTexture(ai_material, aiTextureType_DIFFUSE, "texture_diffuse");
+	vector<shared_ptr<Texture>> diffuse_maps = loadTexture(ai_material, aiTextureType_DIFFUSE, "color");
 	textures.insert(textures.end(), make_move_iterator(diffuse_maps.begin()), make_move_iterator(diffuse_maps.end()));
 
 	// Load specular from texture
-	vector<shared_ptr<Texture>> specularMaps = loadTexture(ai_material, aiTextureType_SPECULAR, "texture_specular");
+	vector<shared_ptr<Texture>> specularMaps = loadTexture(ai_material, aiTextureType_SPECULAR, "specular");
 	textures.insert(textures.end(), make_move_iterator(specularMaps.begin()), make_move_iterator(specularMaps.end()));
 
 	// Load normal map from texture
-	vector<shared_ptr<Texture>> normalMaps = loadTexture(ai_material, aiTextureType_HEIGHT, "texture_normal");
+	vector<shared_ptr<Texture>> normalMaps = loadTexture(ai_material, aiTextureType_HEIGHT, "normal");
 	textures.insert(textures.end(), make_move_iterator(normalMaps.begin()), make_move_iterator(normalMaps.end()));
 
 	// Load height map from texture
-	vector<shared_ptr<Texture>> heightMaps = loadTexture(ai_material, aiTextureType_AMBIENT, "texture_ambient");
+	vector<shared_ptr<Texture>> heightMaps = loadTexture(ai_material, aiTextureType_AMBIENT, "ambient");
 	textures.insert(textures.end(), make_move_iterator(heightMaps.begin()), make_move_iterator(heightMaps.end()));
 
 	return textures;
@@ -593,6 +598,12 @@ void FBXMesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 {
 	for (unsigned int i = 0; i < m_meshes.size(); ++i)
 		m_meshes[i]->draw(P, V, shader);
+}
+
+void FBXMesh::draw()
+{
+	for (unsigned int i = 0; i < m_meshes.size(); ++i)
+		m_meshes[i]->draw();
 }
 
 bool FBXMesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)

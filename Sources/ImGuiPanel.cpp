@@ -264,38 +264,53 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 		if (expand_material)
 		{
 			shared_ptr<Material> mat = clicked_object->getMesh()->getMaterial();
-			m_preview_object->setIrradiance(clicked_object->getIrradiance());
-			m_preview_object->setPrefiler(clicked_object->getPrefiler());
-			m_preview_object->setLUT(clicked_object->getLUT());
-			renderPreview(*mat);
-			//static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
-			ImGui::Image((ImTextureID)m_preview_fb->getTextureID(), ImVec2(100.0, 100.0), ImVec2(0, 1), ImVec2(1, 0));
-			
-			ImGuiColorEditFlags misc_flags = ImGuiColorEditFlags_NoOptions;
-			glm::vec3 color_mat = mat->getBaseColor();
-			ImVec4 color = ImVec4(color_mat.x, color_mat.y, color_mat.z, 1.0);
-			ImGui::ColorEdit3("Select color", (float*)&color, misc_flags);
-			mat->setBaseColor(glm::vec3(color.x, color.y, color.z));
-
-			static ImGuiSliderFlags flags = ImGuiSliderFlags_None;
-			float metallic = mat->getMetallic();
-			//static float slider_f = 0.5f;
-			ImGui::SliderFloat("Metallic", &metallic, 0.0f, 1.0f, "%.3f", flags);
-			mat->setMetallic(metallic);
-
-			float roughness = mat->getRoughness();
-			ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f, "%.3f", flags);
-			mat->setRoughness(roughness);
-
-			bool load_texture = ImGui::Button("Apply texture");
-			if (load_texture)
+			if (clicked_object->getMesh()->getTexture().size() > 0)
 			{
-				m_fd = make_unique<FileDialog>();
-				string path = m_fd->OpenFile(".jpg");
-				if (path != "")
+			//cout << "Clicked object " << clicked_object->getName() << " , " << clicked_object->getMesh()->getTexture().size() << endl;
+				vector<shared_ptr<Texture>> tex = clicked_object->getMesh()->getTexture();
+				renderPreview(tex);
+				ImGui::Image((ImTextureID)m_preview_fb->getTextureID(), ImVec2(100.0, 100.0), ImVec2(0, 1), ImVec2(1, 0));
+			}
+			else
+			{
+				m_preview_object->setIrradiance(clicked_object->getIrradiance());
+				m_preview_object->setPrefiler(clicked_object->getPrefiler());
+				m_preview_object->setLUT(clicked_object->getLUT());
+
+				//shared_ptr<Material> mat = clicked_object->getMesh()->getMaterial();
+				renderPreview(*mat);
+
+				//static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
+				ImGui::Image((ImTextureID)m_preview_fb->getTextureID(), ImVec2(100.0, 100.0), ImVec2(0, 1), ImVec2(1, 0));
+			
+				if (mat->getTexture() == nullptr)
 				{
-					cout << "Open: " << path << endl;
-					mat->addTexture(path);
+					ImGuiColorEditFlags misc_flags = ImGuiColorEditFlags_NoOptions;
+					glm::vec3 color_mat = mat->getBaseColor();
+					ImVec4 color = ImVec4(color_mat.x, color_mat.y, color_mat.z, 1.0);
+					ImGui::ColorEdit3("Select color", (float*)&color, misc_flags);
+					mat->setBaseColor(glm::vec3(color.x, color.y, color.z));
+
+					static ImGuiSliderFlags flags = ImGuiSliderFlags_None;
+					float metallic = mat->getMetallic();
+					//static float slider_f = 0.5f;
+					ImGui::SliderFloat("Metallic", &metallic, 0.0f, 1.0f, "%.3f", flags);
+					mat->setMetallic(metallic);
+
+					float roughness = mat->getRoughness();
+					ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f, "%.3f", flags);
+					mat->setRoughness(roughness);
+				}
+				bool load_texture = ImGui::Button("Apply texture");
+				if (load_texture)
+				{
+					m_fd = make_unique<FileDialog>();
+					string path = m_fd->OpenFile(".jpg");
+					if (path != "")
+					{
+						cout << "Open: " << path << endl;
+						mat->addTexture(path);
+					}
 				}
 			}
 			ImGui::TreePop();
@@ -314,3 +329,12 @@ void PropertyPanel::renderPreview(Material& mat)
 	m_preview_fb->unbind();
 }
 
+void PropertyPanel::renderPreview(vector<shared_ptr<Texture>>& tex)
+{
+	m_preview_fb->bind();
+	glViewport(0, 0, 512, 512);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	m_preview_object->drawPreview(tex);
+	m_preview_fb->unbind();
+}

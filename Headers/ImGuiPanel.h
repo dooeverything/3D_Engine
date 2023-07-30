@@ -57,6 +57,7 @@ private:
 	//unique_ptr<Shader> m_preview_shader;
 
 	void renderPreview(Material& mat);
+	void renderPreview(vector<shared_ptr<Texture>>& tex);
 
 	unique_ptr<FileDialog> m_fd;
 };

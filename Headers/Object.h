@@ -106,6 +106,7 @@ public:
 	~GameObject();
 
 	virtual void drawPreview(Material& mat);
+	virtual void drawPreview(vector<shared_ptr<Texture>>& tex);
 	virtual void draw(glm::mat4& P, glm::mat4& V, Light& light, 
 					  glm::vec3& view_pos, ShadowMap& shadow, 
 					  IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut);

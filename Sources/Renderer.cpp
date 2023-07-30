@@ -459,13 +459,17 @@ void Renderer::renderScene(int width, int height)
 				moveObject(*it);
 				continue;
 			}
+
+			//cout << "Gizmo clicking?";
 			if (it->isGizmoClick(ray_dir, ray_pos) )
 			{
+				//cout << " Yes " << endl;
 				moveObject(*it);
 				m_is_click_gizmo = true;
 			}
 			else
 			{
+				//cout << " NO" << endl;
 				m_is_click_gizmo = false;
 			}
 			break;
@@ -487,6 +491,7 @@ void Renderer::renderScene(int width, int height)
 
 	if (m_click_object != nullptr)
 	{
+		//cout << "Draw outline" << endl;
 		glDisable(GL_DEPTH_TEST);
 		m_outline->draw(*m_click_object, P, V);
 		glEnable(GL_DEPTH_TEST);
@@ -499,6 +504,7 @@ void Renderer::renderScene(int width, int height)
 	{
 		if (it->getIsClick())
 		{
+			//cout << "Draw gizmo!" << endl;
 			it->drawGizmos(P, V, cam_pos);
 		}
 	}

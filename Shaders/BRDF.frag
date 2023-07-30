@@ -30,6 +30,11 @@ struct Light
 	vec3 specular;
 };
 
+struct TextureFBX
+{
+	sampler2D color1;
+};
+
 uniform sampler2D texture_map;
 uniform sampler2D shadow_map;
 uniform samplerCube irradiance_map;
@@ -37,6 +42,7 @@ uniform samplerCube prefilter_map;
 uniform sampler2D lut_map;
 
 uniform Material mat;
+uniform TextureFBX tex_fbx;
 uniform vec3 view_pos;
 uniform vec3 light_pos;
 uniform Light light;
@@ -151,6 +157,13 @@ void main()
 		vec3 specular = light.specular * pow(max(dot(v, h), 0.0), 32.0) * vec3(0.5);
 		color = ambient + (1.0-shadow)*(diffuse+specular);
 	}
-
+	else if(has_texture == 2)
+	{
+		vec3 texture_color = vec3(texture(tex_fbx.color1, fs_in.frag_texCoord));
+		vec3 ambient = vec3(1.0) * texture_color;
+		vec3 diffuse = light.diffuse * max(dot(n, l), 0.0) * texture_color;
+		vec3 specular = light.specular * pow(max(dot(v, h), 0.0), 32.0) * vec3(0.5);
+		color = ambient + (1.0-shadow)*(diffuse+specular);
+	}
     frag_color = vec4(color, 1.0);
 }  
