@@ -19,7 +19,7 @@ public:
 	Renderer();
 	~Renderer();
 
-	bool init();
+	void init();
 	void run();
 	void render();
 
@@ -33,20 +33,25 @@ public:
 
 private:
 	unique_ptr<SDL_GL_Window> m_sdl_window;
-	vector<SDL_Event> m_frame_events;
-	
-	vector<shared_ptr<GameObject>> m_scene_objects;
-	shared_ptr<GameObject> m_click_object;
+	unique_ptr<Camera> m_camera;
 	unique_ptr<Grid> m_grid;
+	unique_ptr<FrameBuffer> m_framebuffer;
+
+	unique_ptr<ShadowMap> m_shadow_map;
+	unique_ptr<CubeMap> m_cubemap;
+	unique_ptr<IrradianceMap> m_irradiancemap;
+	unique_ptr<PrefilterMap> m_prefilter;
+	unique_ptr<LUTMap> m_lut;
+	unique_ptr<EnvironmentMap> m_environment;
 	
+	unique_ptr<Outline> m_outline;
+	shared_ptr<GameObject> m_click_object;
+
+	vector<SDL_Event> m_frame_events;
+	vector<shared_ptr<GameObject>> m_scene_objects;
+	vector<shared_ptr<Light>> m_lights;
 	vector<shared_ptr<ImGuiPanel>> m_panels;
 	
-	unique_ptr<FrameBuffer> m_framebuffer;
-	unique_ptr<ShadowMap> m_shadow_map;
-	unique_ptr<Outline> m_outline;
-	
-	unique_ptr<Camera> m_camera;
-
 	long long m_start_time;
 	float m_ticks;
 	

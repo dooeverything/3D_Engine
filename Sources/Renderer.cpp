@@ -1,48 +1,78 @@
 #include "Renderer.h"
 
 Renderer::Renderer() :
-	m_sdl_window(make_unique<SDL_GL_Window>()), m_camera(unique_ptr<Camera>()),
-	m_framebuffer(make_unique<FrameBuffer>()), 
-	m_scene_objects({}), m_click_object(nullptr), m_shadow_map(nullptr),
-	m_frame_events({}), m_is_running(true), m_ticks(0), m_start_time(0), m_is_mouse_down(false),
+	m_shadow_map(nullptr), m_click_object(nullptr),
+	m_frame_events({}), m_scene_objects({}), m_lights({}), m_panels({}),
+	m_is_running(true), m_ticks(0), m_start_time(0), m_is_mouse_down(false),
 	m_is_click_gizmo(false), m_mouse_in_panel(false), m_is_moving_gizmo(false), m_is_drag(false)
-{}
+{
+	m_sdl_window = make_unique<SDL_GL_Window>();
+	init();
+}
 
 Renderer::~Renderer() {}
 
-bool Renderer::init()
+void Renderer::init()
 {
 	cout << "Initialize Renderer" << endl;
+	m_start_time = SDL_GetTicks64();
 
 	int width = 1400;
 	int height = 800;
 	m_sdl_window->init(width, height, "OpenGL Engine");
-	m_grid = make_unique<Grid>();
+
+	m_framebuffer = make_unique<FrameBuffer>();
 	m_framebuffer->createBuffers(width, height);
 
+	m_grid = make_unique<Grid>();
 	m_outline = make_unique<Outline>(width, height);
 
-	m_camera = make_unique<Camera>(glm::vec3(0.0f, 0.5f, 20.0f), -90.0f, 0.0f );
-	m_start_time = SDL_GetTicks64();
-
-	glm::vec3 light_pos = { 4.0f, 4.0f, 4.0f };
-	m_shadow_map = make_unique<ShadowMap>(light_pos);
+	m_camera = make_unique<Camera>(glm::vec3(0.0f, 7.5f, 27.0f), -90.0f, -11.0f);
 	
+	glm::vec3 light_pos = { 1.0f, 1.0f, 1.0f };
+	m_shadow_map = make_unique<ShadowMap>(2048, 2048, light_pos);
+	m_cubemap = make_unique<CubeMap>(4096, 4096);
+	m_irradiancemap = make_unique<IrradianceMap>(32, 32);
+	m_prefilter = make_unique<PrefilterMap>(256, 256);
+	m_lut = make_unique<LUTMap>(512, 512);
+	//m_environment = make_unique<EnvironmentMap>(glm::vec3({ 0.0f, 7.0f, 0.0f }));
+
 	m_panels.push_back(make_shared<ImGuiMenuBar>());
 	m_panels.push_back(make_shared<ObjectPanel>());
 	m_panels.push_back(make_shared<PropertyPanel>());
 
-	shared_ptr<GameObject> test_brdf = make_shared<Sphere>();
-	string name = "Sphere-BRDF";
-	test_brdf->setName(name);
+	shared_ptr<GameObject> test_brdf = make_shared<Sphere>(true);
+	test_brdf->setProperty(0, glm::vec3(0.0f, 7.0f, 0.0f));
 	m_scene_objects.push_back(test_brdf);
+	
+	//shared_ptr<GameObject> plane = make_shared<GameObject>("Models/Floor.txt");
+	//plane->setProperty(0, glm::vec3(0.0f, 1.5f, 0.0f));
+	//m_scene_objects.push_back(plane);
 
-	return true;
+	// Setup lights
+	glm::vec3 dir = -light_pos; //{ -0.2f, -1.0f, -0.3f };
+	glm::vec3 amb = { 10.0f, 10.0f, 10.0f };
+	glm::vec3 diff = { 0.8f, 0.8f, 0.8f };
+	glm::vec3 spec = { 0.5f, 0.5f, 0.5f };
+	m_lights.push_back(make_unique<Light>(dir, amb, diff, spec));
 }
 
 void Renderer::run()
 {
 	cout << "Render" << endl;
+
+	// Setup a cubemap
+	m_cubemap->drawMap();
+	
+	// Setup an irradiance map
+	m_irradiancemap->drawMap(*m_cubemap->getCubemapBuffer());
+
+	// Setup an prefilter map
+	m_prefilter->drawMap(*m_cubemap->getCubemapBuffer());
+
+	// Setup a lut map
+	m_lut->drawMap();
+
 	while (m_is_running)
 	{
 		render();
@@ -59,6 +89,9 @@ void Renderer::render()
 
 	handleInput();
 	//m_sdl_window->clearWindow();
+
+	// Draw an environment cubemap
+	//m_environment->draw(m_scene_objects, *m_lights.front());
 
 	// Draw a shadow map first to get shadows
 	m_shadow_map->draw(m_scene_objects);
@@ -267,8 +300,8 @@ void Renderer::renderImGui()
 	ImGui::NewFrame();
 	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
-	bool demo = true;
-	ImGui::ShowDemoWindow(&demo);
+	//bool demo = true;
+	//ImGui::ShowDemoWindow(&demo);
 
 	for (int i = 0; i < m_scene_objects.size(); ++i)
 	{
@@ -342,7 +375,7 @@ void Renderer::renderImGui()
 	//	ImGui::BeginChild("DebugRenderer");
 	//	{
 	//		ImVec2 wsize = ImGui::GetWindowSize();
-	//		ImGui::Image((ImTextureID)m_outline->getOutlineFrame(), wsize, ImVec2(0, 1), ImVec2(1, 0));
+	//		ImGui::Image((ImTextureID)m_lut->getFrameBuffer()->getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
 	//	}
 	//	ImGui::EndChild();
 	//}
@@ -369,13 +402,6 @@ void Renderer::renderScene(int width, int height)
 	}
 
 	glm::vec3 cam_pos = m_camera->getPos();
-
-	// Setup light
-	glm::vec3 dir = -(*m_shadow_map->getPosition());
-	glm::vec3 amb = { 100.0f, 100.0f, 100.0f };
-	glm::vec3 diff = { 0.8f, 0.8f, 0.8f };
-	glm::vec3 spec = { 0.5f, 0.5f, 0.5f };
-	unique_ptr<Light> directional_light = make_unique<Light>(dir, amb, diff, spec);
 
 	// Setup world to pixel coordinate transformation 
 	float aspect = static_cast<float>(width) / static_cast<float>(height);
@@ -448,23 +474,25 @@ void Renderer::renderScene(int width, int height)
 
 	for (auto it = render_objects.rbegin(); it != render_objects.rend(); ++it)
 	{
-		if (!it->get()->getIsClick())
-		{
-			it->get()->draw(P, V, *directional_light, cam_pos, *m_shadow_map);
-		}
+		it->get()->draw(P, V, *m_lights.at(0), cam_pos, 
+			*m_shadow_map, *m_irradiancemap, *m_prefilter, *m_lut);
 	}
+
+	// Draw background
+	m_cubemap->draw(P, V);
+	//m_irradiancemap->draw(P, V);
+
+	// Draw Grid
+	m_grid->draw(P, V, cam_pos);
 
 	if (m_click_object != nullptr)
 	{
 		glDisable(GL_DEPTH_TEST);
 		m_outline->draw(*m_click_object, P, V);
 		glEnable(GL_DEPTH_TEST);
-		m_click_object->draw(P, V, *directional_light, cam_pos, *m_shadow_map);
+		//m_click_object->draw(P, V, *m_lights.at(0), cam_pos, *m_shadow_map);
 	}
 
-	// Draw Grid
-	m_grid->draw(P, V, cam_pos);
-	
 	// Draw gizmos for clicked objects
 	glDisable(GL_DEPTH_TEST);
 	for (auto& it : render_objects)
@@ -475,7 +503,6 @@ void Renderer::renderScene(int width, int height)
 		}
 	}
 	glEnable(GL_DEPTH_TEST);
-
 }
 
 void Renderer::end()

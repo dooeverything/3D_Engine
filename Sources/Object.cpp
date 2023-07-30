@@ -12,13 +12,13 @@ Object::Object() :
 Object::Object(const string& mesh_path) :
 	m_click(false), m_name(""), m_property({}), m_path(mesh_path), m_id(0)
 {
-	//int last = mesh_path.find_last_of('/');
-	//if (last == -1)
-	//{
-	//	last = mesh_path.find_last_of('\\');
-	//}
-	//string temp = mesh_path.substr(last + 1, mesh_path.length());
-	//m_name = temp.substr(0, temp.find_last_of('.'));
+	int last = mesh_path.find_last_of('/');
+	if (last == -1)
+	{
+		last = mesh_path.find_last_of('\\');
+	}
+	string temp = mesh_path.substr(last + 1, mesh_path.length());
+	m_name = temp.substr(0, temp.find_last_of('.'));
 
 	string::size_type pos = mesh_path.find_last_of('.');
 	if (pos != mesh_path.length())
@@ -44,7 +44,7 @@ Object::Object(const string& mesh_path) :
 	m_property.push_back(glm::vec3(0.0f)); // Rotation
 	m_property.push_back(glm::vec3(1.0f)); // Scale
 
-	vector<string> shader_path = { "Shaders/Basic.vert", "Shaders/Basic.frag" };
+	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 }
 
@@ -144,53 +144,14 @@ void Object::setScale(glm::vec3 scale)
 	m_mesh->setScale(t);
 };
 
-ShadowMap::ShadowMap() :
-	m_shadow_buffer(shared_ptr<ShadowBuffer>()),
-	m_proj(glm::mat4(0.0f)), m_view(glm::mat4(0.0f)), m_light_position(glm::vec3(0.0f))
-{}
-
-ShadowMap::ShadowMap(glm::vec3 position)
-{
-	cout << "Shadw map constructor" << endl;
-	m_light_position = position;
-	m_proj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, -10.0f, 20.0f);
-	m_view = glm::lookAt(position, glm::vec3(0.0f), glm::vec3(0.0, -1.0, 0.0));
-
-	m_shadow_buffer = make_shared<ShadowBuffer>();
-	m_shadow_buffer->createBuffers(WIDTH, HEIGHT);
-
-	vector<string> shader_path = { "Shaders/ShadowMap.vert", "Shaders/ShadowMap.frag" };
-	m_shader = make_shared<Shader>(shader_path);
-	m_shader->processShader();
-}
-
-ShadowMap::~ShadowMap() {}
-
-void ShadowMap::draw(vector<shared_ptr<GameObject>>& gameobjects)
-{
-	glViewport(0, 0, WIDTH, HEIGHT);
-	m_shadow_buffer->bind();
-		glClear(GL_DEPTH_BUFFER_BIT);
-		for (auto& it : gameobjects)
-		{
-			m_shader->load();
-			it->getMesh()->draw(m_proj, m_view, *m_shader);
-		}
-	m_shadow_buffer->unbind();
-}
-
 Gizmo::Gizmo(GameObject& root, int axis) : 
 	m_root(root), m_axis(axis)
 {
-	m_mesh = make_shared<FBXMesh>("Models/Test.fbx");
+	m_mesh = make_shared<FBXMesh>("Models/Arrow.fbx");
 	m_mesh->processMesh();
-
 	vector<string> shader_paths = {"Shaders/Arrow.vert", "Shaders/Arrow.frag"};
 	m_shader = make_shared<Shader>(shader_paths);
 	m_shader->processShader();
-
-	cout << "Gizmos loaded succesfully..." << endl;
-	cout << endl;
 }
 
 Gizmo::~Gizmo()
@@ -227,7 +188,7 @@ void Gizmo::draw(glm::mat4& P, glm::mat4& V, glm::mat4& M)
 Grid::Grid()
 {
 	m_name = "Grid";
-	m_mesh = make_shared<Mesh>(m_name, "Models/Plane.txt");
+	m_mesh = make_shared<Mesh>(m_name, "Models/Grid.txt");
 	vector<string> shader_path = { "Shaders/Grid.vert", "Shaders/Grid.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 
@@ -249,7 +210,7 @@ void Grid::draw(glm::mat4& P, glm::mat4& V, glm::vec3 cam_pos)
 
 GameObject::GameObject() : Object(), 
 	m_gizmos({}), m_color(glm::vec3(1.0f, 0.5f, 0.31f)),
-	m_move_axis(-1)
+	m_move_axis(-1), m_irradiance(0.0), m_prefilter(0.0), m_lut(0.0)
 {}
 
 GameObject::GameObject(const string& mesh_path) : Object(mesh_path),
@@ -259,46 +220,96 @@ GameObject::GameObject(const string& mesh_path) : Object(mesh_path),
 	loadMesh();
 	loadShader();
 
-	vector<string> shader_paths = { "Shaders/Arrow.vert", "Shaders/Arrow.frag" };
-	m_gizmo_center_shader = make_shared<Shader>(shader_paths);
-	m_gizmo_center_shader->processShader();
-
-	m_gizmo_center = make_shared<Sphere>();
 	for (int axis = 0; axis < 3; ++axis)
 	{
 		shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
 		m_gizmos.push_back(gizmo);
 	}
 
-	cout << "Gameobject successfully loaded..." << endl;
+	cout << m_name << " successfully loaded..." << endl;
 	cout << endl;
-
 }
 
-GameObject::GameObject(const string& mesh_path, const vector<string>& shader_path) :
-	Object(mesh_path, shader_path),
-	m_gizmos({}), m_color(glm::vec3(1.0f, 0.5f, 0.31f)),
-	m_move_axis(-1)
+GameObject::GameObject(const string& mesh_path, const vector<string>& shader_path) : Object(mesh_path, shader_path),
+	m_gizmos({}), m_color(glm::vec3(1.0f, 0.5f, 0.31f)), m_move_axis(-1)
 {
 	loadMesh();
 	loadShader();
 
-	for (int axis = 0; axis < 3; ++axis)
-	{
-		shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
-		m_gizmos.push_back(gizmo);
-	}
+	//for (int axis = 0; axis < 3; ++axis)
+	//{
+	//	shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
+	//	m_gizmos.push_back(gizmo);
+	//}
 
-	cout << "Gameobject successfully loaded..." << endl;	
+	cout << m_name << " successfully loaded..." << endl;
 	cout << endl;
 }
 
 GameObject::~GameObject()
 {}
 
-void GameObject::draw(glm::mat4& P, glm::mat4& V, 
-	Light& light, glm::vec3& view_pos, ShadowMap& shadow)
+void GameObject::drawPreview(Material& mat)
 {
+	//cout << "Draw preview : " << m_irradiance << " " << m_prefilter << " " << m_lut << endl;
+	
+	glm::mat4 P = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
+	glm::mat4 V = glm::lookAt(glm::vec3(1.0f, 0.5f, 2.5f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 M = glm::mat4(1.0f);
+
+	glm::vec3 dir = { -0.2f, -1.0f, -0.3f };
+	glm::vec3 amb = { 10.0f, 10.0f, 10.0f };
+	glm::vec3 diff = { 0.8f, 0.8f, 0.8f };
+	glm::vec3 spec = { 0.5f, 0.5f, 0.5f };
+	unique_ptr<Light> light = make_unique<Light>(dir, amb, diff, spec);
+	glm::vec3 view_pos = glm::vec3(0.0, 0.0, 4.0);
+
+	m_shader->load();
+	m_shader->setVec3("view_pos", view_pos);
+	m_shader->setLight(*light);
+	m_shader->setInt("preview", 1);
+	m_shader->setMaterial(mat);
+
+	m_shader->setInt("shadow_map", 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	m_shader->setInt("irradiance_map", 1);
+	glActiveTexture(GL_TEXTURE0 + 1);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, m_irradiance);
+	m_shader->setInt("prefilter_map", 2);
+	glActiveTexture(GL_TEXTURE0 + 2);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, m_prefilter);
+	m_shader->setInt("lut_map", 3);
+	glActiveTexture(GL_TEXTURE0 + 3);
+	glBindTexture(GL_TEXTURE_2D, m_lut);
+
+	m_shader->setPVM(P, V, M);
+
+	m_shader->setInt("has_texture", 0);
+
+	if (mat.getTexture() != nullptr)
+	{
+		//cout << "Add texture to the object" << endl;
+		//cout << m_buffer->getLayouts().at(0).texCoord << endl;
+		m_shader->setInt("has_texture", 1);
+		m_shader->setInt("texture_map", 4);
+		glActiveTexture(GL_TEXTURE0 + 4);
+		mat.getTexture()->setActive();
+	}
+
+	m_mesh->draw();
+
+	glActiveTexture(GL_TEXTURE0);
+}
+
+void GameObject::draw(glm::mat4& P, glm::mat4& V,
+	Light& light, glm::vec3& view_pos, ShadowMap& shadow, 
+	IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut)
+{
+	m_prefilter = prefilter.getCubemapBuffer()->getCubemapTexture();
+	m_irradiance = irradiance.getCubemapBuffer()->getCubemapTexture();
+	m_lut = lut.getFrameBuffer()->getTextureID();
+	
 	if(!m_click)
 	{
 		m_move_axis = -1;
@@ -312,13 +323,25 @@ void GameObject::draw(glm::mat4& P, glm::mat4& V,
 	m_shader->setVec3("view_pos", view_pos);
 	m_shader->setLight(light);
 
-	m_shader->setFloat("width", m_screen_w);
-	m_shader->setFloat("height", m_screen_h);
+	//m_shader->setFloat("width", m_screen_w);
+	//m_shader->setFloat("height", m_screen_h);
+
+	m_shader->setInt("preview", 0);
 
 	// Load shadow map as texture
 	m_shader->setInt("shadow_map", 0);
 	glActiveTexture(GL_TEXTURE0);
 	shadow.getBuffer().bindFrameTexture();
+	m_shader->setInt("irradiance_map", 1);
+	glActiveTexture(GL_TEXTURE0 + 1);
+	irradiance.getCubemapBuffer()->bindCubemapTexture();
+	m_shader->setInt("prefilter_map", 2);
+	glActiveTexture(GL_TEXTURE0 + 2);
+	prefilter.getCubemapBuffer()->bindCubemapTexture();
+	m_shader->setInt("lut_map", 3);
+	glActiveTexture(GL_TEXTURE0 + 3);
+	lut.getFrameBuffer()->bindFrameTexture();
+
 	m_mesh->draw(P, V, *m_shader);
 }
 
@@ -372,10 +395,10 @@ Geometry::~Geometry()
 Sphere::~Sphere()
 {}
 
-Sphere::Sphere() : 
-	Geometry(), m_division(18.0f), m_radius(1.0f)
+Sphere::Sphere(bool is_create_gizmo) :
+	Geometry(), m_division(64.0f), m_radius(1.0f)
 {
-	cout << "Create sphere" << endl;
+	cout << "Sphere Constructor" << endl;
 
 	m_name = "Sphere";
 
@@ -383,18 +406,20 @@ Sphere::Sphere() :
 	vector<unsigned int> indices = calculateIndex();
 	m_mesh = make_shared<Mesh>(m_name, layouts, indices);
 
-	//vector<string> shader_path = { "Shaders/Basic.vert", "Shaders/Basic.frag" };
 	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	loadShader();
 
-	for (int axis = 0; axis < 3; ++axis)
+	if (is_create_gizmo)
 	{
-		shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
-		m_gizmos.push_back(gizmo);
+		for (int axis = 0; axis < 3; ++axis)
+		{
+			shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
+			m_gizmos.push_back(gizmo);
+		}
 	}
 
-	cout << "Sphere successfullly loaded" << endl;
+	cout << "Sphere Constructor successfullly loaded" << endl;
 	cout << endl;
 }
 
@@ -425,9 +450,14 @@ vector<info::VertexLayout> Sphere::calculateVertex()
 			glm::vec3 normal = { x, y, z };
 			normals.push_back(normal);
 
-			float s = (float)j / angle_sector;
-			float t = (float)i / angle_stack;
-			glm::vec2 texCoord = { s, t };
+			float lon = glm::atan(z, x);
+			float lat = glm::atan(y, sqrt(x * x + z * z));
+			float s = (lon + M_PI) / (2 * M_PI);
+			float t = (log(tan(lat / 2 + M_PI / 4)) + M_PI) / (2 * M_PI);
+
+			//float s = (float)j / angle_sector;
+			//float t = (float)i / angle_stack;
+			glm::vec2 texCoord = {s, t};
 			texCoords.push_back(texCoord);
 		}
 	}
@@ -478,6 +508,7 @@ vector<unsigned int> Sphere::calculateIndex()
 
 Outline::Outline(int width, int height)
 {
+	cout << "Create an outline constructor" << endl;
 	vector<string> outline_shader_paths = { "Shaders/Outline.vert", "Shaders/Outline.frag" };
 	m_outline_shader = make_unique<Shader>(outline_shader_paths);
 	m_outline_shader->processShader();
@@ -494,6 +525,8 @@ Outline::Outline(int width, int height)
 
 	vector<string> debug_shader = { "Shaders/Debug.vert", "Shaders/Debug.frag" };
 	m_debug = make_unique<GameObject>("Models/Debug.txt", debug_shader);
+	cout << "Outline finish loading" << endl;
+	cout << endl;
 }
 
 Outline::~Outline()

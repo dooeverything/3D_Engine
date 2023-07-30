@@ -53,16 +53,15 @@ private:
 public:
 	Mesh();
 	Mesh(string name, const string& path);
-	Mesh(string name, vector<info::VertexLayout> layouts, 
-		 vector<unsigned int> indices);
-	Mesh(string name, shared_ptr<VertexBuffer> buffer,
-		 vector<shared_ptr<Texture>> textures,
+	Mesh(string name, vector<info::VertexLayout> layouts, vector<unsigned int> indices);
+	Mesh(string name, shared_ptr<VertexBuffer> buffer, vector<shared_ptr<Texture>> textures,
 		 shared_ptr<Material> material);
 
 	virtual void processMesh();
 
 	void draw();
 	virtual void draw(glm::mat4& P, glm::mat4& V, Shader& shader);
+	virtual void drawLowQuality(Shader& shader);
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
 
 	inline void setName(string name) { m_name = name; };

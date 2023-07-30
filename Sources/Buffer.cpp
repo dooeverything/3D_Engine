@@ -16,7 +16,7 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts, cons
 	cout << "  -Create vertex buffers " << m_layouts.size() << endl;
 	cout << "  -Size of vertex layout: " << n_layouts << endl;
 	cout << "  -Size of indices: " << n_indices << endl;
-
+	
 	// Generate buffers: VAO, VBO, EBO
 	glGenVertexArrays(1, &m_VAO);
 	glGenBuffers(1, &m_VBO);
@@ -190,3 +190,91 @@ void ShadowBuffer::bindFrameTexture()
 {
 	glBindTexture(GL_TEXTURE_2D, m_shadow_map);
 }
+
+CubemapBuffer::CubemapBuffer() : m_cubemap(0), m_width(0), m_height(0)
+{}
+
+CubemapBuffer::~CubemapBuffer()
+{}
+
+void CubemapBuffer::createBuffers(int width, int height, bool mipmap)
+{
+	cout << "Create a Framebuffer" << endl;
+	// Create a framebuffer
+	glGenFramebuffers(1, &m_FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+
+	glGenRenderbuffers(1, &m_RBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, m_RBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_RBO);
+
+	cout << "Create cubemap buffer" << endl;
+	glGenTextures(1, &m_cubemap);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemap);
+	// Create a six faces for cubemap texture
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, nullptr);
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	if (mipmap == false)
+	{
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
+	else
+	{
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+	}
+
+	if (glGetError() != GL_NO_ERROR)
+	{
+		cerr << "Error " << glGetError() << endl;
+		assert("error from buffer.cpp");
+	}
+	auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE)
+	{
+		cerr << "Framebuffer error " << status << endl;
+		assert("error from buffer.cpp");
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void CubemapBuffer::bind()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+}
+
+void CubemapBuffer::unbind()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void CubemapBuffer::bindFrameTexture(int i)
+{
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, m_cubemap, 0);
+}
+
+void CubemapBuffer::bindMipMapTexture(int i, int mip)
+{
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, m_cubemap, mip);
+}
+
+void CubemapBuffer::bindCubemapTexture()
+{
+	glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemap);
+}
+
+void CubemapBuffer::bindRenderBuffer(int width, int height)
+{
+	glBindRenderbuffer(GL_RENDERBUFFER, m_RBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+}
+

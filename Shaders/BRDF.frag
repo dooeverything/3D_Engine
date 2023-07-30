@@ -1,3 +1,8 @@
+// References:
+// 1. https://learnopengl.com/PBR/IBL/Specular-IBL
+// 2. https://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
+// 3. http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
+
 #version 410 core
 out vec4 frag_color;
 
@@ -6,6 +11,7 @@ struct Material
 	vec3 color;
     float metallic;
     float roughness;
+	float ao;
 };
 
 in VS_OUT
@@ -26,11 +32,16 @@ struct Light
 
 uniform sampler2D texture_map;
 uniform sampler2D shadow_map;
+uniform samplerCube irradiance_map;
+uniform samplerCube prefilter_map;
+uniform sampler2D lut_map;
 
 uniform Material mat;
 uniform vec3 view_pos;
 uniform vec3 light_pos;
 uniform Light light;
+uniform int has_texture;
+uniform int preview;
 
 #define M_PI 3.1415926535897932384626433832795
 
@@ -54,9 +65,15 @@ vec3 fernel(float cos_theta)
     return F0 + (1-F0)*pow(clamp(1.0-cos_theta, 0.0, 1.0), 5);
 }
 
+vec3 fernelRoughness(float cos_theta)
+{
+    vec3 F0 = mix(vec3(0.04), mat.color, mat.metallic);
+	return F0 + (max(vec3(1.0-mat.roughness), F0)-F0) * pow(clamp(1.0-cos_theta, 0.0, 1.0), 5);
+}
+
 float ShadowCalculation(vec4 light_space, float cos_theta)
 {
-	vec3 proj_coords = light_space.xyz / light_space.w; // Make homogenous coordinate to 1 by perspective divide
+	vec3 proj_coords = light_space.xyz / light_space.w; // Make homogenous coordinate to 1 by perspective division
 	proj_coords = proj_coords * 0.5 + 0.5; // Convert [-1, 1] => [0, 1]
 
 	if(proj_coords.z > 1.0)
@@ -92,23 +109,48 @@ void main()
     vec3 n = normalize(fs_in.frag_norm);
     vec3 v = normalize(view_pos-fs_in.frag_pos);
     vec3 h = normalize(l+v);
-
-    vec3 F = fernel(max(dot(n,v),0.0)); // Reflection
-    float G = geometry(max(dot(n,l),0.0)) * geometry(max(dot(n,v),0.0));
-    float D = normalDistribution(max(dot(n,h),0.0));
-
-    vec3 specular = (F*G*D) / (4.0*max(dot(n,v),0.0)*max(dot(n,l),0.0)+0.0001);
-    
-    vec3 kS = F;
-    vec3 kD = vec3(1.0)-kS;
-    kD *= 1.0-mat.metallic;
-
-    vec3 diffuse = kD*mat.color/M_PI;
+	vec3 r = normalize(2 * dot(v, n) * n - v);
+	vec3 color = vec3(0.0);
 	float shadow = ShadowCalculation(fs_in.frag_pos_light, max(dot(l, n), 0.0));
 
-    vec3 color = vec3(0.5) * mat.color + (1-shadow)*(diffuse + specular) * light.ambient * max(dot(n,l),0.0);
-    color = color / (color + vec3(1.0)); // HDR
-    color = pow(color, vec3(1.0/2.2)); // Gamma correction
+	if(has_texture == 0)
+	{
+		vec3 F = fernel(max(dot(n,v),0.0)); // Reflection
+		float G = geometry(max(dot(n,l),0.0)) * geometry(max(dot(n,v),0.0));
+		float D = normalDistribution(max(dot(n,h),0.0));
+		vec3 specular2 = (F*G*D) / (4.0*max(dot(n,v),0.0)*max(dot(n,l),0.0)+0.0001);
+		vec3 kS = F;
+		vec3 kD = vec3(1.0)-kS;
+		kD *= 1.0-mat.metallic;
+		vec3 diffuse2 = kD*mat.color/M_PI;
+		vec3 second_sum = (diffuse2 + specular2) * light.ambient * max(dot(l, n), 0.0);
+		if(preview == 0)
+		{
+			second_sum *= (1-shadow);
+		}
+
+		F = fernelRoughness(max(dot(n,v),0.0));
+		kS = F;
+		kD = 1.0-kS;
+		kD *= 1.0 - mat.metallic;
+		vec3 diffuse1 = texture(irradiance_map, n).rgb * mat.color;
+		vec3 prefilter_color = textureLod(prefilter_map, r, mat.roughness*4.0).rgb;
+		vec2 lut_color = texture(lut_map, vec2(max(dot(n,v),0.0), mat.roughness)).rg;
+		vec3 specular1 = prefilter_color * (F*lut_color.x + lut_color.y);
+		vec3 first_sum = (kD * diffuse1 + specular1) * mat.ao;
+		
+		color = (first_sum + second_sum);
+		color = color / (color + vec3(1.0)); // HDR
+		color = pow(color, vec3(1.0/2.2)); // Gamma correction
+	} 
+	else if(has_texture == 1)
+	{
+		vec3 texture_color = vec3(texture(texture_map, fs_in.frag_texCoord));
+		vec3 ambient = vec3(1.0) * texture_color;
+		vec3 diffuse = light.diffuse * max(dot(n, l), 0.0) * texture_color;
+		vec3 specular = light.specular * pow(max(dot(v, h), 0.0), 32.0) * vec3(0.5);
+		color = ambient + (1.0-shadow)*(diffuse+specular);
+	}
 
     frag_color = vec4(color, 1.0);
 }  

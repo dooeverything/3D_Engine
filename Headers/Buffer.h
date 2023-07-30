@@ -53,7 +53,7 @@ public:
 	void rescaleFrame(int width, int height);
 	virtual void bindFrameTexture();
 
-	virtual GLuint& getTextureID() { return m_framebuffer_texture; };
+	virtual GLuint getTextureID() { return m_framebuffer_texture; };
 };
 
 class ShadowBuffer : protected FrameBuffer
@@ -69,7 +69,27 @@ public:
 	virtual void bind();
 	virtual void unbind();
 	virtual void bindFrameTexture();
-	virtual GLuint& getTextureID() { return m_shadow_map; };
+	virtual GLuint getTextureID() { return m_shadow_map; };
+};
+
+class CubemapBuffer : protected FrameBuffer
+{
+public:
+	CubemapBuffer();
+	~CubemapBuffer();
+
+	virtual void createBuffers(int width, int height, bool mipmap);
+	virtual void bind();
+	virtual void unbind();
+	virtual void bindFrameTexture(int i);
+	virtual void bindMipMapTexture(int i, int mip);
+	void bindCubemapTexture();
+	void bindRenderBuffer(int width, int height);
+	virtual inline unsigned int getCubemapTexture() { return m_cubemap; };
+private:
+	unsigned int m_cubemap;
+	unsigned int m_width;
+	unsigned int m_height;
 };
 
 #endif

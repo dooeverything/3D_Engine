@@ -16,7 +16,7 @@ Texture::Texture(const string& path, const string& type) :
 
 Texture::~Texture() {}
 
-bool Texture::loadTexture()
+void Texture::loadTexture()
 {
 	int n_channel = 0;
 
@@ -41,6 +41,16 @@ bool Texture::loadTexture()
 	glBindTexture(GL_TEXTURE_2D, m_texture_ID);
 	glTexImage2D(GL_TEXTURE_2D, 0, format, m_width, m_height, 0, format, GL_UNSIGNED_BYTE, texture);
 	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(texture);
+
+	//GLenum errorCode;
+	//if ((errorCode = glGetError()) != GL_NO_ERROR)
+	//{
+	//	cout << endl;
+	//	cerr << "***** TEXTURE ERROR FROM " << m_path << " " << m_type << "*****" << endl;
+	//	cerr << "Error Type : " << errorCode << endl;
+	//	assert(0);
+	//}
 
 	// Set texture wrapping parameters
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -49,18 +59,6 @@ bool Texture::loadTexture()
 	// Set texture filtering parameters
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	GLenum errorCode;
-	if ((errorCode = glGetError()) != GL_NO_ERROR)
-	{
-		cerr << "***TEXTURE ERROR FROM " << m_path << " " << m_type << endl;
-		cerr << "Error Type : " << errorCode << endl;
-		assert(0);
-	}
-
-	stbi_image_free(texture);
-
-	return true;
 }
 
 void Texture::setActive()

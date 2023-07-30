@@ -4,9 +4,10 @@
 #include <string>
 #include <iostream>
 #include <vector>
-
 #include "Math.h"
+
 #include "Light.h"
+#include "Material.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -29,6 +30,7 @@ public:
 	void setMat4(const string& name, glm::mat4& matrix) const;
 	void setPVM(glm::mat4& p, glm::mat4& v, glm::mat4& m) const;
 	void setLight(Light& light);
+	void setMaterial(Material& material);
 
 	void load();
 	void unload();

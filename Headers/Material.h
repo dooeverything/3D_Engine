@@ -28,12 +28,12 @@ public:
 	inline glm::vec3& getBaseColor() { return m_base_color; };
 	inline float getMetallic() { return m_metallic; };
 	inline float getRoughness() { return m_roughness; };
+	inline float getAO() { return m_ao; };
 	inline shared_ptr<Texture> getTexture() { return m_texture; };
 
 	inline void setBaseColor(glm::vec3 color) { m_base_color = color; };
 	inline void setMetallic(float metallic) { m_metallic = metallic; };
 	inline void setRoughness(float roughness) { m_roughness = roughness; };
-
 private:
 	shared_ptr<Texture> m_texture;
 
@@ -41,6 +41,7 @@ private:
 	glm::vec3 m_base_color;
 	float m_metallic;
 	float m_roughness;
+	float m_ao;
 };
 
 #endif

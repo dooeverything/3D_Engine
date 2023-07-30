@@ -1,0 +1,13 @@
+#version 410 core
+layout (location=0) in vec3 in_pos;
+
+out vec3 frag_pos;
+
+uniform mat4 PV;
+
+void main()
+{
+    frag_pos = in_pos;
+    vec4 clip_pos = PV * vec4(in_pos, 1.0);
+    gl_Position = clip_pos.xyww;
+}

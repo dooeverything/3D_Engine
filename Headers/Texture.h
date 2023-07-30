@@ -19,18 +19,17 @@ public:
 	Texture(const string& path, const string& type);
 	~Texture();
 
-	bool loadTexture();
-	//bool loadCubemapTexture(const vector<string>& faces);
-
+	void loadTexture();
 	void setActive();
 	void unload();
 
-	int getWidth() const { return m_width; };
-	int getHeight() const { return m_height; };
-	unsigned int getTextureID() const { return m_texture_ID; };
+	inline int getWidth() const { return m_width; };
+	inline int getHeight() const { return m_height; };
+	inline unsigned int getTextureID() const { return m_texture_ID; };
 
 	string getPath() const { return m_path; }
 	string getType() const { return m_type; }
+
 private:
 	unsigned int m_texture_ID;
 	int m_width;

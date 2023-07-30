@@ -82,6 +82,7 @@ void SDL_GL_Window::init(const int width, const int height, string title)
 
 	// Enable stencil buffer
 	glEnable(GL_STENCIL_TEST);
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 	// If both depth and stencil test pass, then use the result of the stencil test
 	// Replace with the masked fragment value

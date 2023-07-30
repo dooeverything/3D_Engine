@@ -66,8 +66,8 @@ void BoundingBox::draw()
 	glm::mat4 transform = glm::translate(glm::mat4(1), center) * glm::scale(glm::mat4(1), size);
 }
 
-Mesh::Mesh()
-	: m_directory(""), m_name(""), m_buffer(make_unique<VertexBuffer>()),
+Mesh::Mesh() :
+	m_directory(""), m_name(""), m_buffer(make_unique<VertexBuffer>()),
 	m_textures({}), m_material(make_unique<Material>()),
 	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
 	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f))
@@ -92,9 +92,7 @@ Mesh::Mesh(string name, vector<info::VertexLayout> layouts, vector<unsigned int>
 	m_bbox = computeBoundingBox();
 }
 
-Mesh::Mesh(string name, shared_ptr<VertexBuffer> buffer, 
-		   vector<shared_ptr<Texture>> textures, 
-		   shared_ptr<Material> material) :
+Mesh::Mesh(string name, shared_ptr<VertexBuffer> buffer, vector<shared_ptr<Texture>> textures, shared_ptr<Material> material) :
 	m_directory(""), m_name(name), 
 	m_buffer(buffer), m_textures(textures), m_material(material), 
 	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
@@ -207,36 +205,27 @@ void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 	glm::mat4 adjust = glm::mat4(1.0f);
 	shader.load();
 	shader.setMat4("adjust", adjust);
-	shader.setVec3("mat.color", m_material->getBaseColor());
-	shader.setFloat("mat.metallic", m_material->getMetallic());
-	shader.setFloat("mat.roughness", m_material->getRoughness());
+	shader.setMaterial(*m_material);
 
 	glm::mat4 M = m_transform_pos * m_transform_rot * m_transform_scale;
 	shader.setPVM(P, V, M);
 
-	if (m_textures.size() == 0)
-	{
-		shader.setInt("has_texture", 0);
-	}
-	else
-	{
-		shader.setInt("has_texture", 1);
-	}
+	shader.setInt("has_texture", 0);
 
 	if (m_material->getTexture() != nullptr)
 	{
 		//cout << "Add texture to the object" << endl;
 		//cout << m_buffer->getLayouts().at(0).texCoord << endl;
-		shader.setInt("texture_map", 1);
-		shader.setInt("has_texture", 2);
-		glActiveTexture(GL_TEXTURE0 + 1);
+		shader.setInt("has_texture", 1);
+		shader.setInt("texture_map", 4);
+		glActiveTexture(GL_TEXTURE0 + 4);
 		m_material->getTexture()->setActive();
 	}
 
 	// Set texture before draw a mesh
 	for (int i = 0; i < m_textures.size(); ++i)
 	{
-		glActiveTexture(GL_TEXTURE0 + i + 1);
+		glActiveTexture(GL_TEXTURE0 + i + 3);
 
 		string index;
 		string type = m_textures[i]->getType();
@@ -257,6 +246,15 @@ void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 
 	// Set everything back to default texture
 	glActiveTexture(GL_TEXTURE0);
+}
+
+void Mesh::drawLowQuality(Shader& shader)
+{
+	shader.load();
+	shader.setMaterial(*m_material);
+	glm::mat4 M = m_transform_pos * m_transform_rot * m_transform_scale;
+	shader.setMat4("model", M);
+	draw();
 }
 
 bool Mesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)

@@ -23,7 +23,12 @@ bool Shader::processShader()
 
 	if (!compileShader(m_paths.at(0), GL_VERTEX_SHADER, vert_shader) || 
 		!compileShader(m_paths.at(1), GL_FRAGMENT_SHADER, frag_shader))
-		return false;
+		assert(0);
+
+	if (m_paths.size() > 2)
+	{
+		compileShader(m_paths.at(2), GL_GEOMETRY_SHADER, geom_shader);
+	}
 
 	m_shader_ID = glCreateProgram();
 
@@ -154,6 +159,14 @@ void Shader::setLight(Light& light)
 	setVec3("light.ambient", amb);
 	setVec3("light.diffuse", diff);
 	setVec3("light.specular", spec);
+}
+
+void Shader::setMaterial(Material& material)
+{
+	setVec3("mat.color", material.getBaseColor());
+	setFloat("mat.metallic", material.getMetallic());
+	setFloat("mat.roughness", material.getRoughness());
+	setFloat("mat.ao", material.getAO());
 }
 
 void Shader::unload()

@@ -17,9 +17,8 @@ vec2 clampVec2(vec2 v)
 vec4 gridColor(vec2 uv, vec2 cam_pos)
 {
 	float grid_size = 100.0;
-	float grid_cell_size = 0.1;
-	vec4 grid_thick = vec4(1.0, 1.0, 1.0, 1.0);
-	vec4 grid_thin = vec4(0.3, 0.3, 0.3, 1.0);
+	float grid_cell_size = 1.0;
+	vec4 grid_thin = vec4(0.5, 0.5, 0.5, 1.0);
 
 	vec2 dudv = vec2( length(vec2(dFdx(uv.x), dFdy(uv.x))), 
 					  length(vec2(dFdx(uv.y), dFdy(uv.y))) );
@@ -31,26 +30,33 @@ vec4 gridColor(vec2 uv, vec2 cam_pos)
 	// How many pixel for each level, ex) if level = 1.xxx, then floor(level) => 1
 	float lod0 = grid_cell_size * pow(10.0, floor(level)); 
 	float lod1 = 10 * lod0;
-	float lod2 = 10 * lod1;
-
-	dudv *= 4.0;
+	dudv *= 2.0;
 
 	vec2 dist = vec2(1.0) - abs(clampVec2(mod(uv, lod0)/dudv) * 2.0 - vec2(1.0));
 	float lod0_alpha = max(dist.x, dist.y);
 	dist = vec2(1.0) - abs(clampVec2(mod(uv, lod1)/dudv) * 2.0 - vec2(1.0));
 	float lod1_alpha = max(dist.x, dist.y);
-	dist = vec2(1.0) - abs(clampVec2(mod(uv, lod2)/dudv) * 2.0 - vec2(1.0));
-	float lod2_alpha = max(dist.x, dist.y);
-	vec4 color = lod2_alpha > 0.0 ? grid_thick : lod1_alpha > 0.0 ? mix(grid_thick, grid_thin, fade) : grid_thin;
+	vec4 color = grid_thin;
 	
 	uv -= cam_pos;
 	float fade_out = (1.0 - clamp(length(uv)/grid_size, 0.0, 1.0));
-	color.a = (lod2_alpha > 0.0 ? lod2_alpha : lod1_alpha > 0.0 ? lod1_alpha : (lod0_alpha * (1.0-fade))) * fade_out;
+	color.a = lod1_alpha > 0.0 ? lod1_alpha : (lod0_alpha * (1.0-fade)) * fade_out;
 
 	return color;
 }
 
 void main()
 {
-	frag_color = gridColor(out_uv, out_cam);
+	if(out_uv.x < 0.05 && out_uv.x > -0.05)
+	{
+		frag_color = vec4(0.0, 0.0, 1.0, 1.0);
+	}
+	else if(out_uv.y < 0.05 && out_uv.y > -0.05)
+	{
+		frag_color = vec4(1.0, 0.0, 0.0, 1.0);
+	}
+	else
+	{
+		frag_color = gridColor(out_uv, out_cam);
+	}
 }

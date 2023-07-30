@@ -56,7 +56,8 @@ void Camera::processMouseDrag(SDL_Event event)
 	{
 		m_pitch = -89.0f;
 	}
-
+	//cout << "Yaw: " << m_yaw << " Pitch: " << m_pitch << endl;
+	//cout << "Pos: " << m_pos.x << " " << m_pos.y << " " << m_pos.z << endl;
 	updateCamera();
 }
 

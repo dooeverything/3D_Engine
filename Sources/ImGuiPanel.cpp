@@ -82,7 +82,7 @@ void ImGuiMenuBar::render(vector<shared_ptr<GameObject>>& scene_objects, shared_
 			}
 			if (ImGui::MenuItem("Sphere"))
 			{
-				shared_ptr<GameObject> sphere = make_shared<Sphere>();
+				shared_ptr<GameObject> sphere = make_shared<Sphere>(true);
 				addObject(scene_objects, sphere);
 			}
 			ImGui::EndMenu();
@@ -185,14 +185,14 @@ void ObjectPanel::render(vector<shared_ptr<GameObject>>&scene_objects, shared_pt
 }
 
 PropertyPanel::PropertyPanel() :
-	m_preview_fb(make_unique<FrameBuffer>()),
-	m_preview_object(make_unique<Sphere>())
+	m_preview_fb(make_unique<FrameBuffer>()), m_preview_object(make_unique<Sphere>(false))
 {
-	vector<string> shader_path = { "Shaders/Preview.vert", "Shaders/Preview.frag" };
-	m_preview_shader = make_unique<Shader>(shader_path);
-	
-	m_preview_fb->createBuffers(1024, 1024);
-	m_preview_shader->processShader();
+	m_preview_fb->createBuffers(512, 512);
+
+	//vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
+	//m_preview_shader = make_unique<Shader>(shader_path);
+	//
+	//m_preview_shader->processShader();
 }
 
 PropertyPanel::~PropertyPanel()
@@ -209,6 +209,7 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 			ImGui::End();
 			return;
 		}
+
 		string name = clicked_object->getIdName();
 		const char* object_name = name.c_str();
 		ImGui::Text(object_name);
@@ -263,6 +264,9 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 		if (expand_material)
 		{
 			shared_ptr<Material> mat = clicked_object->getMesh()->getMaterial();
+			m_preview_object->setIrradiance(clicked_object->getIrradiance());
+			m_preview_object->setPrefiler(clicked_object->getPrefiler());
+			m_preview_object->setLUT(clicked_object->getLUT());
 			renderPreview(*mat);
 			//static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
 			ImGui::Image((ImTextureID)m_preview_fb->getTextureID(), ImVec2(100.0, 100.0), ImVec2(0, 1), ImVec2(1, 0));
@@ -287,7 +291,7 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 			if (load_texture)
 			{
 				m_fd = make_unique<FileDialog>();
-				string path = m_fd->OpenFile(".png");
+				string path = m_fd->OpenFile(".jpg");
 				if (path != "")
 				{
 					cout << "Open: " << path << endl;
@@ -296,45 +300,17 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 			}
 			ImGui::TreePop();
 		}
-
-		//for (int i = 0; i < scene_objects.size(); ++i)
-		//{
-		//	if (scene_objects[i]->getIsClick())
-		//	{
-		//	}
-		//}
-
 	}
 	ImGui::End();
 }
 
 void PropertyPanel::renderPreview(Material& mat)
 {
-	glm::mat4 P = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
-	glm::mat4 V = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 M = glm::mat4(1.0f);
-
 	m_preview_fb->bind();
-	glViewport(0, 0, 1024, 1024);
+	glViewport(0, 0, 512, 512);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	m_preview_shader->load();
-	m_preview_shader->setPVM(P, V, M);
-	m_preview_shader->setVec3("mat.color", mat.getBaseColor());
-	//m_preview_shader->setVec3("mat.diffuse", mat.getDiffuse());
-	//m_preview_shader->setVec3("mat.specular", mat.getSpecular());
-	//m_preview_shader->setFloat("mat.shininess", mat.getShininess());
-	if (mat.getTexture() != nullptr)
-	{
-		m_preview_shader->setInt("has_texture", 1);
-		glActiveTexture(GL_TEXTURE0);
-		mat.getTexture()->setActive();
-	}
-	else
-	{
-		m_preview_shader->setInt("has_texture", 0);
-	}
-	m_preview_object->getMesh()->draw();
+	m_preview_object->drawPreview(mat);
 	m_preview_fb->unbind();
 }
 

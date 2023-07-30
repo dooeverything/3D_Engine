@@ -54,7 +54,7 @@ public:
 private:
 	unique_ptr<FrameBuffer> m_preview_fb;
 	unique_ptr<Sphere> m_preview_object;
-	unique_ptr<Shader> m_preview_shader;
+	//unique_ptr<Shader> m_preview_shader;
 
 	void renderPreview(Material& mat);
 

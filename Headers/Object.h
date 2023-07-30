@@ -3,12 +3,8 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include <vector>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include "Mesh.h"
-#include "imgui-docking/imgui.h"
+//#include "imgui-docking/imgui.h"
+#include "Map.h"
 
 using namespace std;
 
@@ -71,37 +67,14 @@ public:
 	void setupBuffers(GameObject& go, glm::mat4& P, glm::mat4& V);
 	void draw(GameObject& go, glm::mat4& P, glm::mat4& V);
 
-	inline GLuint& getOutlineFrame() { return m_outline_buffers.back()->getTextureID(); };
+	inline GLuint getOutlineFrame() { return m_outline_buffers.back()->getTextureID(); };
 	void clearOutlineFrame();
 
 private:
 	vector<unique_ptr<FrameBuffer>> m_outline_buffers;
-	unique_ptr<GameObject> m_debug;
+	unique_ptr<Object> m_debug;
 	unique_ptr<Shader> m_mask_shader;
 	unique_ptr<Shader> m_outline_shader;
-};
-
-class ShadowMap : public Object
-{
-public:
-	ShadowMap();
-	ShadowMap(glm::vec3 m_position);
-	~ShadowMap();
-
-	void draw(vector<shared_ptr<GameObject>>& gameobjects);
-	inline ShadowBuffer& getBuffer() { return *m_shadow_buffer; };
-	inline glm::mat4* getProj() { return &m_proj; };
-	inline glm::mat4* getView() { return &m_view; };
-	inline glm::vec3* getPosition() { return &m_light_position; };
-
-private:
-	const unsigned int WIDTH = 2048;
-	const unsigned int HEIGHT = 2048;
-
-	shared_ptr<ShadowBuffer> m_shadow_buffer;
-	glm::mat4 m_proj;
-	glm::mat4 m_view;
-	glm::vec3 m_light_position;
 };
 
 class Grid : public Object
@@ -124,7 +97,6 @@ private:
 	int m_axis;
 };
 
-class Sphere;
 class GameObject : public Object
 {
 public:
@@ -133,28 +105,35 @@ public:
 	GameObject(const string& mesh_path, const vector<string>& shader_path);
 	~GameObject();
 
-	virtual void draw(glm::mat4& P, glm::mat4& V, Light& light, glm::vec3& view_pos, ShadowMap& shadow);
+	virtual void drawPreview(Material& mat);
+	virtual void draw(glm::mat4& P, glm::mat4& V, Light& light, 
+					  glm::vec3& view_pos, ShadowMap& shadow, 
+					  IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut);
 	virtual void drawGizmos(glm::mat4& P, glm::mat4& V, glm::vec3& view_pos);
 	virtual void loadMesh();
 	virtual bool isGizmoClick(glm::vec3& ray_dir, glm::vec3& ray_pos);
 
 	virtual inline void setColor(glm::vec3 color) { m_color = color; };
 	virtual inline shared_ptr<Gizmo> getGizmo(int index) { return m_gizmos[index]; };
+	virtual inline unsigned int getIrradiance() { return m_irradiance; };
+	virtual inline unsigned int getPrefiler() { return m_prefilter; };
+	virtual inline GLuint getLUT() { return m_lut; };
+	virtual inline void setIrradiance(unsigned int irradiance) { m_irradiance = irradiance; };
+	virtual inline void setPrefiler(unsigned int prefilter) { m_prefilter=prefilter; };
+	virtual inline void setLUT(GLuint lut) { m_lut = lut; };
 
 private:
 	glm::vec3 m_color;
 
 protected:
 	vector<shared_ptr<Gizmo>> m_gizmos;
-	shared_ptr<Sphere> m_gizmo_center;
-	shared_ptr<Shader> m_gizmo_center_shader;
+
+	unsigned int m_irradiance;
+	unsigned int  m_prefilter;
+	GLuint m_lut;
 
 public:
 	int m_move_axis;
-	shared_ptr<FrameBuffer> m_frame_buffer = nullptr;
-	float m_screen_w = 0.0;
-	float m_screen_h = 0.0;
-
 };
 
 class Geometry : public GameObject
@@ -171,7 +150,7 @@ private:
 class Sphere : public Geometry
 {
 public:
-	Sphere();
+	Sphere(bool is_create_gizmo);
 	~Sphere();
 
 private:
