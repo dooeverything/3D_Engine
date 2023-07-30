@@ -29,3 +29,8 @@ I am making this engine just for learning computer graphic stuffs, and it is not
 ### Features to be added
  1. Shadow (Point light)
  2. Skeleton Animation
+ 3. Environment mapping
+ 4. enhanced fbx loader
+ 5. Bump mapping
+ 6. Marching Cube
+ 7. Terrain
