@@ -15,6 +15,7 @@ I am making this engine just for learning computer graphic stuffs, and it is not
  6. Shadow (Directional light)
  7. Load and apply texture to a game object
  8. Physically Based Rendering (PBR)
+ 9. 3D grid
 
 ### Libraries
  1. C++17
