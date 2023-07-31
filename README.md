@@ -4,13 +4,13 @@
 ![Screenshot](https://github.com/dooeverything/OpenGL_Engine/blob/main/ScreenShots/screenshot-5.png)
 
 ### About this project 
-I am making this engine just for learning computer graphics with OpenGL and C++, so it is meant to be a serious engine program. 
+I am making this engine just for learning computer graphics using OpenGL and C++, and it is just a hobby project. This project is mostly inspired by [learnopengl.com](learnopengl.com), which is a perfect tutorial for computer graphics beginners, and later I found some more interesting references to understand and build 3D engine features, such as [Real Time Rendering](https://www.amazon.com/Real-Time-Rendering-Fourth-Tomas-Akenine-M%C3%B6ller/dp/1138627003), [Physically Based Rendering](https://www.amazon.com/Physically-Based-Rendering-Theory-Implementation/dp/0128006455), which helped me to dive deep into core theories behind computer graphics.  
 
 ### Features include
  1. 3D model loading (.fbx)
  2. 3D game engine like gui (by using ImGui)
  3. Phong Shading Model
- 4. 3D Gizmos (translation)
+ 4. 3D Gizmos (only translation)
  5. Outline for picking objects (by using [jump flood algorithm](https://www.comp.nus.edu.sg/~tants/jfa.html))
  6. Shadow (Directional light)
  7. Load and apply texture to a game object
@@ -32,7 +32,7 @@ I am making this engine just for learning computer graphics with OpenGL and C++,
 
 ### Mouse Inputs
  1. With the left mouse button being clicked, press W/A/S/D to move around
- 2. Right mouse button to pick and move the object and to play round with GUI
+ 2. Right mouse button to pick and move the object and to play around with GUI
  
 ### Features to be added
  1. Shadow (Point light)
@@ -42,3 +42,4 @@ I am making this engine just for learning computer graphics with OpenGL and C++,
  5. Bump mapping
  6. Marching Cube
  7. Terrain
+ 8. 3D gizmos for rotation and scale
