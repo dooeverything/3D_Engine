@@ -4,7 +4,7 @@
 ![Screenshot](https://github.com/dooeverything/OpenGL_Engine/blob/main/ScreenShots/screenshot-5.png)
 
 ### About this project 
-I am making this engine just for learning computer graphic stuffs, and it is not a serious engine program. 
+I am making this engine just for learning computer graphics with OpenGL and C++, so it is meant to be a serious engine program. 
 
 ### Features include
  1. 3D model loading (.fbx)
