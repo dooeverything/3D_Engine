@@ -16,7 +16,7 @@ I am making this engine just for learning computer graphic stuffs, and it is not
  7. Load and apply texture to a game object
  8. Physically Based Rendering (PBR)
 
-### Used libraries
+### Libraries
  1. C++17
  2. OpenGl 3.3
  3. [ImGui](https://github.com/ocornut/imgui)
@@ -30,8 +30,8 @@ I am making this engine just for learning computer graphic stuffs, and it is not
  5. [Physically Based Rendering, 3rd edition](https://www.amazon.com/Physically-Based-Rendering-Theory-Implementation/dp/0128006455)
 
 ### Mouse Inputs
- 1. With left mouse button clicked, press W/A/S/D to move around
- 2. Right mouse button to pick and move the object and play round with gui
+ 1. With the left mouse button being clicked, press W/A/S/D to move around
+ 2. Right mouse button to pick and move the object and to play round with GUI
  
 ### Features to be added
  1. Shadow (Point light)
