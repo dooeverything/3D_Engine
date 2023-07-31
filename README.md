@@ -18,7 +18,7 @@ I am making this engine just for learning computer graphic stuffs, and it is not
 
 ### Libraries
  1. C++17
- 2. OpenGl 3.3
+ 2. OpenGL 3.3
  3. [ImGui](https://github.com/ocornut/imgui)
  4. [stb library](https://github.com/nothings/stb)
 
