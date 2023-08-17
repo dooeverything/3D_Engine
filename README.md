@@ -20,8 +20,9 @@ I am making this engine just for learning computer graphics using OpenGL and C++
 ### Libraries
  1. C++17
  2. OpenGL 3.3
- 3. [ImGui](https://github.com/ocornut/imgui)
- 4. [stb library](https://github.com/nothings/stb)
+ 3. [glm](https://github.com/g-truc/glm)
+ 4. [ImGui](https://github.com/ocornut/imgui)
+ 5. [stb library](https://github.com/nothings/stb)
 
 ### References
  1. [Learn OpenGL](learnopengl.com)
