@@ -61,7 +61,7 @@ void SDL_GL_Window::init(const int width, const int height, string title)
 	ImGui::StyleColorsDark();
 	io.Fonts->AddFontFromFileTTF("Roboto-Medium.ttf", 15.0f);
 
-	const char* glsl_version = "#version 330";
+	const char* glsl_version = "#version 450";
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplSDL2_InitForOpenGL(m_window, m_context);

@@ -78,9 +78,6 @@
     <ClInclude Include="C:\vclib\imgui-docking\imgui_internal.h">
       <Filter>헤더 파일\ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="Headers\ImGuiPanel.h">
-      <Filter>헤더 파일\ImGui</Filter>
-    </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imstb_rectpack.h">
       <Filter>헤더 파일\ImGui</Filter>
     </ClInclude>
@@ -94,6 +91,12 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Headers\Map.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\ImGuiPanel.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Quaternion.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -155,13 +158,16 @@
     <ClCompile Include="C:\vclib\imgui-docking\imgui_widgets.cpp">
       <Filter>소스 파일\ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\ImGuiPanel.cpp">
-      <Filter>소스 파일\ImGui</Filter>
-    </ClCompile>
     <ClCompile Include="Sources\Material.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Sources\Map.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\ImGuiPanel.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Quaternion.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

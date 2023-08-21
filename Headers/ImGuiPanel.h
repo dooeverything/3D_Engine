@@ -54,12 +54,15 @@ public:
 private:
 	unique_ptr<FrameBuffer> m_preview_fb;
 	unique_ptr<Sphere> m_preview_object;
+	unique_ptr<FileDialog> m_fd;
 	//unique_ptr<Shader> m_preview_shader;
 
 	void renderPreview(Material& mat);
 	void renderPreview(vector<shared_ptr<Texture>>& tex);
 
-	unique_ptr<FileDialog> m_fd;
+	void translatePanel(GameObject& clicked_object);
+	void rotatePanel(GameObject& clicked_object);
+	void scalePanel(GameObject& clicked_object);
 };
 
 //class MaterialPanel : public PropertyPanel

@@ -124,14 +124,22 @@ void Object::setPosition(glm::vec3 pos)
 
 void Object::setRotation(glm::vec3 rot)
 {
+	cout << m_name << " : set rotation " << rot <<  endl;
 	m_property[1] = rot;
 	glm::mat4 t = glm::mat4(1.0f);
+	
 	for (int i = 0; i < 3; ++i)
 	{
 		glm::vec3 axis = glm::vec3(0.0f);
 		axis[i] = 1.0f;
-		float angle = m_property[1][i];
-		t = glm::rotate(t, angle, axis);
+		//cout << "Axis-" << i << " : " << endl;
+		float angle = glm::radians(m_property[1][i]);
+		//t = glm::rotate(t, angle, axis);
+		Quaternion q;
+		q.set(axis, angle);
+		glm::mat4 m = q.getMatrix();
+		t *= m;
+		//cout << m << endl;
 	}
 	m_mesh->setRotation(t);
 };

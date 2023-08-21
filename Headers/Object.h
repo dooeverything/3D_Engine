@@ -3,8 +3,8 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-//#include "imgui-docking/imgui.h"
 #include "Map.h"
+#include "Quaternion.h"
 
 using namespace std;
 

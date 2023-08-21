@@ -222,39 +222,11 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 			ImGui::BeginTable("Transform", 4);
 			ImU32 cell_bg_color = ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.7f, 0.65f));
 			glm::vec3 pos = glm::vec3(0.0f);
-			vector<string> transforms = { "Position", "Rotation", "Scale" };
-			for (int row = 0; row < 3; ++row)
-			{
-				ImGui::TableNextRow();
-				ImGui::TableNextColumn();
-				ImGui::AlignTextToFramePadding();
-				ImGui::Text(transforms[row].c_str());
-				ImGui::TableNextColumn();
-				ImGui::Text("X");
-				ImGui::SameLine();
-				string id_x = "##x " + to_string(row);
-				if (ImGui::DragFloat(id_x.c_str(), &(clicked_object->getProperty(row)->x), 0.005f))
-				{
-					clicked_object->setProperty(row, *clicked_object->getProperty(row));
-				}
-				ImGui::TableNextColumn();
-				ImGui::Text("Y");
-				ImGui::SameLine();
-				string id_y = "##y " + to_string(row);
-				if (ImGui::DragFloat(id_y.c_str(), &(clicked_object->getProperty(row)->y), 0.005f))
-				{
-					clicked_object->setProperty(row, *clicked_object->getProperty(row));
-				}
-				ImGui::TableNextColumn();
-				ImGui::Text("Z");
-				ImGui::SameLine();
-				string id_z = "##z " + to_string(row);
-				if (ImGui::DragFloat(id_z.c_str(), &(clicked_object->getProperty(row)->z), 0.005f))
-				{
-					clicked_object->setProperty(row, *clicked_object->getProperty(row));
-				}
-				ImGui::TableNextColumn();
-			}
+			
+			translatePanel(*clicked_object);
+			rotatePanel(*clicked_object);
+			scalePanel(*clicked_object);
+
 			ImGui::EndTable();
 			ImGui::PopStyleVar();
 			ImGui::TreePop();
@@ -337,4 +309,97 @@ void PropertyPanel::renderPreview(vector<shared_ptr<Texture>>& tex)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	m_preview_object->drawPreview(tex);
 	m_preview_fb->unbind();
+}
+
+void PropertyPanel::translatePanel(GameObject& clicked_object)
+{
+	ImGui::TableNextRow();
+	ImGui::TableNextColumn();
+	ImGui::AlignTextToFramePadding();
+	ImGui::Text("Position");
+	ImGui::TableNextColumn();
+	ImGui::Text("X");
+	ImGui::SameLine();
+	string id_x = "##x1";
+	if (ImGui::DragFloat(id_x.c_str(), &(clicked_object.getProperty(0)->x), 0.005f))
+	{
+		clicked_object.setProperty(0, *clicked_object.getProperty(0));
+	}
+	ImGui::TableNextColumn();
+	ImGui::Text("Y");
+	ImGui::SameLine();
+	if (ImGui::DragFloat("##y1", &(clicked_object.getProperty(0)->y), 0.005f))
+	{
+		clicked_object.setProperty(0, *clicked_object.getProperty(0));
+	}
+	ImGui::TableNextColumn();
+	ImGui::Text("Z");
+	ImGui::SameLine();
+	if (ImGui::DragFloat("##z1", &(clicked_object.getProperty(0)->z), 0.005f))
+	{
+		clicked_object.setProperty(0, *clicked_object.getProperty(0));
+	}
+	ImGui::TableNextColumn();
+}
+
+void PropertyPanel::rotatePanel(GameObject& clicked_object)
+{
+	ImGui::TableNextRow();
+	ImGui::TableNextColumn();
+	ImGui::AlignTextToFramePadding();
+	ImGui::Text("Rotation");
+	ImGui::TableNextColumn();
+	ImGui::Text("X");
+	ImGui::SameLine();
+	string id_x = "##x2";
+	if (ImGui::DragFloat(id_x.c_str(), &(clicked_object.getProperty(1)->x), 0.1f))
+	{
+		clicked_object.setProperty(1, *clicked_object.getProperty(1));
+	}
+	ImGui::TableNextColumn();
+	ImGui::Text("Y");
+	ImGui::SameLine();
+	if (ImGui::DragFloat("##y2", &(clicked_object.getProperty(1)->y), 0.1f))
+	{
+		clicked_object.setProperty(1, *clicked_object.getProperty(1));
+	}
+	ImGui::TableNextColumn();
+	ImGui::Text("Z");
+	ImGui::SameLine();
+	if (ImGui::DragFloat("##z2", &(clicked_object.getProperty(1)->z), 0.1f))
+	{
+		clicked_object.setProperty(1, *clicked_object.getProperty(1));
+	}
+	ImGui::TableNextColumn();
+}
+
+void PropertyPanel::scalePanel(GameObject& clicked_object)
+{
+	ImGui::TableNextRow();
+	ImGui::TableNextColumn();
+	ImGui::AlignTextToFramePadding();
+	ImGui::Text("Scale");
+	ImGui::TableNextColumn();
+	ImGui::Text("X");
+	ImGui::SameLine();
+	string id_x = "##x3";
+	if (ImGui::DragFloat(id_x.c_str(), &(clicked_object.getProperty(2)->x), 0.005f))
+	{
+		clicked_object.setProperty(2, *clicked_object.getProperty(2));
+	}
+	ImGui::TableNextColumn();
+	ImGui::Text("Y");
+	ImGui::SameLine();
+	if (ImGui::DragFloat("##y3", &(clicked_object.getProperty(2)->y), 0.005f))
+	{
+		clicked_object.setProperty(2, *clicked_object.getProperty(2));
+	}
+	ImGui::TableNextColumn();
+	ImGui::Text("Z");
+	ImGui::SameLine();
+	if (ImGui::DragFloat("##z3", &(clicked_object.getProperty(2)->z), 0.005f))
+	{
+		clicked_object.setProperty(2, *clicked_object.getProperty(2));
+	}
+	ImGui::TableNextColumn();
 }

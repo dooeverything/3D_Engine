@@ -116,8 +116,8 @@ public:
 
 	void draw(vector<shared_ptr<GameObject>>& gameobjects, Light& light);
 private:
-	const unsigned int WIDTH = 2048;
-	const unsigned int HEIGHT = 2048;
+	const unsigned int WIDTH = 512;
+	const unsigned int HEIGHT = 512;
 
 	shared_ptr<CubemapBuffer> m_cubemap_buffer;
 	glm::vec3 m_eye_position;

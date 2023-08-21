@@ -45,10 +45,6 @@ void Renderer::init()
 	test_brdf->setProperty(0, glm::vec3(0.0f, 7.0f, 0.0f));
 	m_scene_objects.push_back(test_brdf);
 	
-	//shared_ptr<GameObject> plane = make_shared<GameObject>("Models/Floor.txt");
-	//plane->setProperty(0, glm::vec3(0.0f, 1.5f, 0.0f));
-	//m_scene_objects.push_back(plane);
-
 	// Setup lights
 	glm::vec3 dir = -light_pos; //{ -0.2f, -1.0f, -0.3f };
 	glm::vec3 amb = { 10.0f, 10.0f, 10.0f };

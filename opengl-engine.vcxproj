@@ -158,6 +158,7 @@
     <ClInclude Include="Headers\Light.h" />
     <ClInclude Include="Headers\Mesh.h" />
     <ClInclude Include="Headers\Picker.h" />
+    <ClInclude Include="Headers\Quaternion.h" />
     <ClInclude Include="Headers\Renderer.h" />
     <ClInclude Include="Headers\SDL_GL_Window.h" />
     <ClInclude Include="Headers\Shader.h" />
@@ -184,6 +185,7 @@
     <ClCompile Include="Sources\main.cpp" />
     <ClCompile Include="Sources\Mesh.cpp" />
     <ClCompile Include="Sources\Picker.cpp" />
+    <ClCompile Include="Sources\Quaternion.cpp" />
     <ClCompile Include="Sources\Renderer.cpp" />
     <ClCompile Include="Sources\SDL_GL_Window.cpp" />
     <ClCompile Include="Sources\Shader.cpp" />
