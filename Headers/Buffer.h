@@ -30,6 +30,7 @@ private:
 
 public:
 	VertexBuffer();
+	void createBuffers(const vector<info::VertexLayout>& layouts);
 	void createBuffers(const vector<info::VertexLayout>& layouts, const vector<unsigned int>& indices);
 	virtual void bind() const;
 	virtual void unbind() const;

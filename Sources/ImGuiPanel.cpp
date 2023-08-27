@@ -85,6 +85,11 @@ void ImGuiMenuBar::render(vector<shared_ptr<GameObject>>& scene_objects, shared_
 				shared_ptr<GameObject> sphere = make_shared<Sphere>(true);
 				addObject(scene_objects, sphere);
 			}
+			if (ImGui::MenuItem("Metaball"))
+			{
+				shared_ptr<GameObject> metaball = make_shared<Metaball>(true);
+				addObject(scene_objects, metaball);
+			}
 			ImGui::EndMenu();
 		}
 

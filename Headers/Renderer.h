@@ -7,6 +7,7 @@
 
 #include "SDL_GL_Window.h"
 #include "Object.h"
+#include "MarchingCube.h"
 #include "Camera.h"
 #include "Light.h"
 #include "ImGuiPanel.h"

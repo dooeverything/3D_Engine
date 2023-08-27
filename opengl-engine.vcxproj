@@ -151,8 +151,10 @@
     <ClInclude Include="C:\vclib\imgui-docking\imstb_truetype.h" />
     <ClInclude Include="Headers\Buffer.h" />
     <ClInclude Include="Headers\Camera.h" />
+    <ClInclude Include="Headers\FastNoiseLite.h" />
     <ClInclude Include="Headers\FileDialog.h" />
     <ClInclude Include="Headers\Map.h" />
+    <ClInclude Include="Headers\MarchingCube.h" />
     <ClInclude Include="Headers\Object.h" />
     <ClInclude Include="Headers\ImGuiPanel.h" />
     <ClInclude Include="Headers\Light.h" />
@@ -178,6 +180,7 @@
     <ClCompile Include="Sources\Camera.cpp" />
     <ClCompile Include="Sources\FileDialog.cpp" />
     <ClCompile Include="Sources\Map.cpp" />
+    <ClCompile Include="Sources\MarchingCube.cpp" />
     <ClCompile Include="Sources\Material.cpp" />
     <ClCompile Include="Sources\Object.cpp" />
     <ClCompile Include="Sources\ImGuiPanel.cpp" />

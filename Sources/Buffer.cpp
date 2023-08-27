@@ -6,6 +6,38 @@ VertexBuffer::VertexBuffer() :
 {
 }
 
+void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts)
+{
+	m_layouts = layouts;
+	n_layouts = static_cast<unsigned int>(layouts.size());
+
+	cout << " Generate buffer" << endl;
+	cout << "  -Create vertex buffers " << m_layouts.size() << endl;
+	cout << "  -Size of vertex layout: " << n_layouts << endl;
+
+	// Generate buffers: VAO, VBO, EBO
+	glGenVertexArrays(1, &m_VAO);
+	glGenBuffers(1, &m_VBO);
+
+	glBindVertexArray(m_VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+	glBufferData(GL_ARRAY_BUFFER, n_layouts * sizeof(info::VertexLayout), &layouts[0], GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(POS_ATTRIB);
+	glVertexAttribPointer(POS_ATTRIB, 3, GL_FLOAT, GL_FALSE, sizeof(info::VertexLayout), (void*)0);
+
+	glEnableVertexAttribArray(NORMAL_ATTRIB);
+	glVertexAttribPointer(NORMAL_ATTRIB, 3, GL_FLOAT, GL_FALSE, sizeof(info::VertexLayout), (void*)offsetof(info::VertexLayout, normal));
+
+	glEnableVertexAttribArray(TANGENT_ATTRIB);
+	glVertexAttribPointer(TANGENT_ATTRIB, 3, GL_FLOAT, GL_FALSE, sizeof(info::VertexLayout), (void*)offsetof(info::VertexLayout, tangent));
+
+	glEnableVertexAttribArray(TEXCOORD_ATTRIB);
+	glVertexAttribPointer(TEXCOORD_ATTRIB, 2, GL_FLOAT, GL_FALSE, sizeof(info::VertexLayout), (void*)offsetof(info::VertexLayout, texCoord));
+
+	glBindVertexArray(0);
+}
+
 void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts, const vector<unsigned int>& indices)
 {	
 	m_layouts = layouts;

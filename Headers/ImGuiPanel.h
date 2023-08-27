@@ -5,6 +5,7 @@
 #include "imgui-docking/imgui_impl_opengl3.h"
 
 #include "Object.h"
+#include "MarchingCube.h"
 #include "Shader.h"
 #include "Buffer.h"
 #include "FileDialog.h"

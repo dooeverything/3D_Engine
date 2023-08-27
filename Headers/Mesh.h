@@ -53,14 +53,16 @@ private:
 public:
 	Mesh();
 	Mesh(string name, const string& path);
+	Mesh(string name, vector<info::VertexLayout> layouts);
 	Mesh(string name, vector<info::VertexLayout> layouts, vector<unsigned int> indices);
 	Mesh(string name, shared_ptr<VertexBuffer> buffer, vector<shared_ptr<Texture>> textures,
 		 shared_ptr<Material> material);
 
 	virtual void processMesh();
 
+	void drawArrays();
 	void draw();
-	virtual void draw(glm::mat4& P, glm::mat4& V, Shader& shader);
+	virtual void draw(glm::mat4& P, glm::mat4& V, Shader& shader, bool terrain=false);
 	virtual void drawLowQuality(Shader& shader);
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
 
@@ -107,11 +109,11 @@ public:
 	vector<shared_ptr<Texture>> processTextures(const aiMesh* mesh, const aiScene* scene);
 	vector<shared_ptr<Texture>> loadTexture(shared_ptr<aiMaterial> mat, aiTextureType type, string typeName); 	// Texture handling functions
 
-	virtual void draw(glm::mat4& P, glm::mat4& V, Shader& shader);
+	virtual void draw(glm::mat4& P, glm::mat4& V, Shader& shader, bool terrain = false);
 	virtual void draw();
 
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
-	
+
 	virtual void setPosition(glm::mat4 t);
 	virtual void setRotation(glm::mat4 t);
 	virtual void setScale(glm::mat4 t);

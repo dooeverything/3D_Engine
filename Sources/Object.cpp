@@ -172,9 +172,9 @@ void Gizmo::draw(glm::mat4& P, glm::mat4& V, glm::mat4& M)
 
 	//cout << "Draw gizmo inside " << m_root.getMesh()->getPosition() << endl;
 	M = *(m_root.getMesh()->getPosition()) * M;
-	glm::vec3 pos = glm::vec3(0.0f);
-	pos[m_axis] = 0.2f;
-	M = glm::translate(M, pos);
+	//glm::vec3 pos = glm::vec3(0.0f);
+	//pos[m_axis] = 0.2f;
+	//M = glm::translate(M, pos);
 
 	if (m_axis == 1)
 		M = glm::rotate(M, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));

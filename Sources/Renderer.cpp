@@ -41,10 +41,13 @@ void Renderer::init()
 	m_panels.push_back(make_shared<ObjectPanel>());
 	m_panels.push_back(make_shared<PropertyPanel>());
 
-	shared_ptr<GameObject> test_brdf = make_shared<Sphere>(true);
-	test_brdf->setProperty(0, glm::vec3(0.0f, 7.0f, 0.0f));
-	m_scene_objects.push_back(test_brdf);
+	//shared_ptr<GameObject> test_brdf = make_shared<Sphere>(true);
+	//test_brdf->setProperty(0, glm::vec3(0.0f, 7.0f, 0.0f));
+	//m_scene_objects.push_back(test_brdf);
 	
+	shared_ptr<GameObject> test_terrain = make_shared<Terrain>(1.0f);
+	m_scene_objects.push_back(test_terrain);
+
 	// Setup lights
 	glm::vec3 dir = -light_pos; //{ -0.2f, -1.0f, -0.3f };
 	glm::vec3 amb = { 10.0f, 10.0f, 10.0f };
@@ -84,10 +87,6 @@ void Renderer::render()
 	m_camera->processInput();
 
 	handleInput();
-	//m_sdl_window->clearWindow();
-
-	// Draw an environment cubemap
-	//m_environment->draw(m_scene_objects, *m_lights.front());
 
 	// Draw a shadow map first to get shadows
 	m_shadow_map->draw(m_scene_objects);

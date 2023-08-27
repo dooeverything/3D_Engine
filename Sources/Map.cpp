@@ -68,7 +68,7 @@ CubeMap::CubeMap(int width, int height) :
 	m_mesh = make_shared<Mesh>(m_name, "Models/Cube.txt");
 	m_mesh->processMesh();
 
-	m_hdr_texture = make_shared<Texture>("Textures/clarens_midday_4k.hdr");
+	m_hdr_texture = make_shared<Texture>("Textures/sky.hdr");
 	m_hdr_texture->loadTexture();
 
 	vector<string> shader_background_path = { "Shaders/Background.vert", "Shaders/Background.frag" };

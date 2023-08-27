@@ -81,6 +81,17 @@ Mesh::Mesh(string name, const string& path) :
 {
 }
 
+Mesh::Mesh(string name, vector<info::VertexLayout> layouts) :
+	m_directory(""), m_name(name), m_buffer(make_unique<VertexBuffer>()),
+	m_textures({}), m_material(make_unique<Material>()),
+	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
+	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f))
+{
+	cout << "Create a mesh without indexing: " << name << endl;
+	m_buffer->createBuffers(layouts);
+	m_bbox = computeBoundingBox();
+}
+
 Mesh::Mesh(string name, vector<info::VertexLayout> layouts, vector<unsigned int> indices) :
 	m_directory(""), m_name(name), m_buffer(make_unique<VertexBuffer>()),
 	m_textures({}), m_material(make_unique<Material>()),
@@ -188,6 +199,13 @@ void Mesh::processMesh()
 	m_bbox = computeBoundingBox();
 }
 
+void Mesh::drawArrays()
+{
+	m_buffer->bind();
+	glDrawArrays(GL_TRIANGLES, 0, m_buffer->getLayouts().size());
+	m_buffer->unbind();
+}
+
 void Mesh::draw()
 {
 	m_buffer->bind();
@@ -195,7 +213,7 @@ void Mesh::draw()
 	m_buffer->unbind();
 }
 
-void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
+void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader, bool terrain)
 {
 	unsigned int color_index = 1;
 	unsigned int specular_index = 1;
@@ -247,7 +265,10 @@ void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
 		}	
 	}
 
-	draw();
+	if (terrain)
+		drawArrays();
+	else
+		draw();
 
 	// Set everything back to default texture
 	glActiveTexture(GL_TEXTURE0);
@@ -594,10 +615,10 @@ vector<shared_ptr<Texture>> FBXMesh::loadTexture(shared_ptr<aiMaterial> mat,
 	return textures;
 }
 
-void FBXMesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader)
+void FBXMesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader, bool terrain)
 {
 	for (unsigned int i = 0; i < m_meshes.size(); ++i)
-		m_meshes[i]->draw(P, V, shader);
+		m_meshes[i]->draw(P, V, shader, terrain);
 }
 
 void FBXMesh::draw()
