@@ -16,6 +16,8 @@ I am making this engine just for learning computer graphics using OpenGL and C++
  7. Load and apply texture to a game object
  8. Physically Based Rendering (PBR)
  9. 3D grid
+ 10. Marching Cube (Terrain, Metaball)
+ 11. Terrain Editor (Sculpting and removing)
 
 ### Libraries
  1. C++17
@@ -36,11 +38,11 @@ I am making this engine just for learning computer graphics using OpenGL and C++
  2. Right mouse button to pick and move the object and to play around with GUI
  
 ### Features to be added
- 1. Shadow (Point light)
- 2. Skeleton Animation
- 3. Environment mapping
- 4. enhanced fbx loader
- 5. Bump mapping
- 6. Marching Cube
- 7. Terrain
- 8. 3D gizmos for rotation and scale
+- [ ] Shadow (Point light)
+- [ ] Skeleton Animation
+- [ ] Environment mapping
+- [ ] enhanced fbx loader
+- [ ] Bump mapping
+- [X] Marching Cube
+- [X] Terrain
+- [ ] 3D gizmos for rotation and scale
