@@ -27,7 +27,7 @@ public:
 	BoundingBox(glm::vec3 min, glm::vec3 max);
 	~BoundingBox();
 
-	bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
+	bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos, float& t_min, float& t_max);
 	void draw();
 	inline glm::vec3 getMin() { return m_min; };
 	inline glm::vec3 getMax() { return m_max; };

@@ -1,4 +1,5 @@
 #include "ImGuiPanel.h"
+#include "Utils.h"
 
 ImGuiPanel::ImGuiPanel() : 
 	m_scene_min(ImVec2(0.0, 0.0)), m_scene_max(ImVec2(0.0, 0.0))
@@ -117,10 +118,10 @@ void ImGuiMenuBar::addObject(vector<shared_ptr<GameObject>>& scene_objects, shar
 	string name;
 	if (add_object->getPath() != "")
 	{
-		int last = add_object->getPath().find_last_of('/');
+		int last = int(add_object->getPath().find_last_of('/'));
 		if (last == -1)
 		{
-			last = add_object->getPath().find_last_of('\\');
+			last = int(add_object->getPath().find_last_of('\\'));
 		}
 		string temp = add_object->getPath().substr(last + 1, add_object->getPath().length());
 		name = temp.substr(0, temp.find_last_of('.'));
@@ -152,38 +153,66 @@ ObjectPanel::~ObjectPanel()
 
 void ObjectPanel::render(vector<shared_ptr<GameObject>>&scene_objects, shared_ptr<GameObject>& clicked_object)
 {
-	bool click_object = false;
 	ImGui::Begin("Scene Objects");
 	{
 		calculatePanelSize();
+		string name;
+		static int selected_index = -1;
+	
+		if (clicked_object == nullptr)
+		{
+			selected_index = -1;
+		}
+
 		for (int i = 0; i < scene_objects.size(); ++i)
 		{
-			string name = scene_objects.at(i)->getIdName();
-			const char* object_name = name.c_str();
-			ImGui::Selectable(object_name, &click_object);
-			if (click_object)
-			{
-				if (clicked_object != nullptr)
-				{
-					string clicked_name = clicked_object->getIdName();
-					cout << "Unclick " << clicked_name << " " << clicked_object->getName() << endl;
+			name = scene_objects.at(i)->getIdName();
 
-					if (object_name == clicked_name)
-					{
-						clicked_object = nullptr;
-					}
-					else
-					{
-						clicked_object = scene_objects.at(i);
-					}
+			if (clicked_object != nullptr)
+			{
+				if (clicked_object->getIdName() == name )
+				{
+					selected_index = i;
+				}
+			}
+
+			if (ImGui::Selectable(name.c_str(), selected_index == i, 0, ImVec2(64, 16)))
+			{
+				if (selected_index == i)
+				{
+					selected_index = -1;
+					break;
+				}
+				selected_index = i;
+			}
+		}
+
+		if (selected_index != -1)
+		{
+			if (clicked_object != nullptr)
+			{
+				string clicked_name = clicked_object->getName();
+				int id = clicked_object->getId();
+				if (name == clicked_name && id != 0)
+				{
+					cout << clicked_object->getId();
+					cout << "HI " << clicked_name << endl;
+					clicked_object = nullptr;
 				}
 				else
 				{
-					clicked_object = scene_objects.at(i);
+					clicked_object = scene_objects.at(selected_index);
 				}
-				cout << name << " is clicked from panel" << endl;
 			}
-			click_object = false;
+			else
+			{
+				clicked_object = scene_objects.at(selected_index);
+			}
+		}
+		else
+		{
+			//cout << "No clicked object" << endl;
+			clicked_object = nullptr;
 		}
 	}
 	ImGui::End();
@@ -193,11 +222,6 @@ PropertyPanel::PropertyPanel() :
 	m_preview_fb(make_unique<FrameBuffer>()), m_preview_object(make_unique<Sphere>(false))
 {
 	m_preview_fb->createBuffers(512, 512);
-
-	//vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
-	//m_preview_shader = make_unique<Shader>(shader_path);
-	//
-	//m_preview_shader->processShader();
 }
 
 PropertyPanel::~PropertyPanel()
@@ -211,6 +235,7 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 
 		if (clicked_object == nullptr)
 		{
+			//cout << "No clicked object" << endl;
 			ImGui::End();
 			return;
 		}
@@ -218,6 +243,8 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 		string name = clicked_object->getIdName();
 		const char* object_name = name.c_str();
 		ImGui::Text(object_name);
+		
+		// Transform panel
 		bool expand_transform = ImGui::TreeNode("Transform");
 		if (expand_transform)
 		{
@@ -226,7 +253,6 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 			ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
 			ImGui::BeginTable("Transform", 4);
 			ImU32 cell_bg_color = ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.7f, 0.65f));
-			glm::vec3 pos = glm::vec3(0.0f);
 			
 			translatePanel(*clicked_object);
 			rotatePanel(*clicked_object);
@@ -237,6 +263,7 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 			ImGui::TreePop();
 		}
 
+		// Material Panel
 		bool expand_material = ImGui::TreeNode("Material");
 		if (expand_material)
 		{
@@ -291,6 +318,159 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 				}
 			}
 			ImGui::TreePop();
+		}
+	
+		// Terrain Panel, if a gameobject is a terrain
+		if (name == "Terrain")
+		{
+			Terrain* t = dynamic_cast<Terrain*>(clicked_object.get());
+			bool expand_terrain = ImGui::TreeNode("Terrain");
+			if (expand_terrain)
+			{
+				static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
+				ImVec2 cell_padding(0.0f, 2.0f);
+				ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
+				ImGui::BeginTable("Terrain", 2);
+				ImU32 cell_bg_color = ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.7f, 0.65f));
+
+				bool update = false;
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::AlignTextToFramePadding();
+				ImGui::Text("Size");
+				ImGui::TableNextColumn();
+				string id_size = "##size";
+				float size = t->getSize();
+				if (ImGui::DragFloat(id_size.c_str(), &size, 1.0f))
+				{
+					t->setSize(size);
+					update = true;
+				}
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::AlignTextToFramePadding();
+				ImGui::Text("Grid Size");
+				ImGui::TableNextColumn();
+				string id_grid = "##grid";
+				float grid_size = t->getGridSize();
+				if (ImGui::DragFloat(id_grid.c_str(), &grid_size, 0.1f))
+				{
+					t->setGridSize(grid_size);
+					update = true;
+				}
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::AlignTextToFramePadding();
+				ImGui::Text("Threshold");
+				ImGui::TableNextColumn();
+				string id_threshold = "##threshold";
+				float threshold = t->getThreshold();
+				if (ImGui::DragFloat(id_threshold.c_str(), &threshold, 0.1f))
+				{
+					t->setThreshold(threshold);
+					update = true;
+				}
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::AlignTextToFramePadding();
+				ImGui::Text("Noise Scale");
+				ImGui::TableNextColumn();
+				string id_scale = "##noiseScale";
+				int noise_scale = t->getNoiseScale();
+				if (ImGui::DragInt(id_scale.c_str(), &noise_scale, 1))
+				{
+					t->setNoiseScale(noise_scale);
+					update = true;
+				}
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::AlignTextToFramePadding();
+				ImGui::Text("Octaves");
+				ImGui::TableNextColumn();
+				string id_octave = "##octaves";
+				int octaves = t->getOctave();
+				if (ImGui::DragInt(id_octave.c_str(), &octaves, 1))
+				{
+					t->setOctave(octaves);
+					update = true;
+				}
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::AlignTextToFramePadding();
+				ImGui::Text("Frequency");
+				ImGui::TableNextColumn();
+				string id_freq = "##frequency";
+				float frequency = t->getFrequency();
+				if (ImGui::DragFloat(id_freq.c_str(), &frequency, 0.001f))
+				{
+					t->setFrequency(frequency);
+					update = true;
+				}
+
+				if (update)
+				{
+					t->createWeights();
+					t->updateVertex();
+				}
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::AlignTextToFramePadding();
+				static int clicked = 0;
+				if (ImGui::Button("Click to edit terrain"))
+				{
+					clicked++;
+				}
+
+				static int selected = -1;
+				if (clicked & 1)
+				{
+					t->setIsEdit(true);
+					ImGui::TableNextColumn();
+					char buf1[32];
+					sprintf_s(buf1, "Sculpting");
+					if (ImGui::Selectable(buf1, selected == 0, 0, ImVec2(64, 16)))
+						selected = 0;
+
+					//ImGui::TableNextColumn();
+					char buf2[32];
+					sprintf_s(buf2, "Remove");
+					if (ImGui::Selectable(buf2, selected == 1, 0, ImVec2(64, 16)))
+						selected = 1;
+
+				}
+				else
+				{
+					selected = -1;
+					t->setIsEdit(false);
+				}
+
+				if (selected == 0)
+				{
+					t->setStrength(1.0f);
+				}
+				else if(selected == 1)
+				{
+					t->setStrength(-1.0f);
+				}
+
+				ImGui::EndTable();
+
+				//static int clicked = 0;
+
+				ImGui::PopStyleVar();
+				ImGui::TreePop();
+			}
+			else
+			{
+				t->setIsEdit(false);
+			}
 		}
 	}
 	ImGui::End();

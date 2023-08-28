@@ -8,7 +8,7 @@ BoundingBox::BoundingBox(glm::vec3 min, glm::vec3 max) : m_min(min), m_max(max)
 
 BoundingBox::~BoundingBox() {}
 
-bool BoundingBox::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
+bool BoundingBox::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos, float& t_min, float& t_max)
 {
 	float temp;
 	float tmin = -1.0e10;
@@ -56,6 +56,9 @@ bool BoundingBox::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 		return false;
 	}
 
+	t_min = tmin;
+	t_max = tmax;
+
 	return true;
 }
 
@@ -87,7 +90,7 @@ Mesh::Mesh(string name, vector<info::VertexLayout> layouts) :
 	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
 	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f))
 {
-	cout << "Create a mesh without indexing: " << name << endl;
+	//cout << "Create a mesh without indexing: " << name << endl;
 	m_buffer->createBuffers(layouts);
 	m_bbox = computeBoundingBox();
 }
@@ -98,7 +101,7 @@ Mesh::Mesh(string name, vector<info::VertexLayout> layouts, vector<unsigned int>
 	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
 	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f))
 {
-	cout << "Create a mesh: " << name << endl;
+	//cout << "Create a mesh: " << name << endl;
 	m_buffer->createBuffers(layouts, indices);
 	m_bbox = computeBoundingBox();
 }
@@ -286,9 +289,10 @@ void Mesh::drawLowQuality(Shader& shader)
 bool Mesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 {
 	//cout << "Intersect with mesh: " << m_name << endl;
-	
+	float t_min;
+	float t_max;
 	m_bbox = computeBoundingBox();
-	return m_bbox->intersect(ray_dir, ray_pos);
+	return m_bbox->intersect(ray_dir, ray_pos, t_min, t_max);
 }
 
 void Mesh::setPosition(glm::mat4 t)
@@ -322,7 +326,6 @@ shared_ptr<BoundingBox> Mesh::computeBoundingBox()
 
 	min = max = positions.at(0); 
 
-	
 	for (auto& it : positions)
 	{
 		if (it.x < min.x) min.x = it.x;

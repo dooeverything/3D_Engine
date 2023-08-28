@@ -2,7 +2,7 @@
 #include "Utils.h"
 
 MarchingCube::MarchingCube(float size) :
-	GameObject(),  m_size(size), m_center(0.0f), m_grid_size(0.1f), m_threshold(1.0f), 
+	GameObject(),  m_size(size), m_grid_size(0.1f), m_threshold(1.0f), 
 	m_vertices({}), m_normals({})
 {
 }
@@ -75,19 +75,20 @@ void MarchingCube::polygonize(vector<glm::vec3> grids, vector<float> gridValues)
 	// Create triangles with vertices on edges
 	for (int i = 0; table::triTable[vertexIndex][i] != -1; i += 3)
 	{
+		glm::vec3 a = vertexList[table::triTable[vertexIndex][i]];
+		glm::vec3 b = vertexList[table::triTable[vertexIndex][i + 1]];
+		glm::vec3 c = vertexList[table::triTable[vertexIndex][i + 2]];
 
-		glm::vec3 vertex1 = vertexList[table::triTable[vertexIndex][i]];
-		glm::vec3 vertex2 = vertexList[table::triTable[vertexIndex][i + 1]];
-		glm::vec3 vertex3 = vertexList[table::triTable[vertexIndex][i + 2]];
-
-		glm::vec3 edge1 = { vertex2.x - vertex1.x, vertex2.y - vertex1.y, vertex2.z - vertex1.z };
-		glm::vec3 edge2 = { vertex3.x - vertex1.x, vertex3.y - vertex1.y, vertex3.z - vertex1.z };
+		glm::vec3 ab = b - a;
+		glm::vec3 ac = c - a;
 		
-		glm::vec3 n = glm::cross(edge1, edge2);
+		glm::vec3 n = glm::normalize(glm::cross(ab, ac));
 
-		m_vertices.push_back(vertex1);
-		m_vertices.push_back(vertex2);
-		m_vertices.push_back(vertex3);
+		m_vertices.push_back(a);
+		m_vertices.push_back(b);
+		m_vertices.push_back(c);
+
+		m_trimeshes.emplace_back(make_shared<TriMesh>(a, b, c));
 
 		m_normals.push_back(n);
 		m_normals.push_back(n); 
@@ -149,7 +150,8 @@ Metaball::Metaball(float size) : MarchingCube(size)
 	cout << "Radius : " << m_size << endl;
 	cout << "Center : " << m_center << endl;
 	m_name = "Metaball";
-	
+	m_center = glm::vec3(0.0f);
+
 	getVertex();
 
 	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
@@ -172,7 +174,7 @@ float Metaball::calculateGridValue(glm::vec3 gridPoint)
 	float y = gridPoint.y - m_center.y;
 	float z = gridPoint.z - m_center.z;
 
-	return glm::sqrt(glm::pow(x, 2) + glm::pow(y, 2) + glm::pow(z, 2));
+	return float(glm::sqrt(glm::pow(x, 2) + glm::pow(y, 2) + glm::pow(z, 2)));
 }
 
 void Metaball::getVertex()
@@ -230,44 +232,100 @@ void Metaball::getVertex()
 	m_mesh = make_shared<Mesh>(m_name, layouts);
 }
 
+TriMesh::TriMesh(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3) :
+	m_a(v1), m_b(v2), m_c(v3)
+{}
+
+glm::vec3 TriMesh::getClosest(glm::vec3 pos)
+{
+	float pv1 = glm::length(m_a - pos);
+	float pv2 = glm::length(m_b - pos);
+	float pv3 = glm::length(m_c - pos);
+
+	float closest = glm::min(pv1, glm::min(pv2, pv3));
+
+	if (closest == pv1)
+		return m_a;
+
+	if (closest == pv2)
+		return m_b;
+
+	if (closest == pv3)
+		return m_c;
+
+	return glm::vec3(-1.0f);
+}
+
+bool TriMesh::intersect(glm::vec3 ray_dir, glm::vec3 ray_pos, float& t)
+{
+	glm::vec3 ab = m_b - m_a;
+	glm::vec3 ac = m_c - m_a;
+	glm::vec3 ap = ray_pos - m_a;
+	glm::vec3 n = glm::cross(ab, ac);
+
+	// Check the bad trimesh
+	if (n == glm::vec3(0.0f))
+		return false;
+
+	n = glm::normalize(n);
+
+	if (ap.y > 0)
+		n.y = -n.y;
+
+	// Intersect from behind
+	float vdotn = glm::dot(n, ray_dir);
+	if (-vdotn < 0.00001f)
+	{
+		return false;
+	}
+
+	float numer = -glm::dot(ap, n);
+	t = numer / vdotn;
+
+	// Intersect from behind
+	if (t < 0.00001f)
+		return false;
+
+	float max_norm = FLT_MIN;
+	int k = -1;
+	for (int i = 0; i < 3; ++i)
+	{
+		if (glm::abs(n[i]) > max_norm)
+		{
+			k = i;
+			max_norm = n[i];
+		}
+	}
+
+	glm::vec3 am = ap + t * ray_dir;
+	float u = glm::cross(am, ac)[k] / glm::cross(ab, ac)[k];
+	float v = glm::cross(ab, am)[k] / glm::cross(ab, ac)[k];
+	float a = 1 - u - v;
+
+	if (a < 0 || u < 0 || u > 1 || v < 0 || v > 1)
+	{
+		return false;
+	}
+
+	return true;
+}
+
 Terrain::Terrain(float size) : MarchingCube(size)
 {
 	cout << "Terrain Constructor" << endl;
 
 	m_name = "Terrain";
-	m_size = 10.0f;
+	m_size = 20.0f;
 	m_grid_size = 1.0f;
 	m_threshold = 0.5f;
-	m_frequency = 0.02f;
-	m_octaves = 8;
 	m_noise_scale = 1;
+	m_octaves = 8;
+	m_frequency = 0.02f;
+	m_is_edit = false;
+	m_brush_size = 1.0f;
+	m_strength = 1.0f;
 
-	FastNoiseLite noise;
-	noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-	noise.SetFractalType(FastNoiseLite::FractalType_Ridged);
-	noise.SetFrequency(m_frequency);
-	noise.SetFractalOctaves(m_octaves);
-
-	float num_weights = pow(m_size, 3.0);
-	m_weights = vector<float>(num_weights);
-	cout << "Num weights : " << num_weights << endl;
-	for (float z = 0.0f; z < m_size; z += m_grid_size)
-	{
-		for (float y = 0.0f; y < m_size; y += m_grid_size)
-		{
-			for (float x = 0.0f; x < m_size; x += m_grid_size)
-			{
-				glm::vec3 pos = { x, y, z };
-				pos *= m_noise_scale;
-
-				float ground = -pos.y + (0.5f * m_size);
-				float n = ground + noise.GetNoise(pos.x, pos.y, pos.z) * 10;
-				int index = x + m_size * (y + m_size * z);
-				m_weights[index] = n;
-			}
-		}
-	}
-
+	createWeights();
 	getVertex();
 
 	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
@@ -284,9 +342,14 @@ Terrain::Terrain(float size) : MarchingCube(size)
 	cout << endl;
 }
 
+float Terrain::calculateGridValue(glm::vec3 grid_point)
+{
+	int index = int(grid_point.x + m_size * (grid_point.y + m_size * grid_point.z));
+	return m_weights[index];
+}
+
 void Terrain::getVertex()
 {
-	cout << "Get vertex" << endl;
 	for (float z = 0.0f; z < m_size-1; z += m_grid_size)
 	{
 		for (float y = 0.0f; y < m_size-1; y += m_grid_size)
@@ -337,11 +400,85 @@ void Terrain::getVertex()
 	m_mesh = make_shared<Mesh>(m_name, layouts);
 }
 
-float Terrain::calculateGridValue(glm::vec3 grid_point)
+void Terrain::createWeights()
 {
-	int index = grid_point.x + m_size * (grid_point.y + m_size * grid_point.z);
-	//cout << "Weights at " << grid_point << " : " << m_weights[index] << endl;
-	return m_weights[index];
+	m_weights.clear();
+	float num_weights = float(pow(m_size, 3.0));
+	m_weights = vector<float>(num_weights);
+	cout << "Num weights : " << num_weights << endl;
+
+	FastNoiseLite noise;
+	noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+	noise.SetFractalType(FastNoiseLite::FractalType_Ridged);
+	noise.SetFrequency(m_frequency);
+	noise.SetFractalOctaves(m_octaves);
+
+	for (float z = 0.0f; z < m_size; z += m_grid_size)
+	{
+		for (float y = 0.0f; y < m_size; y += m_grid_size)
+		{
+			for (float x = 0.0f; x < m_size; x += m_grid_size)
+			{
+				glm::vec3 pos = { x, y, z };
+				pos *= m_noise_scale;
+
+				float ground = -pos.y + (0.5f * m_size);
+				float n = ground + noise.GetNoise(pos.x, pos.y, pos.z) * 10;
+				int index = int(x + m_size * (y + m_size * z));
+				m_weights[index] = n;
+			}
+		}
+	}
 }
 
+void Terrain::updateWeights(glm::vec3 ray_dir, glm::vec3 ray_pos)
+{
+	float t = 0.0f;
+	
+	std::sort(m_trimeshes.begin(), m_trimeshes.end(),
+		[ray_pos](const shared_ptr<TriMesh>& lhs, const shared_ptr<TriMesh>& rhs)
+		{
+			float d1 = glm::length(ray_pos - (lhs->getClosest(ray_pos)));
+			float d2 = glm::length(ray_pos - (rhs->getClosest(ray_pos)));
+			return d1 < d2;
+		});
 
+	glm::vec3 hit_pos = glm::vec3(0.0f);
+	for (int i = 0; i < m_trimeshes.size(); ++i)
+	{
+		if (m_trimeshes[i]->intersect(ray_dir, ray_pos, t))
+		{
+			hit_pos = ray_pos + ray_dir * t;
+			int index = int(hit_pos.x + m_size * (hit_pos.y + m_size * hit_pos.z));
+			break;
+		}
+	}
+
+	for (float z = 0.0f; z < m_size; z += m_grid_size)
+	{
+		for (float y = 0.0f; y < m_size; y += m_grid_size)
+		{
+			for (float x = 0.0f; x < m_size; x += m_grid_size)
+			{
+				glm::vec3 p = { x, y, z };
+				float d = glm::length(hit_pos - p);
+				if (d <= m_brush_size)
+				{
+					int index = int(x + m_size * (y + m_size * z));
+					m_weights[index] += m_strength;
+				}
+			}
+		}
+	}
+
+	updateVertex();
+}
+
+void Terrain::updateVertex()
+{
+	// Update the vertex
+	m_vertices.clear();
+	m_normals.clear();
+	m_trimeshes.clear();
+	getVertex();
+}

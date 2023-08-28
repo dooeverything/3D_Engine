@@ -132,7 +132,7 @@ void Renderer::handleInput()
 			//cout << "Mouse Position " << pos.x << " " << pos.y << endl;
 			for (auto& it : m_panels)
 			{
-				if (it->mouseInPanel(pos.x, pos.y) && !m_is_mouse_down)
+				if (it->mouseInPanel(int(pos.x), int(pos.y)) && !m_is_drag)
 				{
 					//cout << "Mouse in panel" << endl;
 					m_mouse_in_panel = true;
@@ -140,19 +140,9 @@ void Renderer::handleInput()
 				}
 				else
 				{
+					//cout << "Mouse not in panel" << endl;
 					m_mouse_in_panel = false;
 				}
-			}
-
-			ImVec2 min = m_sdl_window->getSceneMin();
-			ImVec2 max = m_sdl_window->getSceneMax();
-
-			int x, y, w, h;
-			SDL_GetWindowPosition(m_sdl_window->getWindow(), &x, &y);
-			SDL_GetWindowSize(m_sdl_window->getWindow(), &w, &h);
-			if (pos.x < x || pos.y < y || pos.x > x + w || pos.y > y + h)
-			{
-				m_mouse_in_panel = true;
 			}
 			
 			if (m_mouse_in_panel) continue;
@@ -168,23 +158,16 @@ void Renderer::handleInput()
 
 				case SDL_MOUSEBUTTONDOWN:
 					if (!m_mouse_in_panel && event.button.button == SDL_BUTTON_RIGHT)
-					{
-						//cout << "Mouse Down" << endl;
 						m_is_drag = true;
-					}
 					else if (!m_mouse_in_panel && event.button.button == SDL_BUTTON_LEFT)
-					{
 						m_is_mouse_down = true;
-					}
 					m_camera->processMouseDown(event);
 					m_frame_events.clear();
 					return; // To avoid dragging when mouse is clicked
 
 				case SDL_MOUSEMOTION:
 					if (m_is_drag)
-					{
 						m_camera->processMouseDrag(event);
-					}
 					break;
 			}
 			m_frame_events.clear();
@@ -295,34 +278,32 @@ void Renderer::renderImGui()
 	ImGui::NewFrame();
 	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
-	//bool demo = true;
-	//ImGui::ShowDemoWindow(&demo);
+	bool demo = true;
+	ImGui::ShowDemoWindow(&demo);
 
 	for (int i = 0; i < m_scene_objects.size(); ++i)
 	{
 		m_scene_objects.at(i)->setIsClick(false);
 	}
 
+	// Draw panels
+	for (auto& it : m_panels)
+	{
+		it->render(m_scene_objects, m_click_object);
+	}
+
 	if (m_mouse_in_panel)
 	{
-		//cout << "Hello " << m_frame_events.size() << endl;
 		SDL_Event event;
 		ImGuiIO& io = ImGui::GetIO();
-		float moveCellSize = 0.1f;
+		//float moveCellSize = 0.1f;
 		for (auto& it : m_frame_events)
 		{
 			event = it;
 			ImGui_ImplSDL2_ProcessEvent(&event);
 		}
-		m_frame_events.clear();
-		
-		m_mouse_in_panel = false;
-	}
-
-	// Draw panels
-	for (auto& it : m_panels)
-	{
-		it->render(m_scene_objects, m_click_object);
+		m_frame_events.clear();		
+		//m_mouse_in_panel = false;
 	}
 
 	glViewport(0, 0, 1400, 800);
@@ -406,8 +387,8 @@ void Renderer::renderScene(int width, int height)
 	// Calculate a ray to check whether object is clicked
 	int x, y;
 	SDL_GetGlobalMouseState(&x, &y);
-	int mouse_x = x - m_sdl_window->getSceneMin().x;
-	int mouse_y = y - m_sdl_window->getSceneMin().y;
+	int mouse_x = x - int(m_sdl_window->getSceneMin().x);
+	int mouse_y = y - int(m_sdl_window->getSceneMin().y);
 	m_camera->processPicker(width, height, mouse_x, mouse_y);
 	glm::vec3 ray_dir = m_camera->getRay();
 	glm::vec3 ray_pos = m_camera->getPos();
@@ -425,6 +406,16 @@ void Renderer::renderScene(int width, int height)
 	{
 		for (int i = 0; i < render_objects.size(); ++i)
 		{
+			if (render_objects.at(i)->getName() == "Terrain")
+			{
+				Terrain* t = dynamic_cast<Terrain*>(render_objects.at(i).get());
+				if (t->getIsEdit())
+				{
+					t->updateWeights(ray_dir, ray_pos);
+					break;
+				}
+			}
+
 			if (render_objects.at(i)->isClick(ray_dir, ray_pos))
 			{
 				cout << "Clicked object: " << render_objects.at(i)->getName() << endl;
@@ -447,7 +438,8 @@ void Renderer::renderScene(int width, int height)
 	// Check whether any gizmos is clicked
 	for (auto& it : render_objects)
 	{
-		if (it->getIsClick())
+		// Find a clicked object
+		if (it->getIsClick() && it->getName() != "Terrain" && !m_is_drag)
 		{
 			if (m_is_moving_gizmo)
 			{
@@ -471,6 +463,7 @@ void Renderer::renderScene(int width, int height)
 		}
 	}
 
+	// Draw objects
 	for (auto it = render_objects.rbegin(); it != render_objects.rend(); ++it)
 	{
 		it->get()->draw(P, V, *m_lights.at(0), cam_pos, 
@@ -479,25 +472,24 @@ void Renderer::renderScene(int width, int height)
 
 	// Draw background
 	m_cubemap->draw(P, V);
-	//m_irradiancemap->draw(P, V);
 
 	// Draw Grid
 	m_grid->draw(P, V, cam_pos);
-
+	
+	// Draw Outline
 	if (m_click_object != nullptr)
 	{
-		//cout << "Draw outline" << endl;
+		//cout << "Draw outline of " << m_click_object->getName() << endl;
 		glDisable(GL_DEPTH_TEST);
 		m_outline->draw(*m_click_object, P, V);
 		glEnable(GL_DEPTH_TEST);
-		//m_click_object->draw(P, V, *m_lights.at(0), cam_pos, *m_shadow_map);
 	}
 
 	// Draw gizmos for clicked objects
 	glDisable(GL_DEPTH_TEST);
 	for (auto& it : render_objects)
 	{
-		if (it->getIsClick())
+		if (it->getIsClick() && it->getName() != "Terrain")
 		{
 			//cout << "Draw gizmo!" << endl;
 			it->drawGizmos(P, V, cam_pos);
