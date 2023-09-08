@@ -88,8 +88,13 @@ void ImGuiMenuBar::render(vector<shared_ptr<GameObject>>& scene_objects, shared_
 			}
 			if (ImGui::MenuItem("Metaball"))
 			{
-				shared_ptr<GameObject> metaball = make_shared<Metaball>(true);
+				shared_ptr<GameObject> metaball = make_shared<Metaball>(1.0f);
 				addObject(scene_objects, metaball);
+			}
+			if (ImGui::MenuItem("Terrain"))
+			{
+				shared_ptr<GameObject> terrain = make_shared<Terrain>(16.0f);
+				addObject(scene_objects, terrain);
 			}
 			ImGui::EndMenu();
 		}
@@ -156,7 +161,6 @@ void ObjectPanel::render(vector<shared_ptr<GameObject>>&scene_objects, shared_pt
 	ImGui::Begin("Scene Objects");
 	{
 		calculatePanelSize();
-		string name;
 		static int selected_index = -1;
 	
 		if (clicked_object == nullptr)
@@ -166,52 +170,37 @@ void ObjectPanel::render(vector<shared_ptr<GameObject>>&scene_objects, shared_pt
 
 		for (int i = 0; i < scene_objects.size(); ++i)
 		{
-			name = scene_objects.at(i)->getIdName();
+			string name = scene_objects.at(i)->getIdName();
 
 			if (clicked_object != nullptr)
 			{
-				if (clicked_object->getIdName() == name )
+				string name_clicked = clicked_object->getIdName();
+				if (name_clicked == name )
 				{
 					selected_index = i;
 				}
 			}
 
-			if (ImGui::Selectable(name.c_str(), selected_index == i, 0, ImVec2(64, 16)))
+			if (ImGui::Selectable(name.c_str(), selected_index == i))
 			{
 				if (selected_index == i)
 				{
+					// unselect, if the selected_index is clicked again
 					selected_index = -1;
 					break;
 				}
+
 				selected_index = i;
+				break;
 			}
 		}
 
 		if (selected_index != -1)
 		{
-			if (clicked_object != nullptr)
-			{
-				string clicked_name = clicked_object->getName();
-				int id = clicked_object->getId();
-				if (name == clicked_name && id != 0)
-				{
-					cout << clicked_object->getId();
-					cout << "HI " << clicked_name << endl;
-					clicked_object = nullptr;
-				}
-				else
-				{
-					clicked_object = scene_objects.at(selected_index);
-				}
-			}
-			else
-			{
-				clicked_object = scene_objects.at(selected_index);
-			}
+			clicked_object = scene_objects.at(selected_index);
 		}
 		else
 		{
-			//cout << "No clicked object" << endl;
 			clicked_object = nullptr;
 		}
 	}
@@ -219,7 +208,7 @@ void ObjectPanel::render(vector<shared_ptr<GameObject>>&scene_objects, shared_pt
 }
 
 PropertyPanel::PropertyPanel() :
-	m_preview_fb(make_unique<FrameBuffer>()), m_preview_object(make_unique<Sphere>(false))
+	m_preview_fb(make_unique<FrameBuffer>()), m_preview_object(make_unique<Sphere>(false)), t_simulate(0.0f)
 {
 	m_preview_fb->createBuffers(512, 512);
 }
@@ -270,7 +259,7 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 			shared_ptr<Material> mat = clicked_object->getMesh()->getMaterial();
 			if (clicked_object->getMesh()->getTexture().size() > 0)
 			{
-			//cout << "Clicked object " << clicked_object->getName() << " , " << clicked_object->getMesh()->getTexture().size() << endl;
+				//cout << "Clicked object " << clicked_object->getName() << " , " << clicked_object->getMesh()->getTexture().size() << endl;
 				vector<shared_ptr<Texture>> tex = clicked_object->getMesh()->getTexture();
 				renderPreview(tex);
 				ImGui::Image((ImTextureID)m_preview_fb->getTextureID(), ImVec2(100.0, 100.0), ImVec2(0, 1), ImVec2(1, 0));
@@ -470,6 +459,115 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 			else
 			{
 				t->setIsEdit(false);
+			}
+		}
+
+		if (name == "Fluid Simulation")
+		{
+			SPHSystem* sph = dynamic_cast<SPHSystem*>(clicked_object.get());
+			bool expand_fluid = ImGui::TreeNode("Fluid");
+			if (expand_fluid)
+			{
+				static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
+				ImVec2 cell_padding(0.0f, 2.0f);
+				ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
+				ImGui::BeginTable("Simulation", 2);
+				ImU32 cell_bg_color = ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.7f, 0.65f));
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::AlignTextToFramePadding();
+				static int clicked_sph = 0;
+				if (ImGui::Button("Click to simulate"))
+				{
+					clicked_sph++;
+				}
+				
+				if (clicked_sph & 1)
+				{ 
+					ImGui::TableNextColumn();
+					if (ImGui::Button("Start") && sph->getSimulate() == false)
+					{
+						sph->setSimulate(true);
+						//cout << sph->getSimulate() << endl;
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Stop") && sph->getSimulate() == true)
+					{
+						sph->setSimulate(false);
+						t_simulate = 0.0f;
+					}
+
+					//ImGui::SameLine();
+					//if (sph->getSimulate())
+					//{
+					//	//cout << ImGui::GetTime() << endl;
+					//	float t = ImGui::GetIO().DeltaTime;
+					//	t_simulate = t_simulate + t;
+					//	ImGui::Text(to_string(t_simulate).c_str());
+					//}
+
+					ImGui::SameLine();
+					if (ImGui::Button("Reset"))
+					{
+						sph->setSimulate(false);
+						t_simulate = 0.0f;
+						sph->reset();
+					}
+
+					ImGui::TableNextColumn();
+					ImGui::Text("Particle Radius");
+					ImGui::TableNextColumn();
+					float h = sph->H;
+					if(ImGui::SliderFloat("##H", &h, 0.0f, 10.0f, "%.3f", 0))
+						sph->setParticleRadius(h);
+
+					ImGui::TableNextColumn();
+					ImGui::Text("Gas Constant");
+					ImGui::TableNextColumn();
+					ImGui::SliderFloat("##K", &sph->K, 0.0f, 1000.0f, "%.3f", 0);
+
+					ImGui::TableNextColumn();
+					ImGui::Text("Rest Density");
+					ImGui::TableNextColumn();
+					ImGui::SliderFloat("##rDENSITY", &sph->rDENSITY, 0.0f, 1000.0f, "%.3f", 0);
+
+					ImGui::TableNextColumn();
+					ImGui::Text("Viscousity");
+					ImGui::TableNextColumn();
+					ImGui::SliderFloat("##VISC", &sph->VISC, -1.0f, 10.0f, "%.3f", 0);
+
+					ImGui::TableNextColumn();
+					ImGui::Text("Wall Damping");
+					ImGui::TableNextColumn();
+					ImGui::SliderFloat("##WALL", &sph->WALL, -1.0f, 0.0f, "%.3f", 0);
+
+				}
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::Text("Render Type");
+				ImGui::TableNextColumn();
+				static int selected_render = sph->m_render_type;
+				char buf1[32];
+				sprintf_s(buf1, "Marching");
+				if (ImGui::Selectable(buf1, selected_render == 0, 0, ImVec2(56, 16)))
+				{
+					sph->m_render_type = 0;
+					selected_render = 0;
+				}
+				ImGui::SameLine();
+				char buf2[32];
+				sprintf_s(buf2, "Particle");
+				if (ImGui::Selectable(buf2, selected_render == 1, 0, ImVec2(56, 16)))
+				{
+					sph->m_render_type = 1;
+					selected_render = 1;
+				}
+
+				ImGui::EndTable();
+				ImGui::PopStyleVar();
+				ImGui::TreePop();
 			}
 		}
 	}

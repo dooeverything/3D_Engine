@@ -33,11 +33,13 @@ class ShadowMap : protected Map
 {
 public:
 	ShadowMap(int width, int height);
-	ShadowMap(int width, int height, glm::vec3 m_position);
+	ShadowMap(int width, int height, glm::vec3 m_position, bool perspective);
 	~ShadowMap();
 
 	void draw(vector<shared_ptr<GameObject>>& gameobjects);
-	inline ShadowBuffer& getBuffer() { return *m_shadow_buffer; };
+	void draw(shared_ptr<GameObject>& gameobject);
+
+	inline ShadowBuffer& getBuffer() const { return *m_shadow_buffer; };
 	inline glm::mat4* getProj() { return &m_proj; };
 	inline glm::mat4* getView() { return &m_view; };
 	inline glm::vec3* getPosition() { return &m_light_position; };
@@ -47,6 +49,7 @@ private:
 	glm::mat4 m_proj;
 	glm::mat4 m_view;
 	glm::vec3 m_light_position;
+	bool m_perspective;
 };
 
 class CubeMap : public Map

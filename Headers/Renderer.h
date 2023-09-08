@@ -11,6 +11,7 @@
 #include "Camera.h"
 #include "Light.h"
 #include "ImGuiPanel.h"
+#include "SPHSystem.h"
 
 using namespace std;
 

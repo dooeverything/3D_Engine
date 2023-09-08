@@ -23,8 +23,11 @@ public:
 
 	bool processShader();
 	
+	GLuint getShaderId() { return m_shader_ID; };
+
 	void setInt(const string& name, int value) const;
 	void setFloat(const string& name, float value) const;
+	void setVec2(const string& name, glm::vec2& vector) const;
 	void setVec3(const string& name, glm::vec3& vector) const;
 	void setVec3(const string& name, float x, float y, float z) const;
 	void setMat4(const string& name, glm::mat4& matrix) const;

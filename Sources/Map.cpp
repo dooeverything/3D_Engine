@@ -14,16 +14,23 @@ Map::Map(int width, int height, string name) :
 Map::~Map() {}
 
 ShadowMap::ShadowMap(int width, int height) : 
-	Map(width, height, "ShadowMap"),
+	Map(width, height, "ShadowMap"), 
 	m_shadow_buffer(shared_ptr<ShadowBuffer>()),
-	m_proj(glm::mat4(0.0f)), m_view(glm::mat4(0.0f)), m_light_position(glm::vec3(0.0f))
+	m_proj(glm::mat4(0.0f)), m_view(glm::mat4(0.0f)), m_light_position(glm::vec3(0.0f)),
+	m_perspective(false)
 {}
 
-ShadowMap::ShadowMap(int width, int height, glm::vec3 position) :
-	Map(width, height, "ShadowMap")
+ShadowMap::ShadowMap(int width, int height, glm::vec3 position, bool perspective) :
+	Map(width, height, "ShadowMap"), m_perspective(perspective)
 {
 	cout << "Shadow map constructor with " << m_width << ", " << m_height << endl;
-	m_proj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, -10.0f, 20.0f);
+	
+	float aspect = static_cast<float>(width) / static_cast<float>(height);
+	if(perspective)
+		m_proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+	else
+		m_proj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, -10.0f, 20.0f);
+	
 	m_view = glm::lookAt(position, glm::vec3(0.0f), glm::vec3(0.0, -1.0, 0.0));
 
 	m_light_position = position;
@@ -47,9 +54,21 @@ void ShadowMap::draw(vector<shared_ptr<GameObject>>& gameobjects)
 	glClear(GL_DEPTH_BUFFER_BIT);
 	for (auto& it : gameobjects)
 	{
+		if (it->getMesh() == nullptr) continue;
+		
 		m_shader->load();
 		it->getMesh()->draw(m_proj, m_view, *m_shader);
 	}
+	m_shadow_buffer->unbind();
+}
+
+void ShadowMap::draw(shared_ptr<GameObject>& gameobject)
+{
+	glViewport(0, 0, m_width, m_height);
+	m_shadow_buffer->bind();
+	glClear(GL_DEPTH_BUFFER_BIT);
+	m_shader->load();
+	gameobject->getMesh()->drawInstance(m_proj, m_view, *m_shader);
 	m_shadow_buffer->unbind();
 }
 

@@ -61,6 +61,7 @@ void SDL_GL_Window::init(const int width, const int height, string title)
 	ImGui::StyleColorsDark();
 	io.Fonts->AddFontFromFileTTF("Roboto-Medium.ttf", 15.0f);
 	ImGuiStyle& style = ImGui::GetStyle();
+	style.FrameBorderSize = 1.0f;
 	style.Colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
 	style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
 	style.Colors[ImGuiCol_WindowBg] = ImVec4(0.13f, 0.14f, 0.15f, 1.00f);
@@ -85,9 +86,9 @@ void SDL_GL_Window::init(const int width, const int height, string title)
 	style.Colors[ImGuiCol_Button] = ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
 	style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.38f, 0.38f, 0.38f, 1.00f);
 	style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.67f, 0.67f, 0.67f, 0.39f);
-	style.Colors[ImGuiCol_Header] = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
-	style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
-	style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.67f, 0.67f, 0.67f, 0.39f);
+	style.Colors[ImGuiCol_Header] = ImVec4(0.0f, 0.22f, 0.22f, 1.00f);
+	style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.0f, 0.22f, 0.22f, 1.00f);
+	style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.0f, 0.22f, 0.22f, 1.00f);
 	style.Colors[ImGuiCol_Separator] = style.Colors[ImGuiCol_Border];
 	style.Colors[ImGuiCol_SeparatorHovered] = ImVec4(0.41f, 0.42f, 0.44f, 1.00f);
 	style.Colors[ImGuiCol_SeparatorActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);

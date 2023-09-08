@@ -55,12 +55,14 @@ public:
 	Mesh(string name, const string& path);
 	Mesh(string name, vector<info::VertexLayout> layouts);
 	Mesh(string name, vector<info::VertexLayout> layouts, vector<unsigned int> indices);
+	Mesh(string name, vector<info::VertexLayout> layouts, vector<unsigned int> indices, vector<glm::mat4> matrices);
 	Mesh(string name, shared_ptr<VertexBuffer> buffer, vector<shared_ptr<Texture>> textures,
 		 shared_ptr<Material> material);
 
 	virtual void processMesh();
 
 	void drawArrays();
+	void drawInstance(glm::mat4& P, glm::mat4& V, Shader& shader);
 	void draw();
 	virtual void draw(glm::mat4& P, glm::mat4& V, Shader& shader, bool terrain=false);
 	virtual void drawLowQuality(Shader& shader);
@@ -72,6 +74,7 @@ public:
 	virtual void setRotation(glm::mat4 t);
 	virtual void setScale(glm::mat4 t);
 
+	inline VertexBuffer& getBuffer() { return *m_buffer.get(); };
 	inline shared_ptr<Material> getMaterial() { return m_material; };
 	inline shared_ptr<BoundingBox> getBox() { return m_bbox; };
 	inline string getName() { return m_name; };

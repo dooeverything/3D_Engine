@@ -15,7 +15,7 @@ Shader::~Shader()
 
 bool Shader::processShader()
 {
-	cout << "Load shader file: " << endl;
+	//cout << "Load shader file: " << endl;
 
 	GLuint vert_shader = 0;
 	GLuint frag_shader = 0;
@@ -62,7 +62,7 @@ bool Shader::processShader()
 
 bool Shader::compileShader(const string& filePath, GLenum shaderType, GLuint& outShader)
 {
-	printf("  -Compile %s \n", filePath.c_str());
+	//printf("  -Compile %s \n", filePath.c_str());
 
 	ifstream shader_file(filePath);
 	if (shader_file.is_open())
@@ -125,6 +125,11 @@ void Shader::setInt(const string& name, int value) const
 void Shader::setFloat(const string& name, float value) const
 {
 	glUniform1f(glGetUniformLocation(m_shader_ID, name.c_str()), value);
+}
+
+void Shader::setVec2(const string& name, glm::vec2& vector) const
+{
+	glUniform2f(glGetUniformLocation(m_shader_ID, name.c_str()), vector.x, vector.y);
 }
 
 void Shader::setVec3(const string& name, glm::vec3& vector) const

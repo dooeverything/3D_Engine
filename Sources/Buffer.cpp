@@ -1,8 +1,8 @@
 #include "Buffer.h"
 
 VertexBuffer::VertexBuffer() : 
-	m_VAO(0), m_VBO(0), m_EBO(0), 
-	m_layouts({}), n_layouts(0), n_indices(0)
+	m_VAO(0), m_VBO(0), m_EBO(0), m_IBO(0),
+	m_layouts({}), m_matrices({}), n_layouts(0), n_indices(0)
 {
 }
 
@@ -12,7 +12,7 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts)
 	n_layouts = static_cast<unsigned int>(layouts.size());
 
 	//cout << " Generate buffer" << endl;
-	//cout << "  -Create vertex buffers " << m_layouts.size() << endl;
+	//cout << "  -Create vertex buffers " << m_layouts[10].position.x << endl;
 	//cout << "  -Size of vertex layout: " << n_layouts << endl;
 
 	// Generate buffers: VAO, VBO, EBO
@@ -34,7 +34,7 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts)
 
 	glEnableVertexAttribArray(TEXCOORD_ATTRIB);
 	glVertexAttribPointer(TEXCOORD_ATTRIB, 2, GL_FLOAT, GL_FALSE, sizeof(info::VertexLayout), (void*)offsetof(info::VertexLayout, texCoord));
-
+	
 	glBindVertexArray(0);
 }
 
@@ -44,11 +44,6 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts, cons
 	n_layouts = static_cast<unsigned int>(layouts.size());
 	n_indices = static_cast<unsigned int>(indices.size());
 
-	//cout << " Generate buffer" << endl;
-	//cout << "  -Create vertex buffers " << m_layouts.size() << endl;
-	//cout << "  -Size of vertex layout: " << n_layouts << endl;
-	//cout << "  -Size of indices: " << n_indices << endl;
-	//
 	// Generate buffers: VAO, VBO, EBO
 	glGenVertexArrays(1, &m_VAO);
 	glGenBuffers(1, &m_VBO);
@@ -72,13 +67,29 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts, cons
 	glEnableVertexAttribArray(TEXCOORD_ATTRIB);
 	glVertexAttribPointer(TEXCOORD_ATTRIB, 2, GL_FLOAT, GL_FALSE, sizeof(info::VertexLayout), (void*)offsetof(info::VertexLayout, texCoord));
 
-	// Bone 
-	//glEnableVertexAttribArray(BONE_ATTRIB);
-	//glVertexAttribIPointer(BONE_ATTRIB, 4, GL_INT, sizeof(VertexLayout), (void*)offsetof(VertexLayout, bone_IDs));
 
-	// Bone weights
-	//glEnableVertexAttribArray(BONE_WEIGHT_ATTRIB);
-	//glVertexAttribPointer(BONE_WEIGHT_ATTRIB, 4, GL_FLOAT, GL_FALSE, sizeof(VertexLayout), (void*)offsetof(VertexLayout, weights));
+	if (m_matrices.size() > 1)
+	{
+		//cout << "Setup instance mesh" << endl;
+		glGenBuffers(1, &m_IBO);
+		glBindBuffer(GL_ARRAY_BUFFER, m_IBO);
+		glBufferData(GL_ARRAY_BUFFER, m_matrices.size() * sizeof(glm::mat4), &m_matrices[0], GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(TEXCOORD_ATTRIB + 1);
+		glVertexAttribPointer(TEXCOORD_ATTRIB + 1, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+		glEnableVertexAttribArray(TEXCOORD_ATTRIB + 2);
+		glVertexAttribPointer(TEXCOORD_ATTRIB + 2, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(1 * sizeof(glm::vec4)));
+		glEnableVertexAttribArray(TEXCOORD_ATTRIB + 3);
+		glVertexAttribPointer(TEXCOORD_ATTRIB + 3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+		glEnableVertexAttribArray(TEXCOORD_ATTRIB + 4);
+		glVertexAttribPointer(TEXCOORD_ATTRIB + 4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+
+		glVertexAttribDivisor(TEXCOORD_ATTRIB + 1, 1);
+		glVertexAttribDivisor(TEXCOORD_ATTRIB + 2, 1);
+		glVertexAttribDivisor(TEXCOORD_ATTRIB + 3, 1);
+		glVertexAttribDivisor(TEXCOORD_ATTRIB + 4, 1);
+
+	}
 
 	// Reset the vertex array binder
 	glBindVertexArray(0);
@@ -192,16 +203,17 @@ void ShadowBuffer::createBuffers(int width, int height)
 	glDrawBuffer(GL_NONE);
 	glReadBuffer(GL_NONE);
 
-	// Check any errors
-	if (glGetError() != GL_NO_ERROR)
-	{
-		cerr << "Error " << glGetError() << endl;
-		assert(0);
-	}
 	auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE)
 	{
 		cerr << "Framebuffer error " << status << endl;
+		assert(0);
+	}
+
+	// Check any errors
+	if (glGetError() != GL_NO_ERROR)
+	{
+		cerr << "Error: " << glGetError() << endl;
 		assert(0);
 	}
 

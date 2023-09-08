@@ -110,6 +110,7 @@ public:
 	virtual void draw(glm::mat4& P, glm::mat4& V, Light& light, 
 					  glm::vec3& view_pos, ShadowMap& shadow, 
 					  IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut);
+	virtual void drawInstance(glm::mat4& P, glm::mat4& V, Light& light, glm::vec3& view_pos, glm::vec3& light_pos);
 	virtual void drawGizmos(glm::mat4& P, glm::mat4& V, glm::vec3& view_pos);
 	virtual void loadMesh();
 	virtual bool isGizmoClick(glm::vec3& ray_dir, glm::vec3& ray_pos);
@@ -122,6 +123,7 @@ public:
 	virtual inline void setIrradiance(unsigned int irradiance) { m_irradiance = irradiance; };
 	virtual inline void setPrefiler(unsigned int prefilter) { m_prefilter=prefilter; };
 	virtual inline void setLUT(GLuint lut) { m_lut = lut; };
+	vector<float> m_weights;
 
 private:
 	glm::vec3 m_color;
@@ -148,10 +150,20 @@ private:
 	virtual vector<unsigned int> calculateIndex() { return {}; };
 };
 
+class Point : public Geometry
+{
+public:
+	Point(vector<info::VertexLayout> layouts);
+	~Point();
+
+	void drawPoint(glm::mat4& P, glm::mat4& V);
+
+};
+
 class Sphere : public Geometry
 {
 public:
-	Sphere(bool is_create_gizmo);
+	Sphere(bool is_create_gizmo, vector<glm::mat4> matrices = {});
 	~Sphere();
 
 private:

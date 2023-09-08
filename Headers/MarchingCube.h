@@ -3,8 +3,11 @@
 #include <math.h>
 #include <limits.h>
 #include <random>
-#include "Object.h"
+#include <unordered_map>
+
 #include "FastNoiseLite.h"
+#include "Object.h"
+#include "Particle.h"
 
 using namespace std;
 
@@ -13,14 +16,18 @@ class TriMesh;
 class MarchingCube : public GameObject
 {
 public:
+    MarchingCube();
     MarchingCube(float size);
     ~MarchingCube();
 
-    virtual float calculateGridValue(glm::vec3 gridPoint) = 0;
+    //virtual void createWeights() = 0;
+    //virtual float getGridValue(glm::vec3) = 0;
+    virtual void createVertex() = 0;
+    virtual void updateVertex();
 
-    virtual glm::vec3 interpolate(glm::vec3 grid1, glm::vec3 grid2, float gridValue1, float gridValue2, float threshold);
+    virtual glm::vec3 interpolate(glm::vec3, glm::vec3, float, float, float);
 
-    virtual void polygonize(vector<glm::vec3> grids, vector<float> gridValues);
+    virtual void polygonize(vector<glm::vec3>, vector<float> gridValues);
 
     virtual void draw(glm::mat4& P, glm::mat4& V, Light& light,
                       glm::vec3& view_pos, ShadowMap& shadow,
@@ -34,16 +41,15 @@ public:
     inline virtual void setGridSize(float grid_size) { m_grid_size = grid_size; };
     inline virtual void setThreshold(float threshold) { m_threshold = threshold; };
 
-    virtual void getVertex() = 0;
-
 protected:
     float m_size;
     float m_grid_size;
     float m_threshold;
-    
+
     vector<glm::vec3> m_vertices;
     vector<glm::vec3> m_normals;
     vector<shared_ptr<TriMesh>> m_trimeshes;
+    vector<float> m_weights;
 };
 
 class Metaball : public MarchingCube
@@ -51,8 +57,8 @@ class Metaball : public MarchingCube
 public:
     Metaball(float size);
 
-    virtual float calculateGridValue(glm::vec3 grid_point);
-    virtual void getVertex();
+    virtual float getGridValue(glm::vec3 grid_point);
+    virtual void createVertex();
 
 private:
     glm::vec3 m_center;
@@ -77,11 +83,10 @@ class Terrain : public MarchingCube
 {
 public:
     Terrain(float size);
-    virtual float calculateGridValue(glm::vec3 grid_point);
-    virtual void getVertex();
-    void createWeights();
+    virtual float getGridValue(glm::vec3 grid_point);
+    virtual void createVertex();
+    virtual void createWeights();
     void updateWeights(glm::vec3 ray_dir, glm::vec3 ray_pos);
-    void updateVertex();
 
     inline int getNoiseScale() { return m_noise_scale; };
     inline int getOctave() { return m_octaves; };
@@ -103,9 +108,8 @@ private:
     float m_brush_size;
     float m_strength;
     bool m_is_edit;
-
-    vector<float> m_weights;
 };
+
 
 
 

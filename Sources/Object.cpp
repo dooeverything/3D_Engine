@@ -86,6 +86,8 @@ Object::~Object()
 
 bool Object::isClick(glm::vec3& ray_dir, glm::vec3& ray_pos)
 {
+	if (m_mesh == nullptr) return false;
+
 	return m_mesh->intersect(ray_dir, ray_pos);
 }
 
@@ -219,7 +221,7 @@ void Grid::draw(glm::mat4& P, glm::mat4& V, glm::vec3 cam_pos)
 
 GameObject::GameObject() : Object(), 
 	m_gizmos({}), m_color(glm::vec3(1.0f, 0.5f, 0.31f)),
-	m_move_axis(-1), m_irradiance(0.0), m_prefilter(0.0), m_lut(0.0)
+	m_move_axis(-1), m_irradiance(0), m_prefilter(0), m_lut(0)
 {}
 
 GameObject::GameObject(const string& mesh_path) : Object(mesh_path),
@@ -394,6 +396,11 @@ void GameObject::draw(glm::mat4& P, glm::mat4& V,
 	m_mesh->draw(P, V, *m_shader);
 }
 
+void GameObject::drawInstance(glm::mat4& P, glm::mat4& V, Light& light, glm::vec3& view_pos, glm::vec3& light_pos)
+{
+	m_mesh->drawInstance(P, V, *m_shader);
+}
+
 void GameObject::drawGizmos(glm::mat4& P, glm::mat4& V, glm::vec3& view_pos)
 {
 
@@ -442,41 +449,69 @@ Geometry::Geometry() : GameObject()
 Geometry::~Geometry()
 {}
 
+Point::Point(vector<info::VertexLayout> layouts) : Geometry()
+{
+	m_name = "Point";
+
+	m_mesh = make_shared<Mesh>("Point", layouts);
+
+	vector<string> shader_path = { "Shaders/Fluid.vert", "Shaders/Point.frag" };
+	m_shader = make_shared<Shader>(shader_path);
+	loadShader();
+}
+
+Point::~Point()
+{
+}
+
+void Point::drawPoint(glm::mat4& P, glm::mat4& V)
+{
+	m_mesh->getBuffer().bind();
+	m_shader->load();
+	glm::mat4 M = glm::mat4(1.0f);
+	m_shader->setPVM(P, V, M);
+	//m_shader->setFloat("point_radius", 1.0);
+	//m_shader->setFloat("point_scale", 10.0);
+
+	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+	glDrawArrays(GL_POINTS, 0, (GLsizei)m_mesh->getBuffer().getLayouts().size());
+	glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
+
+	m_mesh->getBuffer().unbind();
+}
+
 Sphere::~Sphere()
 {}
 
-Sphere::Sphere(bool is_create_gizmo) :
-	Geometry(), m_division(64.0f), m_radius(1.0f)
+Sphere::Sphere(bool is_create_gizmo, vector<glm::mat4> matrices) :
+	Geometry(), m_division(2.0f), m_radius(0.0f)
 {
-	cout << "Sphere Constructor" << endl;
+	//cout << "Sphere Constructor" << endl;
 
 	m_name = "Sphere";
 
 	vector<info::VertexLayout> layouts = calculateVertex();
 	vector<unsigned int> indices = calculateIndex();
-	m_mesh = make_shared<Mesh>(m_name, layouts, indices);
+	m_mesh = make_shared<Mesh>(m_name, layouts, indices, matrices);
 
-	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
+	vector<string> shader_path = { "Shaders/Instance.vert", "Shaders/Fluid.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	loadShader();
 
-	if (is_create_gizmo)
-	{
-		for (int axis = 0; axis < 3; ++axis)
-		{
-			shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
-			m_gizmos.push_back(gizmo);
-		}
-	}
-
-	cout << "Sphere Constructor successfullly loaded" << endl;
-	cout << endl;
+	//if (is_create_gizmo)
+	//{
+	//	for (int axis = 0; axis < 3; ++axis)
+	//	{
+	//		shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
+	//		m_gizmos.push_back(gizmo);
+	//	}
+	//}
 }
 
 vector<info::VertexLayout> Sphere::calculateVertex()
 {
-	float angle_sector = (2 * M_PI) / m_division; // 0 to 360
-	float angle_stack = M_PI / m_division; // 90 to -90
+	float angle_sector = float(2 * M_PI) / m_division; // 0 to 360
+	float angle_stack = float(M_PI / m_division); // 90 to -90
 	//float length_inv = 1.0f / 
 
 	vector<glm::vec3> vertices;
@@ -502,8 +537,8 @@ vector<info::VertexLayout> Sphere::calculateVertex()
 
 			float lon = glm::atan(z, x);
 			float lat = glm::atan(y, sqrt(x * x + z * z));
-			float s = (lon + M_PI) / (2 * M_PI);
-			float t = (log(tan(lat / 2 + M_PI / 4)) + M_PI) / (2 * M_PI);
+			float s = float(lon + M_PI) / float(2 * M_PI);
+			float t = float(log(tan(lat / 2 + M_PI / 4)) + M_PI) / float(2 * M_PI);
 
 			//float s = (float)j / angle_sector;
 			//float t = (float)i / angle_stack;
@@ -516,7 +551,7 @@ vector<info::VertexLayout> Sphere::calculateVertex()
 	for (int i = 0; i < vertices.size(); ++i)
 	{
 		info::VertexLayout layout;
-		layout.position = vertices[i];
+		layout.position = vertices[i]* m_radius;
 		layout.normal = normals[i];
 		layout.texCoord = texCoords[i];
 
@@ -584,6 +619,8 @@ Outline::~Outline()
 
 void Outline::setupBuffers(GameObject& go, glm::mat4 & P, glm::mat4 & V)
 {
+	if (go.getMesh() == nullptr) return;
+
 	m_outline_buffers.at(0)->bind();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		m_mask_shader->load();  

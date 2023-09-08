@@ -1,7 +1,9 @@
 #include "Quaternion.h"
 #include <iostream>
 
-// Reference : https://github.com/gameprogcpp/code/blob/master/Chapter06/Math.h
+// Reference : 
+// https://github.com/gameprogcpp/code/blob/master/Chapter06/Math.h
+// https://developer.nvidia.com/gpugems/gpugems3/part-v-physics-simulation/chapter-29-real-time-rigid-body-simulation-gpus - 29.5 apendix
 
 Quaternion::Quaternion() : m_v(glm::vec4(1.0f)) {}
 
@@ -15,7 +17,6 @@ void Quaternion::set(glm::vec3 axis, float angle)
 	m_v.y *= axis.y;
 	m_v.z *= axis.z;
 	m_v.w = glm::cos(angle / 2.0);
-	//std::cout << "Set quaternion : " << m_v.x << " " << m_v.y << " " << m_v.z << " " << m_v.w  << " with angle : " << angle << std::endl;
 }
 
 glm::mat4 Quaternion::getMatrix()

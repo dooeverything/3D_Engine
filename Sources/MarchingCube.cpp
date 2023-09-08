@@ -1,14 +1,35 @@
 #include "MarchingCube.h"
 #include "Utils.h"
 
+// Marching Cube 
+// Reference : 
+// https://developer.nvidia.com/gpugems/gpugems3/part-i-geometry/chapter-1-generating-complex-procedural-terrains-using-gpu
+// https://polycoding.net/marching-cubes/part-2/
+// http://paulbourke.net/geometry/polygonise/
+
+MarchingCube::MarchingCube() :
+	GameObject(), m_size(10), m_grid_size(0.1f), m_threshold(1.0f),
+	m_vertices({}), m_normals({}), m_trimeshes({})
+{
+}
+
 MarchingCube::MarchingCube(float size) :
 	GameObject(),  m_size(size), m_grid_size(0.1f), m_threshold(1.0f), 
-	m_vertices({}), m_normals({})
+	m_vertices({}), m_normals({}), m_trimeshes({})
 {
 }
 
 MarchingCube::~MarchingCube()
 {
+}
+
+void MarchingCube::updateVertex()
+{
+	// Update the vertex
+	m_vertices.clear();
+	m_normals.clear();
+	m_trimeshes.clear();
+	createVertex();
 }
 
 glm::vec3 MarchingCube::interpolate(glm::vec3 grid1, glm::vec3 grid2,
@@ -33,7 +54,6 @@ void MarchingCube::polygonize(vector<glm::vec3> grids, vector<float> gridValues)
 	int vertexIndex = 0;
 	
 	//cout << "Gridvalues : " << gridValues[0] << endl;
-	//cout << "Threshold : " << m_threshold << endl;
 
 	if (gridValues[0] <= m_threshold) vertexIndex |= 1;
 	if (gridValues[1] <= m_threshold) vertexIndex |= 2;
@@ -43,7 +63,7 @@ void MarchingCube::polygonize(vector<glm::vec3> grids, vector<float> gridValues)
 	if (gridValues[5] <= m_threshold) vertexIndex |= 32;
 	if (gridValues[6] <= m_threshold) vertexIndex |= 64;
 	if (gridValues[7] <= m_threshold) vertexIndex |= 128;
-
+	
 	// If the vertex is outside or inside the surface
 	if (table::edgeTable[vertexIndex] == 0) return;
 
@@ -71,28 +91,37 @@ void MarchingCube::polygonize(vector<glm::vec3> grids, vector<float> gridValues)
 		vertexList.at(10) = interpolate(grids[2], grids[6], gridValues[2], gridValues[6], m_threshold);
 	if (table::edgeTable[vertexIndex] & 2048)
 		vertexList.at(11) = interpolate(grids[3], grids[7], gridValues[3], gridValues[7], m_threshold);
-
+		
 	// Create triangles with vertices on edges
 	for (int i = 0; table::triTable[vertexIndex][i] != -1; i += 3)
 	{
 		glm::vec3 a = vertexList[table::triTable[vertexIndex][i]];
 		glm::vec3 b = vertexList[table::triTable[vertexIndex][i + 1]];
 		glm::vec3 c = vertexList[table::triTable[vertexIndex][i + 2]];
-
+		
 		glm::vec3 ab = b - a;
 		glm::vec3 ac = c - a;
+		glm::vec3 n1 = -glm::normalize(glm::cross(ab, ac));
 		
-		glm::vec3 n = glm::normalize(glm::cross(ab, ac));
+		glm::vec3 ba = a - b;
+		glm::vec3 bc = c - b;
+		glm::vec3 n2 = -glm::normalize(glm::cross(ba, bc));
+
+		glm::vec3 ca = a - c;
+		glm::vec3 cb = b - c;
+		glm::vec3 n3 = -glm::normalize(glm::cross(ca, cb));
+
+		glm::vec3 n = (n1 + n2 + n3) / 3.0f;
 
 		m_vertices.push_back(a);
-		m_vertices.push_back(b);
 		m_vertices.push_back(c);
+		m_vertices.push_back(b);
 
 		m_trimeshes.emplace_back(make_shared<TriMesh>(a, b, c));
 
-		m_normals.push_back(n);
-		m_normals.push_back(n); 
-		m_normals.push_back(n);
+		m_normals.push_back(n1);
+		m_normals.push_back(n1);
+		m_normals.push_back(n1);
 	}
 }
 
@@ -100,7 +129,11 @@ void MarchingCube::draw(glm::mat4& P, glm::mat4& V, Light& light,
 					glm::vec3& view_pos, ShadowMap& shadow,
 					IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut)
 {
-	//cout << "Draw metaball" << endl;
+	if (m_mesh == nullptr)
+	{
+		//cout << "Mesh is empty" << endl;
+		return;
+	}
 
 	m_prefilter = prefilter.getCubemapBuffer()->getCubemapTexture();
 	m_irradiance = irradiance.getCubemapBuffer()->getCubemapTexture();
@@ -146,29 +179,29 @@ Metaball::Metaball(float size) : MarchingCube(size)
 	//m_center = glm::vec3(0.5f);
 	//m_threshold = 1.0f;
 
-	cout << "Metaball Constructor" << endl;
-	cout << "Radius : " << m_size << endl;
-	cout << "Center : " << m_center << endl;
-	m_name = "Metaball";
+	//cout << "Metaball Constructor" << endl;
+	//cout << "Radius : " << m_size << endl;
+	//cout << "Center : " << m_center << endl;
+	//m_name = "Metaball";
 	m_center = glm::vec3(0.0f);
 
-	getVertex();
+	createVertex();
 
 	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	loadShader();
 
-	for (int axis = 0; axis < 3; ++axis)
-	{
-		shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
-		m_gizmos.push_back(gizmo);
-	}
+	//for (int axis = 0; axis < 3; ++axis)
+	//{
+	//	shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
+	//	m_gizmos.push_back(gizmo);
+	//}
 
-	cout << "Metaball Constructor successfullly loaded" << endl;
-	cout << endl;
+	//cout << "Metaball Constructor successfullly loaded" << endl;
+	//cout << endl;
 }
 
-float Metaball::calculateGridValue(glm::vec3 gridPoint)
+float Metaball::getGridValue(glm::vec3 gridPoint)
 {
 	float x = gridPoint.x - m_center.x;
 	float y = gridPoint.y - m_center.y;
@@ -177,7 +210,7 @@ float Metaball::calculateGridValue(glm::vec3 gridPoint)
 	return float(glm::sqrt(glm::pow(x, 2) + glm::pow(y, 2) + glm::pow(z, 2)));
 }
 
-void Metaball::getVertex()
+void Metaball::createVertex()
 {
 	vector<glm::vec3> gridPoints;
 	vector<float> gridValues;
@@ -188,29 +221,30 @@ void Metaball::getVertex()
 		{
 			for (float x = -m_size; x < m_size; x += m_grid_size)
 			{
+
 				gridPoints.push_back({ x, y, z });
-				gridValues.push_back(calculateGridValue(gridPoints.at(0)));
+				gridValues.push_back(getGridValue(gridPoints.at(0)));
 
 				gridPoints.push_back({ x + m_grid_size, y, z });
-				gridValues.push_back(calculateGridValue({ x + m_grid_size, y, z }));
+				gridValues.push_back(getGridValue({ x + m_grid_size, y, z }));
 
 				gridPoints.push_back({ x + m_grid_size, y, z + m_grid_size });
-				gridValues.push_back(calculateGridValue({ x + m_grid_size, y, z + m_grid_size }));
+				gridValues.push_back(getGridValue({ x + m_grid_size, y, z + m_grid_size }));
 
 				gridPoints.push_back({ x, y, z + m_grid_size });
-				gridValues.push_back(calculateGridValue({ x, y, z + m_grid_size }));
+				gridValues.push_back(getGridValue({ x, y, z + m_grid_size }));
 
 				gridPoints.push_back({ x, y + m_grid_size, z });
-				gridValues.push_back(calculateGridValue({ x, y + m_grid_size, z }));
+				gridValues.push_back(getGridValue({ x, y + m_grid_size, z }));
 
 				gridPoints.push_back({ x + m_grid_size, y + m_grid_size, z });
-				gridValues.push_back(calculateGridValue({ x + m_grid_size, y + m_grid_size, z }));
+				gridValues.push_back(getGridValue({ x + m_grid_size, y + m_grid_size, z }));
 
 				gridPoints.push_back({ x + m_grid_size, y + m_grid_size, z + m_grid_size });
-				gridValues.push_back(calculateGridValue({ x + m_grid_size, y + m_grid_size, z + m_grid_size }));
+				gridValues.push_back(getGridValue({ x + m_grid_size, y + m_grid_size, z + m_grid_size }));
 
 				gridPoints.push_back({ x, y + m_grid_size, z + m_grid_size });
-				gridValues.push_back(calculateGridValue({ x, y + m_grid_size, z + m_grid_size }));
+				gridValues.push_back(getGridValue({ x, y + m_grid_size, z + m_grid_size }));
 
 				polygonize(gridPoints, gridValues);
 
@@ -315,9 +349,9 @@ Terrain::Terrain(float size) : MarchingCube(size)
 	cout << "Terrain Constructor" << endl;
 
 	m_name = "Terrain";
-	m_size = 20.0f;
 	m_grid_size = 1.0f;
 	m_threshold = 0.5f;
+
 	m_noise_scale = 1;
 	m_octaves = 8;
 	m_frequency = 0.02f;
@@ -326,7 +360,7 @@ Terrain::Terrain(float size) : MarchingCube(size)
 	m_strength = 1.0f;
 
 	createWeights();
-	getVertex();
+	createVertex();
 
 	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
@@ -342,13 +376,13 @@ Terrain::Terrain(float size) : MarchingCube(size)
 	cout << endl;
 }
 
-float Terrain::calculateGridValue(glm::vec3 grid_point)
+float Terrain::getGridValue(glm::vec3 grid_point)
 {
 	int index = int(grid_point.x + m_size * (grid_point.y + m_size * grid_point.z));
 	return m_weights[index];
 }
 
-void Terrain::getVertex()
+void Terrain::createVertex()
 {
 	for (float z = 0.0f; z < m_size-1; z += m_grid_size)
 	{
@@ -360,28 +394,28 @@ void Terrain::getVertex()
 				vector<float> values(8);
 
 				points[0] = { x, y, z };
-				values[0] = calculateGridValue(points[0]);
+				values[0] = getGridValue(points[0]);
 
 				points[1] = { x + m_grid_size, y, z };
-				values[1] = calculateGridValue(points[1]);
+				values[1] = getGridValue(points[1]);
 
 				points[2] = { x + m_grid_size, y, z + m_grid_size };
-				values[2] = calculateGridValue(points[2]);
+				values[2] = getGridValue(points[2]);
 
 				points[3] = { x, y, z + m_grid_size };
-				values[3] = calculateGridValue(points[3]);
+				values[3] = getGridValue(points[3]);
 
 				points[4] = { x, y + m_grid_size, z };
-				values[4] = calculateGridValue(points[4]);
+				values[4] = getGridValue(points[4]);
 
 				points[5] = { x + m_grid_size, y + m_grid_size, z };
-				values[5] = calculateGridValue(points[5]);
+				values[5] = getGridValue(points[5]);
 
 				points[6] = { x + m_grid_size, y + m_grid_size, z + m_grid_size };
-				values[6] = calculateGridValue(points[6]);
+				values[6] = getGridValue(points[6]);
 
 				points[7] = { x, y + m_grid_size, z + m_grid_size };
-				values[7] = calculateGridValue(points[7]);
+				values[7] = getGridValue(points[7]);
 
 				polygonize(points, values);
 			}
@@ -403,7 +437,7 @@ void Terrain::getVertex()
 void Terrain::createWeights()
 {
 	m_weights.clear();
-	float num_weights = float(pow(m_size, 3.0));
+	int num_weights = int(pow(m_size, 3.0));
 	m_weights = vector<float>(num_weights);
 	cout << "Num weights : " << num_weights << endl;
 
@@ -472,13 +506,4 @@ void Terrain::updateWeights(glm::vec3 ray_dir, glm::vec3 ray_pos)
 	}
 
 	updateVertex();
-}
-
-void Terrain::updateVertex()
-{
-	// Update the vertex
-	m_vertices.clear();
-	m_normals.clear();
-	m_trimeshes.clear();
-	getVertex();
 }

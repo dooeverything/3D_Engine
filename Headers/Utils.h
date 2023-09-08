@@ -3,6 +3,12 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+#ifndef HAVE_M_PI
+#ifndef M_PI
+#define M_PI    3.14159265f   /**< pi */
+#endif
+#endif
+
 using namespace std;
 
 namespace info

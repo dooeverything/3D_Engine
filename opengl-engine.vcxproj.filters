@@ -105,6 +105,15 @@
     <ClInclude Include="Headers\FastNoiseLite.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Headers\Particle.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Force.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\SPHSystem.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Sources\Buffer.cpp">
@@ -178,6 +187,15 @@
     </ClCompile>
     <ClCompile Include="Sources\ImGuiPanel.cpp">
       <Filter>소스 파일\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Particle.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Force.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\SPHSystem.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

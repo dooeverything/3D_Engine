@@ -9,6 +9,7 @@
 #include "Shader.h"
 #include "Buffer.h"
 #include "FileDialog.h"
+#include "SPHSystem.h"
 
 class ImGuiPanel
 {
@@ -64,6 +65,8 @@ private:
 	void translatePanel(GameObject& clicked_object);
 	void rotatePanel(GameObject& clicked_object);
 	void scalePanel(GameObject& clicked_object);
+
+	float t_simulate;
 };
 
 //class MaterialPanel : public PropertyPanel

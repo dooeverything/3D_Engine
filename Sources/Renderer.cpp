@@ -30,7 +30,7 @@ void Renderer::init()
 	m_camera = make_unique<Camera>(glm::vec3(0.0f, 7.5f, 27.0f), -90.0f, -11.0f);
 	
 	glm::vec3 light_pos = { 1.0f, 1.0f, 1.0f };
-	m_shadow_map = make_unique<ShadowMap>(2048, 2048, light_pos);
+	m_shadow_map = make_unique<ShadowMap>(2048, 2048, light_pos, false);
 	m_cubemap = make_unique<CubeMap>(4096, 4096);
 	m_irradiancemap = make_unique<IrradianceMap>(32, 32);
 	m_prefilter = make_unique<PrefilterMap>(256, 256);
@@ -41,16 +41,12 @@ void Renderer::init()
 	m_panels.push_back(make_shared<ObjectPanel>());
 	m_panels.push_back(make_shared<PropertyPanel>());
 
-	//shared_ptr<GameObject> test_brdf = make_shared<Sphere>(true);
-	//test_brdf->setProperty(0, glm::vec3(0.0f, 7.0f, 0.0f));
-	//m_scene_objects.push_back(test_brdf);
-	
-	shared_ptr<GameObject> test_terrain = make_shared<Terrain>(1.0f);
-	m_scene_objects.push_back(test_terrain);
+	shared_ptr<GameObject> test = make_shared<SPHSystem>(32.0f);
+	m_scene_objects.push_back(test);
 
 	// Setup lights
 	glm::vec3 dir = -light_pos; //{ -0.2f, -1.0f, -0.3f };
-	glm::vec3 amb = { 10.0f, 10.0f, 10.0f };
+	glm::vec3 amb = { 1.0f, 1.0f, 1.0f };
 	glm::vec3 diff = { 0.8f, 0.8f, 0.8f };
 	glm::vec3 spec = { 0.5f, 0.5f, 0.5f };
 	m_lights.push_back(make_unique<Light>(dir, amb, diff, spec));
@@ -278,12 +274,14 @@ void Renderer::renderImGui()
 	ImGui::NewFrame();
 	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
-	bool demo = true;
-	ImGui::ShowDemoWindow(&demo);
+	//bool demo = true;
+	//ImGui::ShowDemoWindow(&demo);
 
 	for (int i = 0; i < m_scene_objects.size(); ++i)
 	{
 		m_scene_objects.at(i)->setIsClick(false);
+
+
 	}
 
 	// Draw panels
@@ -323,12 +321,21 @@ void Renderer::renderImGui()
 
 			m_sdl_window->setScene(scene_min, scene_max);
 			ImVec2 wsize = ImGui::GetWindowSize();
+			float aspect = static_cast<float>(wsize.x) / static_cast<float>(wsize.y);
+			glm::mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+			glm::mat4 V = m_camera->camera2pixel();
+
+			for (auto& it : m_scene_objects)
+			{
+				if (it->getName() == "Fluid Simulation")
+				{
+					SPHSystem* t = dynamic_cast<SPHSystem*>(it.get());
+					t->setupFrame(P, V, 1400.0f, 800.0f, m_camera->getPos().z);
+				}
+			}
 
 			if (m_click_object != nullptr)
 			{
-				float aspect = static_cast<float>(wsize.x) / static_cast<float>(wsize.y);
-				glm::mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
-				glm::mat4 V = m_camera->camera2pixel();
 				m_outline->setupBuffers(*m_click_object, P, V);
 			}
 			else
@@ -346,16 +353,42 @@ void Renderer::renderImGui()
 	}
 	ImGui::End();
 
-	//ImGui::Begin("Debug");
-	//{
-	//	ImGui::BeginChild("DebugRenderer");
-	//	{
-	//		ImVec2 wsize = ImGui::GetWindowSize();
-	//		ImGui::Image((ImTextureID)m_lut->getFrameBuffer()->getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
-	//	}
-	//	ImGui::EndChild();
-	//}
-	//ImGui::End();
+	ImGui::Begin("Debug");
+	{
+		ImGui::BeginChild("DebugRenderer");
+		{
+			ImVec2 wsize = ImGui::GetWindowSize();
+			if (m_click_object != nullptr)
+			{
+				if (m_click_object->getName() == "Fluid Simulation")
+				{
+					SPHSystem* t = dynamic_cast<SPHSystem*>(m_click_object.get());
+					ImGui::Image((ImTextureID)t->getFB().getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
+				}
+			}
+		}
+		ImGui::EndChild();
+	}
+	ImGui::End();
+
+
+	ImGui::Begin("Debug2");
+	{
+		ImGui::BeginChild("DebugRenderer2");
+		{
+			ImVec2 wsize = ImGui::GetWindowSize();
+			if (m_click_object != nullptr)
+			{
+				if (m_click_object->getName() == "Fluid Simulation")
+				{
+					SPHSystem* t = dynamic_cast<SPHSystem*>(m_click_object.get());
+					ImGui::Image((ImTextureID)t->getNormalFB().getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
+				}
+			}
+		}
+		ImGui::EndChild();
+	}
+	ImGui::End();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -418,7 +451,7 @@ void Renderer::renderScene(int width, int height)
 
 			if (render_objects.at(i)->isClick(ray_dir, ray_pos))
 			{
-				cout << "Clicked object: " << render_objects.at(i)->getName() << endl;
+				//cout << "Clicked object: " << render_objects.at(i)->getName() << endl;
 				m_is_mouse_down = false;
 				m_click_object = render_objects.at(i);
 				break;
@@ -429,17 +462,31 @@ void Renderer::renderScene(int width, int height)
 			}
 		}
 	}
-
 	if (m_click_object != nullptr)
 	{
 		m_click_object->setIsClick(true);
+		if (m_click_object->getName() == "Fluid Simulation")
+		{
+			//cout << "hi" << endl;
+			SPHSystem* t = dynamic_cast<SPHSystem*>(m_click_object.get());
+			if (t->getSimulate())
+			{
+				t->update(0.07f);
+			}
+		}
 	}
 
 	// Check whether any gizmos is clicked
 	for (auto& it : render_objects)
 	{
+		if (it->getName() == "Fluid Simulation" && it->getIsClick())
+		{
+			//cout << "Click? : " << it->getName() << endl;
+			break;
+		}
+		
 		// Find a clicked object
-		if (it->getIsClick() && it->getName() != "Terrain" && !m_is_drag)
+		if (it->getIsClick() && (it->getName() != "Terrain") && !m_is_drag)
 		{
 			if (m_is_moving_gizmo)
 			{
@@ -447,16 +494,13 @@ void Renderer::renderScene(int width, int height)
 				continue;
 			}
 
-			//cout << "Gizmo clicking?";
 			if (it->isGizmoClick(ray_dir, ray_pos) )
 			{
-				//cout << " Yes " << endl;
 				moveObject(*it);
 				m_is_click_gizmo = true;
 			}
 			else
 			{
-				//cout << " NO" << endl;
 				m_is_click_gizmo = false;
 			}
 			break;
@@ -466,6 +510,13 @@ void Renderer::renderScene(int width, int height)
 	// Draw objects
 	for (auto it = render_objects.rbegin(); it != render_objects.rend(); ++it)
 	{
+
+		if (it->get()->getName() == "Fluid Simulation")
+		{
+			SPHSystem* t = dynamic_cast<SPHSystem*>(it->get());
+			t->draw(P, V, *m_lights.at(0), cam_pos, *m_shadow_map->getPosition(), *m_cubemap);
+		}
+
 		it->get()->draw(P, V, *m_lights.at(0), cam_pos, 
 			*m_shadow_map, *m_irradiancemap, *m_prefilter, *m_lut);
 	}
@@ -479,7 +530,6 @@ void Renderer::renderScene(int width, int height)
 	// Draw Outline
 	if (m_click_object != nullptr)
 	{
-		//cout << "Draw outline of " << m_click_object->getName() << endl;
 		glDisable(GL_DEPTH_TEST);
 		m_outline->draw(*m_click_object, P, V);
 		glEnable(GL_DEPTH_TEST);
@@ -489,7 +539,13 @@ void Renderer::renderScene(int width, int height)
 	glDisable(GL_DEPTH_TEST);
 	for (auto& it : render_objects)
 	{
-		if (it->getIsClick() && it->getName() != "Terrain")
+		if (it->getName() == "Fluid Simulation" && it->getIsClick())
+		{
+			//cout << "Click? : " << it->getName() << endl;
+			break;
+		}
+
+		if (it->getIsClick() && (it->getName() != "Terrain" || it->getName() != "Fluid Simulation"))
 		{
 			//cout << "Draw gizmo!" << endl;
 			it->drawGizmos(P, V, cam_pos);

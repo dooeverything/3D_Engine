@@ -23,8 +23,10 @@ private:
 	GLuint m_VAO;
 	GLuint m_VBO;
 	GLuint m_EBO;
+	GLuint m_IBO;
 
 	vector<info::VertexLayout> m_layouts;
+	vector<glm::mat4> m_matrices;
 	unsigned int n_layouts;
 	unsigned int n_indices;
 
@@ -37,6 +39,9 @@ public:
 	
 	inline vector<info::VertexLayout> getLayouts() { return m_layouts; };
 	inline unsigned int getSizeOfIndices() { return n_indices; };
+	inline unsigned int getSizeOfInstance() { return m_matrices.size(); };
+
+	inline void setMatrices(vector<glm::mat4> ms) { m_matrices = ms; };
 };
 
 class FrameBuffer
