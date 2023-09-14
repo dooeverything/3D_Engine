@@ -20,8 +20,6 @@ public:
     MarchingCube(float size);
     ~MarchingCube();
 
-    //virtual void createWeights() = 0;
-    //virtual float getGridValue(glm::vec3) = 0;
     virtual void createVertex() = 0;
     virtual void updateVertex();
 

@@ -62,6 +62,17 @@ public:
 	virtual GLuint getTextureID() { return m_framebuffer_texture; };
 };
 
+class DepthBuffer : public FrameBuffer
+{
+private:
+	GLuint m_depth_map;
+
+public:
+	DepthBuffer();
+	virtual void createBuffers(int width, int height);
+	virtual GLuint getTextureID() { return m_depth_map; };
+};
+
 class ShadowBuffer : protected FrameBuffer
 {
 private:

@@ -455,7 +455,7 @@ Point::Point(vector<info::VertexLayout> layouts) : Geometry()
 
 	m_mesh = make_shared<Mesh>("Point", layouts);
 
-	vector<string> shader_path = { "Shaders/Fluid.vert", "Shaders/Point.frag" };
+	vector<string> shader_path = { "Shaders/Point.vert", "Shaders/Point.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	loadShader();
 }

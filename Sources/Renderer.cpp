@@ -41,7 +41,7 @@ void Renderer::init()
 	m_panels.push_back(make_shared<ObjectPanel>());
 	m_panels.push_back(make_shared<PropertyPanel>());
 
-	shared_ptr<GameObject> test = make_shared<SPHSystem>(32.0f);
+	shared_ptr<GameObject> test = make_shared<SPHSystem>(32.0f, width, height);
 	m_scene_objects.push_back(test);
 
 	// Setup lights
@@ -324,13 +324,14 @@ void Renderer::renderImGui()
 			float aspect = static_cast<float>(wsize.x) / static_cast<float>(wsize.y);
 			glm::mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 			glm::mat4 V = m_camera->camera2pixel();
+			//cout << "P: " << P << endl;
 
 			for (auto& it : m_scene_objects)
 			{
 				if (it->getName() == "Fluid Simulation")
 				{
 					SPHSystem* t = dynamic_cast<SPHSystem*>(it.get());
-					t->setupFrame(P, V, 1400.0f, 800.0f, m_camera->getPos().z);
+					t->setupFrame(P, V, *m_cubemap, wsize.x, wsize.y);
 				}
 			}
 
@@ -363,7 +364,7 @@ void Renderer::renderImGui()
 				if (m_click_object->getName() == "Fluid Simulation")
 				{
 					SPHSystem* t = dynamic_cast<SPHSystem*>(m_click_object.get());
-					ImGui::Image((ImTextureID)t->getFB().getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
+					ImGui::Image((ImTextureID)t->getCurvatureFB().getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
 				}
 			}
 		}
@@ -372,23 +373,16 @@ void Renderer::renderImGui()
 	ImGui::End();
 
 
-	ImGui::Begin("Debug2");
-	{
-		ImGui::BeginChild("DebugRenderer2");
-		{
-			ImVec2 wsize = ImGui::GetWindowSize();
-			if (m_click_object != nullptr)
-			{
-				if (m_click_object->getName() == "Fluid Simulation")
-				{
-					SPHSystem* t = dynamic_cast<SPHSystem*>(m_click_object.get());
-					ImGui::Image((ImTextureID)t->getNormalFB().getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
-				}
-			}
-		}
-		ImGui::EndChild();
-	}
-	ImGui::End();
+	//ImGui::Begin("Debug2");
+	//{
+	//	ImGui::BeginChild("DebugRenderer2");
+	//	{
+	//		ImVec2 wsize = ImGui::GetWindowSize();
+	//		ImGui::Image((ImTextureID)m_shadow_map->getBuffer().getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
+	//	}
+	//	ImGui::EndChild();
+	//}
+	//ImGui::End();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -416,7 +410,6 @@ void Renderer::renderScene(int width, int height)
 	float aspect = static_cast<float>(width) / static_cast<float>(height);
 	glm::mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 	glm::mat4 V = m_camera->camera2pixel();
-
 	// Calculate a ray to check whether object is clicked
 	int x, y;
 	SDL_GetGlobalMouseState(&x, &y);
@@ -510,13 +503,6 @@ void Renderer::renderScene(int width, int height)
 	// Draw objects
 	for (auto it = render_objects.rbegin(); it != render_objects.rend(); ++it)
 	{
-
-		if (it->get()->getName() == "Fluid Simulation")
-		{
-			SPHSystem* t = dynamic_cast<SPHSystem*>(it->get());
-			t->draw(P, V, *m_lights.at(0), cam_pos, *m_shadow_map->getPosition(), *m_cubemap);
-		}
-
 		it->get()->draw(P, V, *m_lights.at(0), cam_pos, 
 			*m_shadow_map, *m_irradiancemap, *m_prefilter, *m_lut);
 	}
@@ -527,6 +513,16 @@ void Renderer::renderScene(int width, int height)
 	// Draw Grid
 	m_grid->draw(P, V, cam_pos);
 	
+
+	for (auto it = render_objects.rbegin(); it != render_objects.rend(); ++it)
+	{
+		if (it->get()->getName() == "Fluid Simulation")
+		{
+			SPHSystem* t = dynamic_cast<SPHSystem*>(it->get());
+			t->draw(P, V, *m_lights.at(0), cam_pos, *m_shadow_map->getPosition(), *m_cubemap);
+		}
+	}
+
 	// Draw Outline
 	if (m_click_object != nullptr)
 	{

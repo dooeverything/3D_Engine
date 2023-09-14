@@ -1,5 +1,5 @@
 #version 330 core
-out vec4 frag_color;
+// out vec4 frag_color;
 
 in vec2 texCoords;
 uniform sampler2D map;
@@ -11,13 +11,13 @@ void main()
 
     if(depth <= 0.0)
     {
-        frag_color = vec4(vec3(0.0), 1.0);
+        depth = 0.0; //vec4(vec3(0.0), 1.0);
         return;
     }
     
-    if (1.0 <= depth) 
+    if (depth >= 1.0) 
     {
-		frag_color = vec4(vec3(depth), 1.0);
+		gl_FragDepth = depth; //vec4(vec3(depth), 1.0);
 		return;
 	}
 
@@ -36,7 +36,7 @@ void main()
 		float r = x * 0.1;
 		float w = exp(-r*r);
 		
-		float r2 = (sample - depth) * 30.0;
+		float r2 = (sample - depth) * 65.0;
 		float g = exp(-r2*r2);
 		
 		sum += sample * w * g;
@@ -48,5 +48,5 @@ void main()
         sum /= wsum;
     }
 
-    frag_color = vec4(vec3(sum), 1.0);
+    gl_FragDepth = sum; //vec4(vec3(sum), 1.0);
 }

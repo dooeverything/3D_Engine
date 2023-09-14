@@ -544,26 +544,26 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 
 				}
 
-				ImGui::TableNextRow();
-				ImGui::TableNextColumn();
-				ImGui::Text("Render Type");
-				ImGui::TableNextColumn();
-				static int selected_render = sph->m_render_type;
-				char buf1[32];
-				sprintf_s(buf1, "Marching");
-				if (ImGui::Selectable(buf1, selected_render == 0, 0, ImVec2(56, 16)))
-				{
-					sph->m_render_type = 0;
-					selected_render = 0;
-				}
-				ImGui::SameLine();
-				char buf2[32];
-				sprintf_s(buf2, "Particle");
-				if (ImGui::Selectable(buf2, selected_render == 1, 0, ImVec2(56, 16)))
-				{
-					sph->m_render_type = 1;
-					selected_render = 1;
-				}
+				//ImGui::TableNextRow();
+				//ImGui::TableNextColumn();
+				//ImGui::Text("Render Type");
+				//ImGui::TableNextColumn();
+				//static int selected_render = sph->m_render_type;
+				//char buf1[32];
+				//sprintf_s(buf1, "Marching");
+				//if (ImGui::Selectable(buf1, selected_render == 0, 0, ImVec2(56, 16)))
+				//{
+				//	sph->m_render_type = 0;
+				//	selected_render = 0;
+				//}
+				//ImGui::SameLine();
+				//char buf2[32];
+				//sprintf_s(buf2, "Particle");
+				//if (ImGui::Selectable(buf2, selected_render == 1, 0, ImVec2(56, 16)))
+				//{
+				//	sph->m_render_type = 1;
+				//	selected_render = 1;
+				//}
 
 				ImGui::EndTable();
 				ImGui::PopStyleVar();
