@@ -68,7 +68,7 @@ void ShadowMap::draw(shared_ptr<GameObject>& gameobject)
 	m_shadow_buffer->bind();
 	glClear(GL_DEPTH_BUFFER_BIT);
 	m_shader->load();
-	gameobject->getMesh()->drawInstance(m_proj, m_view, *m_shader);
+	//gameobject->getMesh()->drawInstance(m_proj, m_view, *m_shader);
 	m_shadow_buffer->unbind();
 }
 

@@ -7,7 +7,7 @@ uniform sampler2D map;
 uniform mat4 projection;
 uniform vec2 screen_size;
 uniform float dt;
-const float threshold = 5.0;
+const float threshold = 8.0;
 
 float dz(vec2 uv, vec2 dir)
 {
@@ -95,6 +95,6 @@ void main()
 
     float H = (Cy*Ex + Cx*Ey) / (2*D*sqrt(D));
 
-    gl_FragDepth = z + H * 0.005;
+    gl_FragDepth = z + H * dt;
     // frag_color = vec4(z, 0.0, 0.0, 1.0);
 }

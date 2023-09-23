@@ -3,26 +3,22 @@
 #include "MarchingCube.h"
 
 const int TABLE_SIZE = 100000;
-class SPHSystem : public MarchingCube
+
+class SPHSystem : public GameObject
 {
 public:
-    SPHSystem(float size, int width, int height);
+    SPHSystem(float width, float height, float depth);
     
-    uint getHashIndex(glm::vec3);
-    int getGridIndex(glm::vec3);
-    glm::vec3 getGridPos(int index);
+    uint getHashIndex(glm::ivec3& pos);
     glm::ivec3 snapToGrid(glm::vec3);
     
-    virtual void initParticles();
+    void initParticles();
     void buildHash();
-
-    void update(float);
-    void updateWeights();
-    void updateDensPress(float);
-    void updateForces(float);
     void reset();
+    void setupFB();
+    void setupShader();
 
-    inline bool getSimulate() { return m_simulation; };
+    inline virtual bool getSimulate() { return m_simulation; };
     inline ShadowBuffer& getFB() { return *m_fb; };
     inline ShadowBuffer& getBlurXFB() { return *m_fb_blur_x; };
     inline ShadowBuffer& getBlurYFB() { return *m_fb_blur_y; };
@@ -34,19 +30,20 @@ public:
     inline void setParticleRadius(float h)
     {
         H = h;
+        H2 = h * h;
         POLY6 = 315.0f / float(64.0f * PI * pow(H, 9));
-        SPICKY = -45.0f / float(PI * pow(H, 6));
-        SPICKY2 = 45.0f / float(PI * pow(H, 6));
+        SPICKY = -45.0f / (PI * pow(h, 6));
+        SPICKY2 = -SPICKY;
     }
 
-    void draw(glm::mat4& P, glm::mat4& V, Light& light, 
-        glm::vec3& view_pos, glm::vec3& light_pos, CubeMap& cubemap);
-    
-    void setupFrame(glm::mat4& P, glm::mat4& V, CubeMap& cubemap, int width, int height);
 
-    virtual void createVertex();
+    virtual void update();
+    virtual void draw();
+    
+    virtual void setupFrame(glm::mat4& P, glm::mat4& V, CubeMap& cubemap, int width, int height);
 
     float H;
+    float H2;
     float POLY6;
     float SPICKY;
     float SPICKY2;
@@ -57,35 +54,42 @@ public:
     float VISC;
     float WALL;
 
-    bool m_render_type;
-
+    float t;
 private:
     vector<shared_ptr<FluidParticle>> m_particles;
-    unordered_map<uint, shared_ptr<FluidParticle>> m_hash_table;
-    shared_ptr<Point> m_point;
-    shared_ptr<Sphere> m_sphere;
+    unordered_map<uint, FluidParticle*> m_hash_table;
+    unique_ptr<Point> m_point;
+    unique_ptr<Sphere> m_sphere;
+
     
-    shared_ptr<GameObject> m_screen;
+    unique_ptr<GameObject> m_screen;
 
-    shared_ptr<ShadowBuffer> m_fb;
-    shared_ptr<ShadowBuffer> m_fb_blur_x;
-    shared_ptr<ShadowBuffer> m_fb_blur_y;
-    shared_ptr<ShadowBuffer> m_fb_curvature;
-    shared_ptr<FrameBuffer> m_fb_normal;
+    unique_ptr<ShadowBuffer> m_fb;
+    unique_ptr<ShadowBuffer> m_fb_blur_x;
+    unique_ptr<ShadowBuffer> m_fb_blur_y;
+    unique_ptr<ShadowBuffer> m_fb_curvature;
+    unique_ptr<FrameBuffer> m_fb_normal;
 
-    shared_ptr<Shader> m_shader_curvature;
-    shared_ptr<Shader> m_shader_curvature_normal;
-    shared_ptr<Shader> m_shader_normal;
-    shared_ptr<Shader> m_shader_render;
+    unique_ptr<Shader> m_shader_depth;
+    unique_ptr<Shader> m_shader_curvature;
+    unique_ptr<Shader> m_shader_curvature_normal;
+    unique_ptr<Shader> m_shader_normal;
+    unique_ptr<Shader> m_shader_render;
 
-    vector<bool> cell_map;
     bool m_simulation;
 
-    int m_width;
-    int m_height;
+    float m_point_size;
+    float m_grid_width;
+    float m_grid_height;
+    float m_grid_depth;
 
+    int m_fb_width;
+    int m_fb_height;
+
+    void updateDensPress();
+    void updateForces();
     void getDepth(glm::mat4& P, glm::mat4& V);
     void blurDepth();
+    void getCurvature(glm::mat4& P, glm::mat4& V);
     void getNormal(glm::mat4& P, glm::mat4& V, CubeMap& cubemap);
-    void getCurvatureNormal(glm::mat4& P, glm::mat4& V);
 };

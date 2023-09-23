@@ -41,6 +41,12 @@ public:
 	virtual inline void setIsClick(bool click) { m_click = click; };
 	virtual inline void setName(string& name) { m_name = name; };
 	virtual inline void setId(int id) { m_id = id; };
+	
+	// Simulation Gameobjects abstract functions
+	virtual void draw() = 0;
+	virtual bool getSimulate() = 0;
+	virtual void update() = 0;
+	virtual void setupFrame(glm::mat4& P, glm::mat4& V, CubeMap& cubemap, int width, int height) = 0;
 
 private:
 	virtual void setPosition(glm::vec3 pos);
@@ -82,6 +88,12 @@ class Grid : public Object
 	public:
 		Grid();
 		void draw(glm::mat4& P, glm::mat4& V, glm::vec3 cam_pos);
+
+		virtual void draw() { return; };
+		virtual bool getSimulate() { return false; };
+		virtual void update() { return; };
+		virtual void setupFrame(glm::mat4& P, glm::mat4& V, CubeMap& cubemap, int width, int height) { return; };
+
 };
 
 class Gizmo : public Object
@@ -91,6 +103,12 @@ public:
 	~Gizmo();
 
 	void draw(glm::mat4& P, glm::mat4& V, glm::mat4& M);
+
+	virtual void draw() { return; };
+	virtual bool getSimulate() { return false; };
+	virtual void update() { return; };
+	virtual void setupFrame(glm::mat4& P, glm::mat4& V, CubeMap& cubemap, int width, int height) { return; };
+
 
 private:
 	GameObject& m_root;
@@ -110,7 +128,7 @@ public:
 	virtual void draw(glm::mat4& P, glm::mat4& V, Light& light, 
 					  glm::vec3& view_pos, ShadowMap& shadow, 
 					  IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut);
-	virtual void drawInstance(glm::mat4& P, glm::mat4& V, Light& light, glm::vec3& view_pos, glm::vec3& light_pos);
+	virtual void drawInstance(glm::mat4& P, glm::mat4& V);
 	virtual void drawGizmos(glm::mat4& P, glm::mat4& V, glm::vec3& view_pos);
 	virtual void loadMesh();
 	virtual bool isGizmoClick(glm::vec3& ray_dir, glm::vec3& ray_pos);
@@ -123,7 +141,11 @@ public:
 	virtual inline void setIrradiance(unsigned int irradiance) { m_irradiance = irradiance; };
 	virtual inline void setPrefiler(unsigned int prefilter) { m_prefilter=prefilter; };
 	virtual inline void setLUT(GLuint lut) { m_lut = lut; };
-	vector<float> m_weights;
+
+	virtual void draw() { return; };
+	virtual bool getSimulate() { return false; };
+	virtual void update() { return; };
+	virtual void setupFrame(glm::mat4& P, glm::mat4& V, CubeMap& cubemap, int width, int height) { return; };
 
 private:
 	glm::vec3 m_color;
@@ -150,14 +172,19 @@ private:
 	virtual vector<unsigned int> calculateIndex() { return {}; };
 };
 
-class Point : public Geometry
+class Point
 {
 public:
-	Point(vector<info::VertexLayout> layouts);
+	Point();
 	~Point();
 
 	void drawPoint(glm::mat4& P, glm::mat4& V);
+	inline ParticleMesh& getMesh() { return *m_mesh; };
+	inline Shader& getShader() { return *m_shader; };
 
+private:
+	unique_ptr<ParticleMesh> m_mesh;
+	unique_ptr<Shader> m_shader;
 };
 
 class Sphere : public Geometry

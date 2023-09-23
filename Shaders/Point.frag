@@ -8,7 +8,6 @@ in vec3 frag_pos;
 in mat4 proj;
 in float r;
 
-
 void main()
 {
     vec3 n = vec3(0.0);

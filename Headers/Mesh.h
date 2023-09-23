@@ -62,7 +62,7 @@ public:
 	virtual void processMesh();
 
 	void drawArrays();
-	void drawInstance(glm::mat4& P, glm::mat4& V, Shader& shader);
+	void drawInstance(glm::mat4& P, glm::mat4& V);
 	void draw();
 	virtual void draw(glm::mat4& P, glm::mat4& V, Shader& shader, bool terrain=false);
 	virtual void drawLowQuality(Shader& shader);
@@ -154,6 +154,20 @@ public:
 	virtual inline glm::mat4* getRotation() { return m_meshes.at(0)->getRotation(); };
 	virtual inline glm::mat4* getScale() { return m_meshes.at(0)->getScale(); };
 
+};
+
+class ParticleMesh
+{
+public:
+	ParticleMesh();
+	~ParticleMesh();
+	
+	void setupMesh(vector<info::VertexLayout> layouts);
+	VertexBuffer& getBuffer() { return *m_buffer; };
+	void drawInstance(glm::mat4& P, glm::mat4& V);
+
+private:
+	unique_ptr<VertexBuffer> m_buffer;
 };
 
 glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& aiMat);

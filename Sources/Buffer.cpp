@@ -8,12 +8,10 @@ VertexBuffer::VertexBuffer() :
 
 void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts)
 {
+	m_layouts.clear();
 	m_layouts = layouts;
-	n_layouts = static_cast<unsigned int>(layouts.size());
 
-	//cout << " Generate buffer" << endl;
-	//cout << "  -Create vertex buffers " << m_layouts[10].position.x << endl;
-	//cout << "  -Size of vertex layout: " << n_layouts << endl;
+	n_layouts = static_cast<unsigned int>(layouts.size());
 
 	// Generate buffers: VAO, VBO, EBO
 	glGenVertexArrays(1, &m_VAO);
@@ -35,6 +33,27 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts)
 	glEnableVertexAttribArray(TEXCOORD_ATTRIB);
 	glVertexAttribPointer(TEXCOORD_ATTRIB, 2, GL_FLOAT, GL_FALSE, sizeof(info::VertexLayout), (void*)offsetof(info::VertexLayout, texCoord));
 	
+	if (m_matrices.size() > 1)
+	{
+		glGenBuffers(1, &m_IBO);
+		glBindBuffer(GL_ARRAY_BUFFER, m_IBO);
+		glBufferData(GL_ARRAY_BUFFER, m_matrices.size() * sizeof(glm::mat4), &m_matrices[0], GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(TEXCOORD_ATTRIB + 1);
+		glVertexAttribPointer(TEXCOORD_ATTRIB + 1, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+		glEnableVertexAttribArray(TEXCOORD_ATTRIB + 2);
+		glVertexAttribPointer(TEXCOORD_ATTRIB + 2, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(1 * sizeof(glm::vec4)));
+		glEnableVertexAttribArray(TEXCOORD_ATTRIB + 3);
+		glVertexAttribPointer(TEXCOORD_ATTRIB + 3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+		glEnableVertexAttribArray(TEXCOORD_ATTRIB + 4);
+		glVertexAttribPointer(TEXCOORD_ATTRIB + 4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+
+		glVertexAttribDivisor(TEXCOORD_ATTRIB + 1, 1);
+		glVertexAttribDivisor(TEXCOORD_ATTRIB + 2, 1);
+		glVertexAttribDivisor(TEXCOORD_ATTRIB + 3, 1);
+		glVertexAttribDivisor(TEXCOORD_ATTRIB + 4, 1);
+	}
+
 	glBindVertexArray(0);
 }
 
@@ -88,7 +107,6 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts, cons
 		glVertexAttribDivisor(TEXCOORD_ATTRIB + 2, 1);
 		glVertexAttribDivisor(TEXCOORD_ATTRIB + 3, 1);
 		glVertexAttribDivisor(TEXCOORD_ATTRIB + 4, 1);
-
 	}
 
 	// Reset the vertex array binder

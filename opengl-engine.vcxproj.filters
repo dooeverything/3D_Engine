@@ -111,6 +111,9 @@
     <ClInclude Include="Headers\Force.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Headers\Cloth.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
     <ClInclude Include="Headers\SPHSystem.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>

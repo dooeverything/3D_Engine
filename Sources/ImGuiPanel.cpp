@@ -18,19 +18,10 @@ void ImGuiPanel::calculatePanelSize()
 	m_scene_min = ImGui::GetWindowContentRegionMin();
 	m_scene_max = ImGui::GetWindowContentRegionMax();
 
-	//cout << "Menu min:  " << m_scene_min.x << " " << m_scene_min.y << endl;
-	//cout << "Menu max: " << m_scene_max.x << " " << m_scene_max.y << endl;
-
-
-	//cout << "After" << endl;
-
 	m_scene_min.x += ImGui::GetWindowPos().x;
 	m_scene_min.y += ImGui::GetWindowPos().y;
 	m_scene_max.x += ImGui::GetWindowPos().x;
 	m_scene_max.y += ImGui::GetWindowPos().y;
-
-	//cout << "Menu min:  " << m_scene_min.x << " " << m_scene_min.y << endl;
-	//cout << "Menu max: " << m_scene_max.x << " " << m_scene_max.y << endl;
 }
 
 bool ImGuiPanel::mouseInPanel(int x, int y)
@@ -58,8 +49,7 @@ void ImGuiMenuBar::render(vector<shared_ptr<GameObject>>& scene_objects, shared_
 	ImGui::BeginMainMenuBar();
 	m_scene_min = ImVec2(1 + ImGui::GetWindowPos().x, 10 + ImGui::GetWindowPos().y);
 	m_scene_max = ImVec2(1400+ ImGui::GetWindowPos().x, 30+ ImGui::GetWindowPos().y);
-	//cout << m_scene_min.x << " " << m_scene_min.y << endl;
-	//cout << "Win pos: " << ImGui::GetWindowPos().x << " " << ImGui::GetWindowPos().y << endl;
+
 	if (ImGui::BeginMenu("GameObject"))
 	{
 		if (ImGui::MenuItem("Create Empty", NULL)) {}
@@ -123,10 +113,10 @@ void ImGuiMenuBar::addObject(vector<shared_ptr<GameObject>>& scene_objects, shar
 	string name;
 	if (add_object->getPath() != "")
 	{
-		int last = int(add_object->getPath().find_last_of('/'));
+		auto last = add_object->getPath().find_last_of('/');
 		if (last == -1)
 		{
-			last = int(add_object->getPath().find_last_of('\\'));
+			last = add_object->getPath().find_last_of('\\');
 		}
 		string temp = add_object->getPath().substr(last + 1, add_object->getPath().length());
 		name = temp.substr(0, temp.find_last_of('.'));
@@ -462,14 +452,14 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 			}
 		}
 
-		if (name == "Fluid Simulation")
+		if (name == "Fluid")
 		{
 			SPHSystem* sph = dynamic_cast<SPHSystem*>(clicked_object.get());
 			bool expand_fluid = ImGui::TreeNode("Fluid");
 			if (expand_fluid)
 			{
 				static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
-				ImVec2 cell_padding(0.0f, 2.0f);
+				ImVec2 cell_padding(0.0f, 5.0f);
 				ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
 				ImGui::BeginTable("Simulation", 2);
 				ImU32 cell_bg_color = ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.7f, 0.65f));
@@ -477,6 +467,7 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 				ImGui::TableNextRow();
 				ImGui::TableNextColumn();
 				ImGui::AlignTextToFramePadding();
+				
 				static int clicked_sph = 0;
 				if (ImGui::Button("Click to simulate"))
 				{
@@ -498,15 +489,6 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 						t_simulate = 0.0f;
 					}
 
-					//ImGui::SameLine();
-					//if (sph->getSimulate())
-					//{
-					//	//cout << ImGui::GetTime() << endl;
-					//	float t = ImGui::GetIO().DeltaTime;
-					//	t_simulate = t_simulate + t;
-					//	ImGui::Text(to_string(t_simulate).c_str());
-					//}
-
 					ImGui::SameLine();
 					if (ImGui::Button("Reset"))
 					{
@@ -515,17 +497,26 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 						sph->reset();
 					}
 
+
+					ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
 					ImGui::TableNextColumn();
 					ImGui::Text("Particle Radius");
 					ImGui::TableNextColumn();
 					float h = sph->H;
 					if(ImGui::SliderFloat("##H", &h, 0.0f, 10.0f, "%.3f", 0))
 						sph->setParticleRadius(h);
+					
+
+					ImGui::TableNextColumn();
+					ImGui::Text("Speed");
+					ImGui::TableNextColumn();
+					ImGui::SliderFloat("##t", &sph->t, 0.0f, 0.01f, "%.3f", 0);
 
 					ImGui::TableNextColumn();
 					ImGui::Text("Gas Constant");
 					ImGui::TableNextColumn();
-					ImGui::SliderFloat("##K", &sph->K, 0.0f, 1000.0f, "%.3f", 0);
+					ImGui::SliderFloat("##K", &sph->K, 0.0f, 10.0f, "%.3f", 0);
 
 					ImGui::TableNextColumn();
 					ImGui::Text("Rest Density");
@@ -543,27 +534,6 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 					ImGui::SliderFloat("##WALL", &sph->WALL, -1.0f, 0.0f, "%.3f", 0);
 
 				}
-
-				//ImGui::TableNextRow();
-				//ImGui::TableNextColumn();
-				//ImGui::Text("Render Type");
-				//ImGui::TableNextColumn();
-				//static int selected_render = sph->m_render_type;
-				//char buf1[32];
-				//sprintf_s(buf1, "Marching");
-				//if (ImGui::Selectable(buf1, selected_render == 0, 0, ImVec2(56, 16)))
-				//{
-				//	sph->m_render_type = 0;
-				//	selected_render = 0;
-				//}
-				//ImGui::SameLine();
-				//char buf2[32];
-				//sprintf_s(buf2, "Particle");
-				//if (ImGui::Selectable(buf2, selected_render == 1, 0, ImVec2(56, 16)))
-				//{
-				//	sph->m_render_type = 1;
-				//	selected_render = 1;
-				//}
 
 				ImGui::EndTable();
 				ImGui::PopStyleVar();

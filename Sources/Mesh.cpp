@@ -219,16 +219,12 @@ void Mesh::drawArrays()
 {
 	//cout << "Draw" << endl;
 	m_buffer->bind();
-	glDrawArrays(GL_TRIANGLES, 0, m_buffer->getLayouts().size());
+	glDrawArrays(GL_TRIANGLES, 0, GLsizei(m_buffer->getLayouts().size()));
 	m_buffer->unbind();
 }
 
-void Mesh::drawInstance(glm::mat4& P, glm::mat4& V, Shader& shader)
+void Mesh::drawInstance(glm::mat4& P, glm::mat4& V)
 {
-	shader.load();
-	glm::mat4 M = glm::mat4(1.0f);
-	shader.setPVM(P, V, M);
-
 	m_buffer->bind();
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 	glDrawElementsInstanced(GL_POINTS, m_buffer->getSizeOfIndices(), GL_UNSIGNED_INT, 0, m_buffer->getSizeOfInstance());
@@ -341,6 +337,7 @@ shared_ptr<BoundingBox> Mesh::computeBoundingBox()
 {
 	glm::vec3 min;
 	glm::vec3 max;
+	//cout << "Computer Bounding box " << m_name << endl;
 
 	vector<glm::vec3> positions;
 	glm::mat4 t = m_transform_pos * m_transform_rot * m_transform_scale;
@@ -401,10 +398,10 @@ void FBXMesh::processMesh()
 	}
 
 	// The directory path of the fbx file 
-	int last = m_path.find_last_of('/');
+	int last = int(m_path.find_last_of('/'));
 	if (last == -1)
 	{
-		last = m_path.find_last_of("\\");
+		last = int(m_path.find_last_of("\\"));
 	}
 	m_directory = m_path.substr(0, last);
 	cout << "Process mesh: " << m_directory.size() << " last: " << last << endl;
@@ -744,4 +741,33 @@ ostream& operator<<(ostream& os, const glm::mat4& m)
 		<< m[0][1] << " " << m[1][1] << " " << m[2][1] << " " << m[3][1] << "\n"
 		<< m[0][2] << " " << m[1][2] << " " << m[2][2] << " " << m[3][2] << "\n"
 		<< m[0][3] << " " << m[1][3] << " " << m[2][3] << " " << m[3][3];
+}
+
+ParticleMesh::ParticleMesh()
+{
+	m_buffer = make_unique<VertexBuffer>();
+}
+
+ParticleMesh::~ParticleMesh()
+{
+}
+
+void ParticleMesh::setupMesh(vector<info::VertexLayout> layouts)
+{
+	m_buffer->createBuffers(layouts);
+}
+
+void ParticleMesh::drawInstance(glm::mat4& P, glm::mat4& V)
+{
+	m_buffer->bind();
+
+	//glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+	//glDrawArraysInstanced(GL_POINTS, 0, GLsizei(m_buffer->getLayouts().size()), m_buffer->getSizeOfInstance());
+	//glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
+	
+	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+	glDrawArrays(GL_POINTS, 0, m_buffer->getLayouts().size());
+	glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
+
+	m_buffer->unbind();
 }

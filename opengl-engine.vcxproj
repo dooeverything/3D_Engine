@@ -151,6 +151,7 @@
     <ClInclude Include="C:\vclib\imgui-docking\imstb_truetype.h" />
     <ClInclude Include="Headers\Buffer.h" />
     <ClInclude Include="Headers\Camera.h" />
+    <ClInclude Include="Headers\Cloth.h" />
     <ClInclude Include="Headers\FastNoiseLite.h" />
     <ClInclude Include="Headers\FileDialog.h" />
     <ClInclude Include="Headers\Force.h" />

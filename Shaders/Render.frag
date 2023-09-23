@@ -8,7 +8,7 @@ void main()
 {
     vec3 color = texture2D(map, texCoords).rgb;
 
-    if(color == 1.0)
+    if(color == vec3(1.0))
     {
         frag_color = vec4(0.0);
     }

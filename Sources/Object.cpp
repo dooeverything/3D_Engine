@@ -12,10 +12,10 @@ Object::Object() :
 Object::Object(const string& mesh_path) :
 	m_click(false), m_name(""), m_property({}), m_path(mesh_path), m_id(0)
 {
-	int last = mesh_path.find_last_of('/');
+	int last = int(mesh_path.find_last_of('/'));
 	if (last == -1)
 	{
-		last = mesh_path.find_last_of('\\');
+		last = int(mesh_path.find_last_of('\\'));
 	}
 	string temp = mesh_path.substr(last + 1, mesh_path.length());
 	m_name = temp.substr(0, temp.find_last_of('.'));
@@ -51,10 +51,10 @@ Object::Object(const string& mesh_path) :
 Object::Object(const string& mesh_path, const vector<string>& shader) :
 	m_click(false), m_name(""), m_property({}), m_path(mesh_path), m_id(0)
 {
-	int last = mesh_path.find_last_of('/');
+	int last = int(mesh_path.find_last_of('/'));
 	if (last == -1)
 	{
-		last = mesh_path.find_last_of('\\');
+		last = int(mesh_path.find_last_of('\\'));
 	}
 	string temp = mesh_path.substr(last + 1, mesh_path.length());
 	m_name = temp.substr(0, temp.find_last_of('.'));
@@ -396,9 +396,9 @@ void GameObject::draw(glm::mat4& P, glm::mat4& V,
 	m_mesh->draw(P, V, *m_shader);
 }
 
-void GameObject::drawInstance(glm::mat4& P, glm::mat4& V, Light& light, glm::vec3& view_pos, glm::vec3& light_pos)
+void GameObject::drawInstance(glm::mat4& P, glm::mat4& V)
 {
-	m_mesh->drawInstance(P, V, *m_shader);
+	m_mesh->drawInstance(P, V);
 }
 
 void GameObject::drawGizmos(glm::mat4& P, glm::mat4& V, glm::vec3& view_pos)
@@ -449,15 +449,13 @@ Geometry::Geometry() : GameObject()
 Geometry::~Geometry()
 {}
 
-Point::Point(vector<info::VertexLayout> layouts) : Geometry()
+Point::Point() 
 {
-	m_name = "Point";
-
-	m_mesh = make_shared<Mesh>("Point", layouts);
+	m_mesh = make_unique<ParticleMesh>();
 
 	vector<string> shader_path = { "Shaders/Point.vert", "Shaders/Point.frag" };
-	m_shader = make_shared<Shader>(shader_path);
-	loadShader();
+	m_shader = make_unique<Shader>(shader_path);
+	m_shader->processShader();
 }
 
 Point::~Point()
@@ -465,26 +463,19 @@ Point::~Point()
 }
 
 void Point::drawPoint(glm::mat4& P, glm::mat4& V)
-{
-	m_mesh->getBuffer().bind();
+{	
 	m_shader->load();
 	glm::mat4 M = glm::mat4(1.0f);
 	m_shader->setPVM(P, V, M);
-	//m_shader->setFloat("point_radius", 1.0);
-	//m_shader->setFloat("point_scale", 10.0);
 
-	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)m_mesh->getBuffer().getLayouts().size());
-	glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
-
-	m_mesh->getBuffer().unbind();
+	m_mesh->drawInstance(P, V);
 }
 
 Sphere::~Sphere()
 {}
 
 Sphere::Sphere(bool is_create_gizmo, vector<glm::mat4> matrices) :
-	Geometry(), m_division(2.0f), m_radius(0.0f)
+	Geometry(), m_division(32.0f), m_radius(0.0f)
 {
 	//cout << "Sphere Constructor" << endl;
 
@@ -498,14 +489,14 @@ Sphere::Sphere(bool is_create_gizmo, vector<glm::mat4> matrices) :
 	m_shader = make_shared<Shader>(shader_path);
 	loadShader();
 
-	//if (is_create_gizmo)
-	//{
-	//	for (int axis = 0; axis < 3; ++axis)
-	//	{
-	//		shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
-	//		m_gizmos.push_back(gizmo);
-	//	}
-	//}
+	if (is_create_gizmo)
+	{
+		for (int axis = 0; axis < 3; ++axis)
+		{
+			shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
+			m_gizmos.push_back(gizmo);
+		}
+	}
 }
 
 vector<info::VertexLayout> Sphere::calculateVertex()
@@ -568,8 +559,8 @@ vector<unsigned int> Sphere::calculateIndex()
 	unsigned int I2;
 
 	for (int i = 0; i < m_division; ++i) { // Stack
-		I1 = i * (m_division + 1);
-		I2 = I1 + (m_division + 1);
+		I1 = i * unsigned int(m_division + 1);
+		I2 = I1 + unsigned int(m_division + 1);
 		for (int j = 0; j < m_division; ++j) { // Sector
 			if (i != 0)
 			{

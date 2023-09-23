@@ -39,7 +39,7 @@ public:
 	
 	inline vector<info::VertexLayout> getLayouts() { return m_layouts; };
 	inline unsigned int getSizeOfIndices() { return n_indices; };
-	inline unsigned int getSizeOfInstance() { return m_matrices.size(); };
+	inline unsigned int getSizeOfInstance() { return unsigned int(m_matrices.size()); };
 
 	inline void setMatrices(vector<glm::mat4> ms) { m_matrices = ms; };
 };
