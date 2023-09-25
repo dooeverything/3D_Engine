@@ -22,7 +22,7 @@ public:
 	Picker();
 	~Picker();
 
-	void calcualteMouseRay(int width, int height, 
+	void calcualteMouseRay(float width, float height, 
 						   int mouse_x, int mouse_y,
 						   glm::mat4 view);
 	glm::vec2 getNDS(int width, int height, int mouse_x, int mouse_y);

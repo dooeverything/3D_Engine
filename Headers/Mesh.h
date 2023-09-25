@@ -64,7 +64,7 @@ public:
 	void drawArrays();
 	void drawInstance(glm::mat4& P, glm::mat4& V);
 	void draw();
-	virtual void draw(glm::mat4& P, glm::mat4& V, Shader& shader, bool terrain=false);
+	virtual void draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool terrain=false);
 	virtual void drawLowQuality(Shader& shader);
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
 
@@ -112,7 +112,7 @@ public:
 	vector<shared_ptr<Texture>> processTextures(const aiMesh* mesh, const aiScene* scene);
 	vector<shared_ptr<Texture>> loadTexture(shared_ptr<aiMaterial> mat, aiTextureType type, string typeName); 	// Texture handling functions
 
-	virtual void draw(glm::mat4& P, glm::mat4& V, Shader& shader, bool terrain = false);
+	virtual void draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool terrain = false);
 	virtual void draw();
 
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
@@ -164,7 +164,7 @@ public:
 	
 	void setupMesh(vector<info::VertexLayout> layouts);
 	VertexBuffer& getBuffer() { return *m_buffer; };
-	void drawInstance(glm::mat4& P, glm::mat4& V);
+	void drawInstance(const glm::mat4& P, const glm::mat4& V);
 
 private:
 	unique_ptr<VertexBuffer> m_buffer;

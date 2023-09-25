@@ -59,7 +59,7 @@ public:
 	~CubeMap();
 
 	void drawMap();
-	void draw(glm::mat4& P, glm::mat4& V);
+	void draw(const glm::mat4& P, const glm::mat4& V);
 	inline shared_ptr<CubemapBuffer> getCubemapBuffer() { return m_cubemap_buffer; };
 
 private:

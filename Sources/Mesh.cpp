@@ -239,7 +239,7 @@ void Mesh::draw()
 	m_buffer->unbind();
 }
 
-void Mesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader, bool terrain)
+void Mesh::draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool terrain)
 {
 	unsigned int color_index = 1;
 	unsigned int specular_index = 1;
@@ -642,7 +642,7 @@ vector<shared_ptr<Texture>> FBXMesh::loadTexture(shared_ptr<aiMaterial> mat,
 	return textures;
 }
 
-void FBXMesh::draw(glm::mat4& P, glm::mat4& V, Shader& shader, bool terrain)
+void FBXMesh::draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool terrain)
 {
 	for (unsigned int i = 0; i < m_meshes.size(); ++i)
 		m_meshes[i]->draw(P, V, shader, terrain);
@@ -757,7 +757,7 @@ void ParticleMesh::setupMesh(vector<info::VertexLayout> layouts)
 	m_buffer->createBuffers(layouts);
 }
 
-void ParticleMesh::drawInstance(glm::mat4& P, glm::mat4& V)
+void ParticleMesh::drawInstance(const glm::mat4& P, const glm::mat4& V)
 {
 	m_buffer->bind();
 

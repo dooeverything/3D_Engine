@@ -131,7 +131,7 @@ void CubeMap::drawMap()
 	m_cubemap_buffer->unbind();
 }
 
-void CubeMap::draw(glm::mat4& P, glm::mat4& V)
+void CubeMap::draw(const glm::mat4& P, const glm::mat4& V)
 {
 	glDepthFunc(GL_LEQUAL);
 	glm::mat4 PV = P * glm::mat4(glm::mat3(V));

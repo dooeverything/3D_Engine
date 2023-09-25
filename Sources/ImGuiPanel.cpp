@@ -511,7 +511,7 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 					ImGui::TableNextColumn();
 					ImGui::Text("Speed");
 					ImGui::TableNextColumn();
-					ImGui::SliderFloat("##t", &sph->t, 0.0f, 0.01f, "%.3f", 0);
+					ImGui::SliderFloat("##t", &sph->t, 0.0f, 0.01f, "%.4f", 0);
 
 					ImGui::TableNextColumn();
 					ImGui::Text("Gas Constant");
@@ -532,6 +532,21 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 					ImGui::Text("Wall Damping");
 					ImGui::TableNextColumn();
 					ImGui::SliderFloat("##WALL", &sph->WALL, -1.0f, 0.0f, "%.3f", 0);
+
+					ImGui::TableNextColumn();
+					ImGui::Text("Particle Size");
+					ImGui::TableNextColumn();
+					ImGui::SliderFloat("##SCALE", &sph->SCALE, 0.0f, 1.5f, "%.3f", 0);
+
+					ImGui::TableNextColumn();
+					ImGui::Text("Render Type");
+					ImGui::TableNextColumn();
+					ImGui::SliderInt("##TYPE", &sph->render_type, 0, 1);
+
+					ImGui::TableNextColumn();
+					ImGui::Text("Iteration");
+					ImGui::TableNextColumn();
+					ImGui::SliderInt("##ITERATION", &sph->iteration, 1, 100);
 
 				}
 

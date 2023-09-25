@@ -168,16 +168,12 @@ Gizmo::Gizmo(GameObject& root, int axis) :
 Gizmo::~Gizmo()
 {}
 
-void Gizmo::draw(glm::mat4& P, glm::mat4& V, glm::mat4& M)
+void Gizmo::draw(const glm::mat4& P, const glm::mat4& V, glm::mat4& M)
 {
 	glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f);
 
-	//cout << "Draw gizmo inside " << m_root.getMesh()->getPosition() << endl;
 	M = *(m_root.getMesh()->getPosition()) * M;
-	//glm::vec3 pos = glm::vec3(0.0f);
-	//pos[m_axis] = 0.2f;
-	//M = glm::translate(M, pos);
-
+	
 	if (m_axis == 1)
 		M = glm::rotate(M, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	else if (m_axis == 2)
@@ -192,7 +188,6 @@ void Gizmo::draw(glm::mat4& P, glm::mat4& V, glm::mat4& M)
 
 	m_shader->load();
 	m_shader->setVec3("object_color", color);
-	m_shader->setPVM(P, V, M);
 	m_mesh->draw(P, V, *m_shader);
 }
 
@@ -210,7 +205,7 @@ Grid::Grid()
 	cout << endl;
 }
 
-void Grid::draw(glm::mat4& P, glm::mat4& V, glm::vec3 cam_pos)
+void Grid::draw(const glm::mat4& P, const glm::mat4& V, glm::vec3 cam_pos)
 {
 	m_shader->load();
 	glm::mat4 M = glm::mat4(1.0f);
@@ -353,7 +348,7 @@ void GameObject::drawPreview(vector<shared_ptr<Texture>>& tex)
 	m_mesh->draw();
 }
 
-void GameObject::draw(glm::mat4& P, glm::mat4& V,
+void GameObject::draw(const glm::mat4& P, const glm::mat4& V,
 	Light& light, glm::vec3& view_pos, ShadowMap& shadow, 
 	IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut)
 {
@@ -401,18 +396,8 @@ void GameObject::drawInstance(glm::mat4& P, glm::mat4& V)
 	m_mesh->drawInstance(P, V);
 }
 
-void GameObject::drawGizmos(glm::mat4& P, glm::mat4& V, glm::vec3& view_pos)
+void GameObject::drawGizmos(const glm::mat4& P, const glm::mat4& V, glm::vec3& view_pos)
 {
-
-	//glm::vec3 scale = glm::vec3(glm::length(m_property[0] - view_pos) * 0.0075f);
-	//M = glm::scale(M, scale);
-	//M = *(m_mesh->getPosition()) * M;
-	//glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
-	//m_gizmo_center_shader->load();
-	//m_gizmo_center_shader->setVec3("object_color", color);
-	//m_gizmo_center_shader->setPVM(P, V, M);
-	//m_gizmo_center->getMesh()->draw();
-
 	glm::mat4 M = glm::mat4(1.0f);
 	glm::vec3 scale = glm::vec3(glm::length(m_property[0] - view_pos) * 0.05f);
 	for (int axis = 0; axis < 3; ++axis)
@@ -462,7 +447,7 @@ Point::~Point()
 {
 }
 
-void Point::drawPoint(glm::mat4& P, glm::mat4& V)
+void Point::drawPoint(const glm::mat4& P, const glm::mat4& V)
 {	
 	m_shader->load();
 	glm::mat4 M = glm::mat4(1.0f);
@@ -475,7 +460,7 @@ Sphere::~Sphere()
 {}
 
 Sphere::Sphere(bool is_create_gizmo, vector<glm::mat4> matrices) :
-	Geometry(), m_division(32.0f), m_radius(0.0f)
+	Geometry(), m_division(32.0f), m_radius(1.0f)
 {
 	//cout << "Sphere Constructor" << endl;
 
@@ -485,7 +470,7 @@ Sphere::Sphere(bool is_create_gizmo, vector<glm::mat4> matrices) :
 	vector<unsigned int> indices = calculateIndex();
 	m_mesh = make_shared<Mesh>(m_name, layouts, indices, matrices);
 
-	vector<string> shader_path = { "Shaders/Instance.vert", "Shaders/Fluid.frag" };
+	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	loadShader();
 
@@ -608,9 +593,12 @@ Outline::Outline(int width, int height)
 Outline::~Outline()
 {}
 
-void Outline::setupBuffers(GameObject& go, glm::mat4 & P, glm::mat4 & V)
+void Outline::setupBuffers(GameObject& go, const glm::mat4& V, float width, float height)
 {
 	if (go.getMesh() == nullptr) return;
+
+	float aspect = width / height;
+	glm::mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
 	m_outline_buffers.at(0)->bind();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -656,7 +644,7 @@ void Outline::setupBuffers(GameObject& go, glm::mat4 & P, glm::mat4 & V)
 	m_outline_buffers.at(3)->unbind();
 }
 
-void Outline::draw(GameObject& go, glm::mat4& P, glm::mat4& V)
+void Outline::draw(GameObject& go)
 {
 	m_outline_shader->load();
 	glActiveTexture(GL_TEXTURE0);

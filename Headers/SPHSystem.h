@@ -40,7 +40,7 @@ public:
     virtual void update();
     virtual void draw();
     
-    virtual void setupFrame(glm::mat4& P, glm::mat4& V, CubeMap& cubemap, int width, int height);
+    virtual void setupFrame(const glm::mat4& P, const glm::mat4& V, CubeMap& cubemap);
 
     float H;
     float H2;
@@ -53,8 +53,13 @@ public:
     float rDENSITY;
     float VISC;
     float WALL;
-
+    float SCALE;
+    
+    // Parameters for experiment
     float t;
+    int iteration;
+    int render_type;
+
 private:
     vector<shared_ptr<FluidParticle>> m_particles;
     unordered_map<uint, FluidParticle*> m_hash_table;
@@ -68,6 +73,7 @@ private:
     unique_ptr<ShadowBuffer> m_fb_blur_x;
     unique_ptr<ShadowBuffer> m_fb_blur_y;
     unique_ptr<ShadowBuffer> m_fb_curvature;
+    unique_ptr<ShadowBuffer> m_fb_curvature2;
     unique_ptr<FrameBuffer> m_fb_normal;
 
     unique_ptr<Shader> m_shader_depth;
@@ -78,7 +84,7 @@ private:
 
     bool m_simulation;
 
-    float m_point_size;
+    //float m_point_size;
     float m_grid_width;
     float m_grid_height;
     float m_grid_depth;
@@ -88,8 +94,8 @@ private:
 
     void updateDensPress();
     void updateForces();
-    void getDepth(glm::mat4& P, glm::mat4& V);
+    void getDepth(const glm::mat4& P, const glm::mat4& V);
     void blurDepth();
-    void getCurvature(glm::mat4& P, glm::mat4& V);
-    void getNormal(glm::mat4& P, glm::mat4& V, CubeMap& cubemap);
+    void getCurvature(const glm::mat4& P, const glm::mat4& V);
+    void getNormal(const glm::mat4& P, const glm::mat4& V, CubeMap& cubemap);
 };

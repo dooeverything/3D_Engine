@@ -142,15 +142,15 @@ void Shader::setVec3(const string& name, float x, float y, float z) const
 	glUniform3f(glGetUniformLocation(m_shader_ID, name.c_str()), x, y, z);
 }
 
-void Shader::setMat4(const string& name, glm::mat4& matrix) const
+void Shader::setMat4(const string& name, const glm::mat4& matrix) const
 {
 	glUniformMatrix4fv(glGetUniformLocation(m_shader_ID, name.c_str()), 1, GL_FALSE, value_ptr(matrix));
 }
 
-void Shader::setPVM(glm::mat4& p, glm::mat4& v, glm::mat4& m) const
+void Shader::setPVM(const glm::mat4& P, const glm::mat4& V, glm::mat4& m) const
 {
-	setMat4("projection", p);
-	setMat4("view", v);
+	setMat4("projection", P);
+	setMat4("view", V);
 	setMat4("model", m);
 }
 

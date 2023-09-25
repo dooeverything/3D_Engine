@@ -30,8 +30,8 @@ public:
 	void setVec2(const string& name, glm::vec2& vector) const;
 	void setVec3(const string& name, glm::vec3& vector) const;
 	void setVec3(const string& name, float x, float y, float z) const;
-	void setMat4(const string& name, glm::mat4& matrix) const;
-	void setPVM(glm::mat4& p, glm::mat4& v, glm::mat4& m) const;
+	void setMat4(const string& name, const glm::mat4& matrix) const;
+	void setPVM(const glm::mat4& P, const glm::mat4& V, glm::mat4& m) const;
 	void setLight(Light& light);
 	void setMaterial(Material& material);
 

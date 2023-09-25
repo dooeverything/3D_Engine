@@ -40,7 +40,7 @@ void Renderer::init()
 	m_panels.push_back(make_shared<ObjectPanel>());
 	m_panels.push_back(make_shared<PropertyPanel>());
 
-	shared_ptr<GameObject> fluid = make_shared<SPHSystem>(16.0f, 16.0f, 16.0f);
+	shared_ptr<GameObject> fluid = make_shared<SPHSystem>(32.0f, 16.0f, 32.0f);
 	m_scene_objects.push_back(fluid);
 
 	// Setup lights
@@ -301,10 +301,9 @@ void Renderer::renderImGui()
 		//m_mouse_in_panel = false;
 	}
 
-	glViewport(0, 0, 1400, 800);
+	glViewport(0, 0, m_sdl_window->getWidth(), m_sdl_window->getHeight());
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Slightly modified from https://www.codingwiththomas.com/blog/rendering-an-opengl-framebuffer-into-a-dear-imgui-window
 	ImGui::Begin("Scenes");
 	{
 		ImGui::BeginChild("SceneRender");
@@ -317,48 +316,38 @@ void Renderer::renderImGui()
 			scene_max.y += ImGui::GetWindowPos().y;
 
 			m_sdl_window->setScene(scene_min, scene_max);
-			ImVec2 wsize = ImGui::GetWindowSize();
-			float aspect = static_cast<float>(wsize.x) / static_cast<float>(wsize.y);
-			glm::mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
-			glm::mat4 V = m_camera->camera2pixel();
 
+			ImVec2 wsize = ImGui::GetWindowSize();
+			m_camera->setSceneWidth(wsize.x);
+			m_camera->setSceneHeight(wsize.y);
+			m_camera->updateSceneProjection();
+
+			m_camera->setWidth(float(m_sdl_window->getWidth()));
+			m_camera->setHeight(float(m_sdl_window->getHeight()));
+			m_camera->updateProjection();
+			m_camera->updateView();
+			const glm::mat4& P = m_camera->getP();
+			const glm::mat4& V = m_camera->getV();
+			
 			for (int i = 0; i < m_scene_objects.size(); ++i)
 			{
 				if (m_scene_objects[i]->getName() == "Fluid")
 				{
-					m_scene_objects[i]->setupFrame(P, V, *m_cubemap, int(wsize.x), int(wsize.y));
+					m_scene_objects[i]->setupFrame(P, V, *m_cubemap);
 				}
 			}
 
 			if (m_click_object != nullptr)
-				m_outline->setupBuffers(*m_click_object, P, V);
+				m_outline->setupBuffers(*m_click_object, V, wsize.x, wsize.y);
 			else
 				m_outline->clearOutlineFrame();
 
 			m_framebuffer->bind();
-				m_sdl_window->clearWindow();
-				renderScene((int)wsize.x, (int)wsize.y);
+			m_sdl_window->clearWindow();
+			renderScene();
 			m_framebuffer->unbind();
 
 			ImGui::Image((ImTextureID)m_framebuffer->getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
-		}
-		ImGui::EndChild();
-	}
-	ImGui::End();
-
-	ImGui::Begin("Debug");
-	{
-		ImGui::BeginChild("DebugRenderer");
-		{
-			ImVec2 wsize = ImGui::GetWindowSize();
-			if (m_click_object != nullptr)
-			{
-				if (m_click_object->getName() == "Fluid")
-				{
-					SPHSystem* t = dynamic_cast<SPHSystem*>(m_click_object.get());
-					ImGui::Image((ImTextureID)t->getNormalFB().getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
-				}
-			}		
 		}
 		ImGui::EndChild();
 	}
@@ -376,7 +365,7 @@ void Renderer::renderImGui()
 	}
 }
 
-void Renderer::renderScene(int width, int height)
+void Renderer::renderScene()
 {
 	vector<shared_ptr<GameObject>> render_objects;
 	for (auto& it : m_scene_objects)
@@ -387,26 +376,25 @@ void Renderer::renderScene(int width, int height)
 	glm::vec3 cam_pos = m_camera->getPos();
 
 	// Setup world to pixel coordinate transformation 
-	float aspect = static_cast<float>(width) / static_cast<float>(height);
-	glm::mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
-	glm::mat4 V = m_camera->camera2pixel();
+	const glm::mat4& P = m_camera->getSP();
+	const glm::mat4& V = m_camera->getV();
 
 	// Calculate a ray to check whether object is clicked
 	int x, y;
 	SDL_GetGlobalMouseState(&x, &y);
 	int mouse_x = x - int(m_sdl_window->getSceneMin().x);
 	int mouse_y = y - int(m_sdl_window->getSceneMin().y);
-	m_camera->processPicker(width, height, mouse_x, mouse_y);
+	m_camera->processPicker(mouse_x, mouse_y);
 	glm::vec3 ray_dir = m_camera->getRay();
 	glm::vec3 ray_pos = m_camera->getPos();
 
 	std::sort(render_objects.begin(), render_objects.end(),
-		[cam_pos](const shared_ptr<GameObject>& lhs, const shared_ptr<GameObject>& rhs)
-		{
-			float d1 = glm::length(cam_pos - *(lhs->getProperty(0)));
-			float d2 = glm::length(cam_pos - *(rhs->getProperty(0)));
-			return d1 < d2;
-		});
+			[cam_pos](const shared_ptr<GameObject>& lhs, const shared_ptr<GameObject>& rhs)
+			{
+				float d1 = glm::length(cam_pos - *(lhs->getProperty(0)));
+				float d2 = glm::length(cam_pos - *(rhs->getProperty(0)));
+				return d1 < d2;
+			});
 
 	// Check whether any object is clicked 
 	if (m_is_mouse_down && !m_is_click_gizmo && !m_mouse_in_panel && !m_is_drag)
@@ -502,7 +490,7 @@ void Renderer::renderScene(int width, int height)
 	if (m_click_object != nullptr)
 	{
 		glDisable(GL_DEPTH_TEST);
-		m_outline->draw(*m_click_object, P, V);
+		m_outline->draw(*m_click_object);
 		glEnable(GL_DEPTH_TEST);
 	}
 

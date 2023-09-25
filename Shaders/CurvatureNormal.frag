@@ -8,8 +8,9 @@ uniform samplerCube cubemap;
 uniform mat4 projection;
 uniform mat4 view;
 uniform vec2 inverse_tex;
+uniform int render_type;
 
-const vec3 light_dir = vec3(-1.0, -1.0, -1.0);
+const vec3 light_dir = vec3(-1.0, -1.0, -0.5);
 const vec3 light_pos = vec3(0.0, 1000.0, 0.0);
 // const float shininess = 1000.0;
 const float fres_power = 5.0;
@@ -21,17 +22,17 @@ vec3 uvToView(vec2 uv)
 {
 	float x = uv.x * 2.0 - 1.0;
 	float y = uv.y * 2.0 - 1.0;
-	float z = texture(map, uv).r;
+	float z = texture(map, uv).r * 2.0 - 1.0;
 	vec4 clip = vec4(x, y, z, 1.0);
 	vec4 view = inverse(projection) * clip;
 	return view.xyz / view.w;
 }
 
-float fresnel(vec3 a, vec3 b)
-{
-	float f = fres_bias + fres_scale * pow( 1.0f - max(dot(a, b), 0.0), fres_power);
-	return f;
-}
+// float fresnel(vec3 a, vec3 b)
+// {
+// 	float f = fres_bias + fres_scale * pow( 1.0f - max(dot(a, b), 0.0), fres_power);
+// 	return f;
+// }
 
 void main()
 {
@@ -68,9 +69,9 @@ void main()
 		ddy1 = ddy2;
 
     vec3 n =  normalize(cross(ddx1, ddy1));
-    vec3 l =  normalize(-light_dir);
-    vec3 v = -normalize(view_pos);
-	float n_dot_l = dot(n, l)*0.5 + 0.5;
+    vec3 l =  mat3(view) * normalize(-light_dir);
+    vec3 v = normalize(-view_pos);
+	float n_dot_l = min(dot(n, l)*0.5 + 0.5, 0.99);
 
     float amb = 0.5f;
     vec3 ambient = vec3(1.0, 1.0, 1.0) * amb * base_color.xyz;
@@ -79,20 +80,21 @@ void main()
 	vec3 diffuse = base_color.xyz * mix(vec3(0.29, 0.379, 0.59), vec3(1.0), n_dot_l) * (1 - base_color.w);
 
     vec3 h = normalize(l + v);
-	float spec = pow(max(dot(v, h), 0.0), 128.0);	
-    vec3 specular = vec3(0.5, 0.5, 0.5) * spec;// * base_color.xyz;
+	float spec = pow(max(dot(v, h), 0.0), 32.0);	
+    vec3 specular = vec3(1.0, 1.0, 1.0) * spec;// * base_color.xyz;
 
-	float ratio = 1.00/1.52;
-	vec3 T =  refract(-v, normalize(n), ratio);
-	vec3 refract_color = texture(cubemap, T).rgb;
+	// fresnel
+    float n_air = 1;
+    float n_water = 1.3;
+    float r = (n_air - n_water)/(n_air + n_water);
+    float r2 = r * r;
+    float fresnel = r2 + (1 - r2) * pow(1 - dot(v, n), 5);
 
-	vec3 sky = vec3(0.1, 0.2, 0.4)*1.2;
-	vec3 ground = vec3(0.1, 0.1, 0.2);
-	vec3 view_reflect = reflect(v, n);
-	vec3 world_reflect = (inverse(view) * vec4(view_reflect, 0.0)).xyz;
-	vec3 reflect_color = vec3(1.0) + mix(ground, sky, smoothstep(0.15, 0.25, world_reflect.y));
+	vec3 color = vec3(1.0)*fresnel  + specular + ambient + diffuse;
+	color = min(color, 0.99);
 
-	vec3 color = refract_color*(1 - fresnel(n, v)) + reflect_color*fresnel(n, v) + specular;
-
-    frag_color = vec4(color, 1.0);
+	if(render_type == 0)
+		frag_color = vec4(color, 1.0);
+	else if(render_type == 1)
+		frag_color = vec4(n, 1.0);
 }

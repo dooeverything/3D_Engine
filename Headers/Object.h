@@ -46,7 +46,7 @@ public:
 	virtual void draw() = 0;
 	virtual bool getSimulate() = 0;
 	virtual void update() = 0;
-	virtual void setupFrame(glm::mat4& P, glm::mat4& V, CubeMap& cubemap, int width, int height) = 0;
+	virtual void setupFrame(const glm::mat4& P, const glm::mat4& V, CubeMap& cubemap) = 0;
 
 private:
 	virtual void setPosition(glm::vec3 pos);
@@ -70,8 +70,8 @@ class Outline
 public:
 	Outline(int width, int height);
 	~Outline();
-	void setupBuffers(GameObject& go, glm::mat4& P, glm::mat4& V);
-	void draw(GameObject& go, glm::mat4& P, glm::mat4& V);
+	void setupBuffers(GameObject& go, const glm::mat4& V, float width, float height);
+	void draw(GameObject& go);
 
 	inline GLuint getOutlineFrame() { return m_outline_buffers.back()->getTextureID(); };
 	void clearOutlineFrame();
@@ -87,12 +87,12 @@ class Grid : public Object
 {
 	public:
 		Grid();
-		void draw(glm::mat4& P, glm::mat4& V, glm::vec3 cam_pos);
+		void draw(const glm::mat4& P, const glm::mat4& V, glm::vec3 cam_pos);
 
 		virtual void draw() { return; };
 		virtual bool getSimulate() { return false; };
 		virtual void update() { return; };
-		virtual void setupFrame(glm::mat4& P, glm::mat4& V, CubeMap& cubemap, int width, int height) { return; };
+		virtual void setupFrame(const glm::mat4& P, const glm::mat4& V, CubeMap& cubemap) { return; };
 
 };
 
@@ -102,12 +102,12 @@ public:
 	Gizmo(GameObject& root, int axis);
 	~Gizmo();
 
-	void draw(glm::mat4& P, glm::mat4& V, glm::mat4& M);
+	void draw(const glm::mat4& P, const glm::mat4& V, glm::mat4& M);
 
 	virtual void draw() { return; };
 	virtual bool getSimulate() { return false; };
 	virtual void update() { return; };
-	virtual void setupFrame(glm::mat4& P, glm::mat4& V, CubeMap& cubemap, int width, int height) { return; };
+	virtual void setupFrame(const glm::mat4& P, const glm::mat4& V, CubeMap& cubemap) { return; };
 
 
 private:
@@ -125,11 +125,11 @@ public:
 
 	virtual void drawPreview(Material& mat);
 	virtual void drawPreview(vector<shared_ptr<Texture>>& tex);
-	virtual void draw(glm::mat4& P, glm::mat4& V, Light& light, 
-					  glm::vec3& view_pos, ShadowMap& shadow, 
-					  IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut);
+	virtual void draw(const glm::mat4& P, const glm::mat4& V, 
+					Light& light, glm::vec3& view_pos, ShadowMap& shadow, 
+					IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut);
 	virtual void drawInstance(glm::mat4& P, glm::mat4& V);
-	virtual void drawGizmos(glm::mat4& P, glm::mat4& V, glm::vec3& view_pos);
+	virtual void drawGizmos(const glm::mat4& P, const glm::mat4& V, glm::vec3& view_pos);
 	virtual void loadMesh();
 	virtual bool isGizmoClick(glm::vec3& ray_dir, glm::vec3& ray_pos);
 
@@ -145,7 +145,7 @@ public:
 	virtual void draw() { return; };
 	virtual bool getSimulate() { return false; };
 	virtual void update() { return; };
-	virtual void setupFrame(glm::mat4& P, glm::mat4& V, CubeMap& cubemap, int width, int height) { return; };
+	virtual void setupFrame(const glm::mat4& P, const glm::mat4& V, CubeMap& cubemap) { return; };
 
 private:
 	glm::vec3 m_color;
@@ -178,7 +178,7 @@ public:
 	Point();
 	~Point();
 
-	void drawPoint(glm::mat4& P, glm::mat4& V);
+	void drawPoint(const glm::mat4& P, const glm::mat4& V);
 	inline ParticleMesh& getMesh() { return *m_mesh; };
 	inline Shader& getShader() { return *m_shader; };
 

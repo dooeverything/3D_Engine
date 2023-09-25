@@ -20,12 +20,13 @@ SPHSystem::SPHSystem(float width, float height, float depth)
 	rDENSITY = 500.0f;
 	VISC = 0.50f;
 	WALL = -0.5f;
+	SCALE = 0.9f;
 
-	t = 0.006;
+	t = 0.007f;
+	render_type = 0;
+	iteration = 50;
 
-	int num_particles = int((m_grid_width / m_point_size) *
-							(m_grid_height / m_point_size) *
-							(m_grid_depth / m_point_size));
+	int num_particles = int(m_grid_width * m_grid_height * m_grid_depth);
 	m_hash_table.reserve(TABLE_SIZE);
 
 	setupFB();
@@ -62,6 +63,9 @@ void SPHSystem::setupFB()
 
 	m_fb_curvature = make_unique<ShadowBuffer>();
 	m_fb_curvature->createBuffers(m_fb_width, m_fb_height);
+
+	m_fb_curvature2 = make_unique < ShadowBuffer>();
+	m_fb_curvature2->createBuffers(m_fb_width, m_fb_height);
 
 	m_fb_normal = make_unique<FrameBuffer>();
 	m_fb_normal->createBuffers(m_fb_width, m_fb_height);
@@ -109,7 +113,7 @@ void SPHSystem::initParticles()
 				
 				glm::vec3 pos = glm::vec3(
 					x * particle_seperation + ran_x - m_grid_width*H / 2.0f,
-					y * particle_seperation + ran_y + H + 0.1f,
+					y * particle_seperation + ran_y + H + 0.2f,
 					z * particle_seperation + ran_z - m_grid_depth*H / 2.0f
 				);
 				shared_ptr<FluidParticle> f = make_shared<FluidParticle>(pos);
@@ -283,7 +287,7 @@ void SPHSystem::buildHash()
 	}
 }
 
-void SPHSystem::setupFrame(glm::mat4& P, glm::mat4& V, CubeMap& cubemap, int width, int height)
+void SPHSystem::setupFrame(const glm::mat4& P, const glm::mat4& V, CubeMap& cubemap)
 {
 	vector<info::VertexLayout> layouts;
 	for (int i = 0; i < m_particles.size(); ++i)
@@ -296,18 +300,17 @@ void SPHSystem::setupFrame(glm::mat4& P, glm::mat4& V, CubeMap& cubemap, int wid
 	m_point->getMesh().setupMesh(layouts);
 
 	getDepth(P, V);
-	blurDepth();
 	getCurvature(P, V);
 	getNormal(P, V, cubemap);
 }
 
-void SPHSystem::getDepth(glm::mat4& P, glm::mat4& V)
+void SPHSystem::getDepth(const glm::mat4& P, const glm::mat4& V)
 {
 	float aspect = float(m_fb_width / m_fb_height);
 	m_fb->bind();
 		glClear(GL_DEPTH_BUFFER_BIT);
 		m_point->getShader().load();
-		m_point->getShader().setFloat("point_radius", H*0.90f);
+		m_point->getShader().setFloat("point_radius", H*SCALE);
 		float point_scale = m_fb_width / aspect * (1.0f / tanf(glm::radians(45.0f)));
 		m_point->getShader().setFloat("point_scale", point_scale);
 
@@ -353,35 +356,65 @@ void SPHSystem::blurDepth()
 	m_fb_blur_x->unbind();
 
 	m_fb_blur_y->bind();
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		m_screen->getShader()->load();
-		glActiveTexture(GL_TEXTURE0);
-		m_fb_blur_x->bindFrameTexture();
-		m_screen->getShader()->setInt("map", 0);
-		m_screen->getShader()->setVec2("dir", dir_y);
-		m_screen->getMesh()->draw();
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	m_screen->getShader()->load();
+	glActiveTexture(GL_TEXTURE0);
+	m_fb_blur_x->bindFrameTexture();
+	m_screen->getShader()->setInt("map", 0);
+	m_screen->getShader()->setVec2("dir", dir_y);
+	m_screen->getMesh()->draw();
 	m_fb_blur_y->unbind();
 }
 
-void SPHSystem::getCurvature(glm::mat4& P, glm::mat4& V)
+void SPHSystem::getCurvature(const glm::mat4& P, const glm::mat4& V)
 {
+	//glDisable(GL_DEPTH_TEST);
+	glm::vec2 res = glm::vec2(m_fb_width, m_fb_height);
+	m_shader_curvature->load();
+	m_shader_curvature->setInt("map", 0);
+	m_shader_curvature->setMat4("projection", P);
+	m_shader_curvature->setVec2("res", res);
+
 	m_fb_curvature->bind();
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		m_shader_curvature->load();
-		m_shader_curvature->setInt("map", 0);
-		glActiveTexture(GL_TEXTURE0);
-		m_fb_blur_y->bindFrameTexture();
-		m_shader_curvature->setMat4("projection", P);
-		glm::vec2 screen_size = glm::vec2(m_fb_width, m_fb_height);
-		m_shader_curvature->setVec2("screen_size", screen_size);
-		m_shader_curvature->setFloat("dt", 0.005f);
-		m_screen->getMesh()->draw();
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glActiveTexture(GL_TEXTURE0);
+	m_fb->bindFrameTexture();
+	m_screen->getMesh()->draw();
 	m_fb_curvature->unbind();
+
+	bool swap = false;
+
+
+	for (int i = 0; i < iteration; ++i)
+	{
+		if (swap)
+		{
+			m_fb_curvature->bind();
+				glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				glActiveTexture(GL_TEXTURE0);
+				m_fb_curvature2->bindFrameTexture();
+				m_screen->getMesh()->draw();
+			m_fb_curvature->unbind();			
+		}
+		else
+		{
+			m_fb_curvature2->bind();
+				glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				glActiveTexture(GL_TEXTURE0);
+				m_fb_curvature->bindFrameTexture();
+				m_screen->getMesh()->draw();
+			m_fb_curvature2->unbind();
+		}
+
+		swap = !swap;
+	}
 }
 
-void SPHSystem::getNormal(glm::mat4& P, glm::mat4& V, CubeMap& cubemap)
+void SPHSystem::getNormal(const glm::mat4& P, const glm::mat4& V, CubeMap& cubemap)
 {
 	m_fb_normal->bind();
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -389,7 +422,7 @@ void SPHSystem::getNormal(glm::mat4& P, glm::mat4& V, CubeMap& cubemap)
 		m_shader_curvature_normal->load();
 		m_shader_curvature_normal->setInt("map", 0);
 		glActiveTexture(GL_TEXTURE0);
-		m_fb_curvature->bindFrameTexture();
+		m_fb_curvature2->bindFrameTexture();
 		m_shader_curvature_normal->setInt("cubemap", 1);
 		glActiveTexture(GL_TEXTURE0 + 1);
 		cubemap.getCubemapBuffer()->bindCubemapTexture();
@@ -397,6 +430,7 @@ void SPHSystem::getNormal(glm::mat4& P, glm::mat4& V, CubeMap& cubemap)
 		m_shader_curvature_normal->setMat4("view", V);
 		glm::vec2 inverse_tex = glm::vec2(1.0 / m_fb_width, 1.0 / m_fb_height);
 		m_shader_curvature_normal->setVec2("inverse_tex", inverse_tex);
+		m_shader_curvature_normal->setInt("render_type", render_type);
 		m_screen->getMesh()->draw();
 	m_fb_normal->unbind();
 }
@@ -425,10 +459,7 @@ void SPHSystem::reset()
 	}
 	m_particles.clear();
 	
-	int num_particles = int((m_grid_width / m_point_size) *
-							(m_grid_height / m_point_size) *
-							(m_grid_depth / m_point_size));
-
+	int num_particles = int(m_grid_width * m_grid_height * m_grid_depth);
 	m_hash_table.reserve(TABLE_SIZE);
 
 	initParticles();

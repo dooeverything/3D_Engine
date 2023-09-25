@@ -1,11 +1,13 @@
 #include "Camera.h"
 
 Camera::Camera(glm::vec3 pos, float yaw, float pitch) :
-	m_picker(make_unique<Picker>()), m_viewMatrix(0.0f),
+	m_picker(make_unique<Picker>()), 
+	m_projectMatrix(0.0f), m_scene_projectMatrix(0.0f), m_viewMatrix(0.0f),
 	m_pos(pos), m_forward(0.0f, 0.0f, -1.0f), m_up(0.0f, 1.0f, 0.0f),
-	m_yaw(yaw), m_pitch(pitch), 
+	m_yaw(yaw), m_pitch(pitch),
 	m_first_click(true), m_mouse_x(0), m_mouse_y(0),
-	m_last_frame(0.0f), m_delta_time(0.0f)
+	m_last_frame(0.0f), m_delta_time(0.0f),
+	m_width(0.0f), m_height(0.0f), m_scene_width(0.0f), m_scene_height(0.0f)
 {}
 
 Camera::~Camera() {}
@@ -61,13 +63,9 @@ void Camera::processMouseDrag(SDL_Event event)
 	updateCamera();
 }
 
-void Camera::processPicker(int w, int h, int x, int y)
+void Camera::processPicker(int x, int y)
 {
-	m_picker->calcualteMouseRay(w, h, x, y, m_viewMatrix);
-
-	//cout << "X: " << x << " Y: " << y << endl;
-	//cout << "W: " << w << " H: " << h << endl;
-	//cout << "Ray: " << m_picker->getRay().x << " " << m_picker->getRay().y << " " << m_picker->getRay().z << endl;
+	m_picker->calcualteMouseRay(m_scene_width, m_scene_height, x, y, m_viewMatrix);
 }
 
 void Camera::processMouseUp(SDL_Event event, SDL_GL_Window* window)
@@ -110,8 +108,20 @@ void Camera::updateCamera()
 
 	m_forward = normalize(forward);
 }
+#include <iomanip> 
+void Camera::updateProjection()
+{
+	float aspect = m_width / m_height;
+	m_projectMatrix = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+}
 
-glm::mat4 Camera::camera2pixel()
+void Camera::updateSceneProjection()
+{
+	float aspect = m_scene_width / m_scene_height;
+	m_scene_projectMatrix = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+}
+
+void Camera::updateView()
 {
 	glm::vec3 right = normalize(cross(m_forward, m_up));
 	glm::vec3 new_up = cross(right, m_forward);
@@ -127,6 +137,4 @@ glm::mat4 Camera::camera2pixel()
 	t[3][2] = -m_pos.z;
 
 	m_viewMatrix = R * t;
-
-	return m_viewMatrix;
 }

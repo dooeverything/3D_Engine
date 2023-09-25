@@ -29,7 +29,7 @@ public:
 	void moveObject(GameObject& go);
 
 	void renderImGui();
-	void renderScene(int width, int height);
+	void renderScene();
 
 	void end();
 
