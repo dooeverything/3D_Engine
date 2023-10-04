@@ -40,8 +40,11 @@ void Renderer::init()
 	m_panels.push_back(make_shared<ObjectPanel>());
 	m_panels.push_back(make_shared<PropertyPanel>());
 
-	shared_ptr<GameObject> fluid = make_shared<SPHSystem>(32.0f, 16.0f, 32.0f);
-	m_scene_objects.push_back(fluid);
+	//shared_ptr<GameObject> fluid = make_shared<SPHSystem>(32.0f, 16.0f, 32.0f);
+	//m_scene_objects.push_back(fluid);
+
+	shared_ptr<GameObject> cloth = make_shared<Cloth>();
+	m_scene_objects.push_back(cloth);
 
 	// Setup lights
 	glm::vec3 dir = -light_pos; //{ -0.2f, -1.0f, -0.3f };
@@ -275,7 +278,6 @@ void Renderer::renderImGui()
 
 	//bool demo = true;
 	//ImGui::ShowDemoWindow(&demo);
-
 	for (int i = 0; i < m_scene_objects.size(); ++i)
 	{
 		m_scene_objects.at(i)->setIsClick(false);
@@ -284,6 +286,7 @@ void Renderer::renderImGui()
 	// Draw panels
 	for (auto& it : m_panels)
 	{
+		//cout << "Render ImGui" << endl;
 		it->render(m_scene_objects, m_click_object);
 	}
 
@@ -462,6 +465,13 @@ void Renderer::renderScene()
 	for (auto it = render_objects.rbegin(); it != render_objects.rend(); ++it)
 	{
 		if (it->get()->getName() == "Fluid") continue;
+
+		//cout << "Draw " << it->get()->getName() << endl;
+
+		if (it->get()->getName() == "Cloth")
+		{
+			it->get()->update();
+		}
 
 		it->get()->draw(P, V, *m_lights.at(0), cam_pos, *m_shadow_map, *m_irradiancemap, *m_prefilter, *m_lut);
 	}

@@ -67,6 +67,7 @@ public:
 	virtual void draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool terrain=false);
 	virtual void drawLowQuality(Shader& shader);
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
+	virtual void updateBuffer(const vector<info::VertexLayout>& pos);
 
 	inline void setName(string name) { m_name = name; };
 	virtual inline void setDirectory(string directory) { m_directory = directory; };
@@ -74,11 +75,11 @@ public:
 	virtual void setRotation(glm::mat4 t);
 	virtual void setScale(glm::mat4 t);
 
-	inline VertexBuffer& getBuffer() { return *m_buffer.get(); };
 	inline shared_ptr<Material> getMaterial() { return m_material; };
-	inline shared_ptr<BoundingBox> getBox() { return m_bbox; };
+	inline BoundingBox& getBox() { return *m_bbox; };
 	inline string getName() { return m_name; };
 	inline glm::vec3 getCenter() { return m_center; };
+	virtual inline VertexBuffer& getBuffer() { return *m_buffer.get(); };
 	virtual inline vector<shared_ptr<Texture>>& getTexture() { return m_textures; };
 	virtual inline glm::mat4 getTransform()
 	{
@@ -115,12 +116,15 @@ public:
 	virtual void draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool terrain = false);
 	virtual void draw();
 
+	inline virtual void updateBuffer(const vector<info::VertexLayout>& layouts) { m_meshes[0]->updateBuffer(layouts); };
+
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
 
 	virtual void setPosition(glm::mat4 t);
 	virtual void setRotation(glm::mat4 t);
 	virtual void setScale(glm::mat4 t);
 
+	virtual inline VertexBuffer& getBuffer() { return m_meshes[0]->getBuffer(); };
 	virtual inline string getPath() { return m_path; };
 	virtual inline glm::vec3 getSize()
 	{
@@ -131,8 +135,8 @@ public:
 		for (auto& it : m_meshes)
 		{
 			//cout << "Get size of " << it->getName() << endl;
-			glm::vec3 box_min = it->getBox()->getMin();
-			glm::vec3 box_max = it->getBox()->getMax();
+			glm::vec3 box_min = it->getBox().getMin();
+			glm::vec3 box_max = it->getBox().getMax();
 			for (int i = 0; i < 3; ++i)
 			{
 				if (box_min[i] < min[i])

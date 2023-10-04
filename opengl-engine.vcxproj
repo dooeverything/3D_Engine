@@ -182,6 +182,7 @@
     <ClCompile Include="C:\vclib\imgui-docking\imgui_widgets.cpp" />
     <ClCompile Include="Sources\Buffer.cpp" />
     <ClCompile Include="Sources\Camera.cpp" />
+    <ClCompile Include="Sources\Cloth.cpp" />
     <ClCompile Include="Sources\FileDialog.cpp" />
     <ClCompile Include="Sources\Force.cpp" />
     <ClCompile Include="Sources\Map.cpp" />

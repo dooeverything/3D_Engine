@@ -12,6 +12,7 @@
 #include "Light.h"
 #include "ImGuiPanel.h"
 #include "SPHSystem.h"
+#include "Cloth.h"
 
 using namespace std;
 

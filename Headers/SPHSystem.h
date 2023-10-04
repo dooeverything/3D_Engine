@@ -66,7 +66,6 @@ private:
     unique_ptr<Point> m_point;
     unique_ptr<Sphere> m_sphere;
 
-    
     unique_ptr<GameObject> m_screen;
 
     unique_ptr<ShadowBuffer> m_fb;

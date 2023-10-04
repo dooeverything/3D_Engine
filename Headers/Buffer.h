@@ -26,6 +26,7 @@ private:
 	GLuint m_IBO;
 
 	vector<info::VertexLayout> m_layouts;
+	vector<unsigned int> m_indices;
 	vector<glm::mat4> m_matrices;
 	unsigned int n_layouts;
 	unsigned int n_indices;
@@ -34,10 +35,12 @@ public:
 	VertexBuffer();
 	void createBuffers(const vector<info::VertexLayout>& layouts);
 	void createBuffers(const vector<info::VertexLayout>& layouts, const vector<unsigned int>& indices);
+	void updateBuffer(const vector<info::VertexLayout>& pos);
 	virtual void bind() const;
 	virtual void unbind() const;
 	
-	inline vector<info::VertexLayout> getLayouts() { return m_layouts; };
+	inline vector<info::VertexLayout>& getLayouts() { return m_layouts; };
+	inline vector<unsigned int> getIndices() { return m_indices; };
 	inline unsigned int getSizeOfIndices() { return n_indices; };
 	inline unsigned int getSizeOfInstance() { return unsigned int(m_matrices.size()); };
 

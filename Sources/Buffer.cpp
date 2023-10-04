@@ -60,6 +60,7 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts)
 void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts, const vector<unsigned int>& indices)
 {	
 	m_layouts = layouts;
+	m_indices = indices;
 	n_layouts = static_cast<unsigned int>(layouts.size());
 	n_indices = static_cast<unsigned int>(indices.size());
 
@@ -111,6 +112,18 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts, cons
 
 	// Reset the vertex array binder
 	glBindVertexArray(0);
+}
+
+void VertexBuffer::updateBuffer(const vector<info::VertexLayout>& layouts)
+{
+	m_layouts = layouts;
+
+	assert(layouts.size() == n_layouts);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+	void* ptr = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+	memcpy(ptr, &m_layouts[0], n_layouts * sizeof(info::VertexLayout));
+	glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 
 void VertexBuffer::bind() const

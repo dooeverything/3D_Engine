@@ -318,6 +318,11 @@ bool Mesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 	return m_bbox->intersect(ray_dir, ray_pos, t_min, t_max);
 }
 
+void Mesh::updateBuffer(const vector<info::VertexLayout>& layouts)
+{
+	m_buffer->updateBuffer(layouts);
+}
+
 void Mesh::setPosition(glm::mat4 t)
 {
 	m_transform_pos = t;
@@ -766,7 +771,7 @@ void ParticleMesh::drawInstance(const glm::mat4& P, const glm::mat4& V)
 	//glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 	
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-	glDrawArrays(GL_POINTS, 0, m_buffer->getLayouts().size());
+	glDrawArrays(GL_POINTS, 0, GLsizei(m_buffer->getLayouts().size()));
 	glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
 	m_buffer->unbind();

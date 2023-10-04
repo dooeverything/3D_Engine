@@ -208,6 +208,8 @@ PropertyPanel::~PropertyPanel()
 
 void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared_ptr<GameObject>& clicked_object)
 {
+	//cout << "Property panel : " << clicked_object->getName() << endl;
+
 	ImGui::Begin("Property");
 	{
 		calculatePanelSize();
