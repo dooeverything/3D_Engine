@@ -23,17 +23,17 @@ void Renderer::init()
 	m_sdl_window->init(width, height, "OpenGL Engine");
 
 	m_framebuffer = make_unique<FrameBuffer>();
-	m_framebuffer->createBuffers(2048, 2048);
+	m_framebuffer->createBuffers(1024, 1024);
 
 	m_grid = make_unique<Grid>();
-	m_outline = make_unique<Outline>(2048, 2048);
+	m_outline = make_unique<Outline>(1024, 1024);
 
 	m_camera = make_unique<Camera>(glm::vec3(0.0f, 7.5f, 27.0f), -90.0f, -11.0f);
 	
 	glm::vec3 light_pos = { 1.0f, 1.0f, 1.0f };
-	m_depth_map = make_unique<ShadowMap>(2048, 2048);
-	m_shadow_map = make_unique<ShadowMap>(2048, 2048, light_pos, false);
-	m_cubemap = make_unique<CubeMap>(4096, 4096);
+	m_depth_map = make_unique<ShadowMap>(1024, 1024);
+	m_shadow_map = make_unique<ShadowMap>(1024, 1024, light_pos, false);
+	m_cubemap = make_unique<CubeMap>(1024, 1024);
 	m_irradiancemap = make_unique<IrradianceMap>(32, 32);
 	m_prefilter = make_unique<PrefilterMap>(256, 256);
 	m_lut = make_unique<LUTMap>(512, 512);
@@ -54,7 +54,7 @@ void Renderer::init()
 	//m_sph = make_shared<SPHSystem>(32.0f, 32.0f, 32.0f);
 	//m_scene_objects.push_back(m_sph);
 
-	shared_ptr<SPHSystemCuda> test = make_shared<SPHSystemCuda>(64.0f, 64.0f, 32.0f);
+	shared_ptr<SPHSystemCuda> test = make_shared<SPHSystemCuda>(64.0f, 32.0f, 64.0f);
 	m_scene_objects.push_back(test);
 	m_sph = test;
 

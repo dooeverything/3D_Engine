@@ -95,7 +95,7 @@
     <ClCompile Include="src\Cloth.cpp" />
     <ClCompile Include="src\FileDialog.cpp" />
     <ClCompile Include="src\Force.cpp" />
-    <ClCompile Include="src\ImGuiPanel.cpp" />
+    <ClCompile Include="src\ImguiPanel.cpp" />
     <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Map.cpp" />
@@ -129,7 +129,7 @@
     <ClInclude Include="include\FastNoiseLite.h" />
     <ClInclude Include="include\FileDialog.h" />
     <ClInclude Include="include\Force.h" />
-    <ClInclude Include="include\ImGuiPanel.h" />
+    <ClInclude Include="include\ImguiPanel.h" />
     <ClInclude Include="include\Light.h" />
     <ClInclude Include="include\Map.h" />
     <ClInclude Include="include\MarchingCube.h" />

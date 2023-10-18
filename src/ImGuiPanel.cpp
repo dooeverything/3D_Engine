@@ -1,4 +1,4 @@
-#include "ImGuiPanel.h"
+#include "ImguiPanel.h"
 #include "Utils.h"
 
 ImGuiPanel::ImGuiPanel() : 
@@ -522,7 +522,7 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 					ImGui::TableNextColumn();
 					ImGui::Text("Speed");
 					ImGui::TableNextColumn();
-					ImGui::SliderFloat("##t", &sph->t, 0.0f, 0.01f, "%.4f", 0);
+					ImGui::SliderFloat("##t", &sph->t, 0.0f, 0.1f, "%.4f", 0);
 
 					ImGui::TableNextColumn();
 					ImGui::Text("Gas Constant");

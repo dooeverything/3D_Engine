@@ -109,7 +109,7 @@ CubeMap::CubeMap(int width, int height) :
 	m_mesh = make_shared<Mesh>(m_name, "assets/models/Cube.txt");
 	m_mesh->processMesh();
 
-	m_hdr_texture = make_shared<Texture>("assets/textures/sky.hdr");
+	m_hdr_texture = make_shared<Texture>("assets/textures/kloofendal_43d_clear_puresky_1k.hdr");
 	m_hdr_texture->loadTexture();
 
 	vector<string> shader_background_path = { "assets/shaders/Background.vert", "assets/shaders/Background.frag" };
