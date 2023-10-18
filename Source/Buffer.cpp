@@ -136,12 +136,16 @@ void VertexBuffer::unbind() const
 	glBindVertexArray(0);
 }
 
-FrameBuffer::FrameBuffer() : m_RBO(0), m_FBO(0), m_framebuffer_texture(0) 
+FrameBuffer::FrameBuffer() 
+	: m_RBO(0), m_FBO(0), m_framebuffer_texture(0), m_width(0), m_height(0)
 {
 }
 
 void FrameBuffer::createBuffers(int width, int height)
 {
+	m_width = width;
+	m_height = height;
+
 	// Create a framebuffer
 	glGenFramebuffers(1, &m_FBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
@@ -171,8 +175,6 @@ void FrameBuffer::createBuffers(int width, int height)
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//glBindTexture(GL_TEXTURE_2D, 0);
-	//glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
 
 void FrameBuffer::bind()
@@ -209,35 +211,32 @@ DepthBuffer::DepthBuffer() : m_depth_map(0)
 
 void DepthBuffer::createBuffers(int width, int height)
 {
-	// Create a framebuffer
-	glGenFramebuffers(1, &m_FBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_COMPONENT24, GL_TEXTURE_2D, m_depth_map, 0);
+	cout << "Create a depth buffer" << endl;
 
+	// Create a texture to store depth values 
 	glGenTextures(1, &m_depth_map);
 	glBindTexture(GL_TEXTURE_2D, m_depth_map);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT24, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	float border_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
+
+	// Framebuffer to store depth values
+	glGenFramebuffers(1, &m_FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth_map, 0);
 
 	// Disable writes to color buffer, as shadow map will not output the color
 	glDrawBuffer(GL_NONE);
 	glReadBuffer(GL_NONE);
 
-	// Check framebuffer is complete 
-	auto check = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if (check != GL_FRAMEBUFFER_COMPLETE)
+	auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE)
 	{
-		cerr << "Framebuffer error: " << check << endl;
-		assert(0);
-	}
-
-	// Check any errors
-	if (glGetError() != GL_NO_ERROR)
-	{
-		cerr << "Error: " << glGetError() << endl;
+		cerr << "Framebuffer error " << status << endl;
 		assert(0);
 	}
 
@@ -281,12 +280,12 @@ void ShadowBuffer::createBuffers(int width, int height)
 		assert(0);
 	}
 
-	// Check any errors
-	if (glGetError() != GL_NO_ERROR)
-	{
-		cerr << "Error: " << glGetError() << endl;
-		assert(0);
-	}
+	//// Check any errors
+	//if (glGetError() != GL_NO_ERROR)
+	//{
+	//	cerr << "Error: " << glGetError() << endl;
+	//	assert(0);
+	//}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

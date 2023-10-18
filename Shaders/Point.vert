@@ -1,4 +1,4 @@
-#version 330 core
+#version 450 core
 layout (location = 0) in vec3 in_pos;
 
 out vec3 frag_pos;
@@ -17,6 +17,7 @@ void main()
     proj = projection;
     r = point_radius;
     frag_pos =(view * vec4(in_pos, 1.0)).xyz;
-	gl_Position = projection * view * model * vec4(in_pos, 1.0);
+	
+    gl_Position = projection * view * model * vec4(in_pos, 1.0);
     gl_PointSize = point_scale * (point_radius / gl_Position.w);
 }

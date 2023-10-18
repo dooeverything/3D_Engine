@@ -1,4 +1,4 @@
-#version 330 core
+#version 450 core
 layout (location = 0) in vec3 in_pos;
 layout (location = 3) in vec2 in_texCoord;
 

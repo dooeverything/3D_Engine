@@ -38,7 +38,6 @@ class Mesh
 protected:
 	string m_directory;
 	shared_ptr<BoundingBox> m_bbox;
-	virtual shared_ptr<BoundingBox> computeBoundingBox();
 
 private:
 	string m_name;
@@ -49,6 +48,8 @@ private:
 	glm::mat4 m_transform_rot;
 	glm::mat4 m_transform_scale;
 	glm::vec3 m_center;
+	float t_min;
+	float t_max;
 
 public:
 	Mesh();
@@ -64,21 +65,26 @@ public:
 	void drawArrays();
 	void drawInstance(glm::mat4& P, glm::mat4& V);
 	void draw();
+
+	//virtual shared_ptr<BoundingBox> computeBoundingBox();
+	virtual void computeBoundingBox();
 	virtual void draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool terrain=false);
 	virtual void drawLowQuality(Shader& shader);
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
 	virtual void updateBuffer(const vector<info::VertexLayout>& pos);
 
 	inline void setName(string name) { m_name = name; };
-	virtual inline void setDirectory(string directory) { m_directory = directory; };
 	virtual void setPosition(glm::mat4 t);
 	virtual void setRotation(glm::mat4 t);
 	virtual void setScale(glm::mat4 t);
+	virtual inline void setDirectory(string directory) { m_directory = directory; };
+	virtual inline void setRayHitMin(float t) { t_min = t; }
 
 	inline shared_ptr<Material> getMaterial() { return m_material; };
 	inline BoundingBox& getBox() { return *m_bbox; };
 	inline string getName() { return m_name; };
 	inline glm::vec3 getCenter() { return m_center; };
+	
 	virtual inline VertexBuffer& getBuffer() { return *m_buffer.get(); };
 	virtual inline vector<shared_ptr<Texture>>& getTexture() { return m_textures; };
 	virtual inline glm::mat4 getTransform()
@@ -89,6 +95,7 @@ public:
 	virtual inline glm::mat4* getRotation() { return &m_transform_rot; };
 	virtual inline glm::mat4* getScale() { return &m_transform_scale; };
 	virtual inline glm::vec3 getSize() { return abs(m_bbox->getMax() - m_bbox->getMin()); };
+	virtual inline float getRayHitMin() { return t_min; };
 };
 
 class FBXMesh : public Mesh
@@ -123,6 +130,14 @@ public:
 	virtual void setPosition(glm::mat4 t);
 	virtual void setRotation(glm::mat4 t);
 	virtual void setScale(glm::mat4 t);
+	virtual inline void setRayHitMin(float t) 
+	{ 
+		for (int i = 0; i < m_meshes.size(); ++i)
+		{
+			m_meshes[i]->setRayHitMin(t);
+		}
+	}
+
 
 	virtual inline VertexBuffer& getBuffer() { return m_meshes[0]->getBuffer(); };
 	virtual inline string getPath() { return m_path; };
@@ -157,16 +172,26 @@ public:
 	virtual inline glm::mat4* getPosition() { return m_meshes.at(0)->getPosition(); };
 	virtual inline glm::mat4* getRotation() { return m_meshes.at(0)->getRotation(); };
 	virtual inline glm::mat4* getScale() { return m_meshes.at(0)->getScale(); };
-
+	virtual inline float getRayHitMin() 
+	{ 
+		float f_min = FLT_MAX;
+		for (int i = 0; i < m_meshes.size(); ++i)
+		{
+			f_min = min(m_meshes[i]->getRayHitMin(), f_min);
+		}
+		
+		return f_min; 
+	};
+	//virtual inline float getRayHitMax() { return t_min; };
 };
 
 class ParticleMesh
 {
 public:
-	ParticleMesh();
+	ParticleMesh(const vector<info::VertexLayout>& layouts);
 	~ParticleMesh();
 	
-	void setupMesh(vector<info::VertexLayout> layouts);
+	void updateBuffer(vector<info::VertexLayout> layouts);
 	VertexBuffer& getBuffer() { return *m_buffer; };
 	void drawInstance(const glm::mat4& P, const glm::mat4& V);
 

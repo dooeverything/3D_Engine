@@ -56,6 +56,7 @@ void ImGuiMenuBar::render(vector<shared_ptr<GameObject>>& scene_objects, shared_
 
 		if (ImGui::BeginMenu("3D Object"))
 		{
+			ImGui::SeparatorText("Primitives");
 			if (ImGui::MenuItem("Cube"))
 			{
 				shared_ptr<GameObject> object = make_shared<GameObject>("Models/Cube.txt");
@@ -81,10 +82,22 @@ void ImGuiMenuBar::render(vector<shared_ptr<GameObject>>& scene_objects, shared_
 				shared_ptr<GameObject> metaball = make_shared<Metaball>(1.0f);
 				addObject(scene_objects, metaball);
 			}
+
+			ImGui::SeparatorText("Others");
 			if (ImGui::MenuItem("Terrain"))
 			{
 				shared_ptr<GameObject> terrain = make_shared<Terrain>(16.0f);
 				addObject(scene_objects, terrain);
+			}
+			if (ImGui::MenuItem("Fluid"))
+			{
+				shared_ptr<GameObject> sph = make_shared<SPHSystem>(32.0f, 32.0f, 16.0f);
+				addObject(scene_objects, sph);
+			}
+			if (ImGui::MenuItem("Cloth"))
+			{
+				shared_ptr<GameObject> cloth = make_shared<Cloth>();
+				addObject(scene_objects, cloth);
 			}
 			ImGui::EndMenu();
 		}
@@ -505,11 +518,8 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 					ImGui::TableNextColumn();
 					ImGui::Text("Particle Radius");
 					ImGui::TableNextColumn();
-					float h = sph->H;
-					if(ImGui::SliderFloat("##H", &h, 0.0f, 10.0f, "%.3f", 0))
-						sph->setParticleRadius(h);
+					ImGui::SliderFloat("##SCALE", &sph->SCALE, 0.0f, 10.0f, "%.3f", 0);
 					
-
 					ImGui::TableNextColumn();
 					ImGui::Text("Speed");
 					ImGui::TableNextColumn();
@@ -536,11 +546,6 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 					ImGui::SliderFloat("##WALL", &sph->WALL, -1.0f, 0.0f, "%.3f", 0);
 
 					ImGui::TableNextColumn();
-					ImGui::Text("Particle Size");
-					ImGui::TableNextColumn();
-					ImGui::SliderFloat("##SCALE", &sph->SCALE, 0.0f, 1.5f, "%.3f", 0);
-
-					ImGui::TableNextColumn();
 					ImGui::Text("Render Type");
 					ImGui::TableNextColumn();
 					ImGui::SliderInt("##TYPE", &sph->render_type, 0, 1);
@@ -549,6 +554,110 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 					ImGui::Text("Iteration");
 					ImGui::TableNextColumn();
 					ImGui::SliderInt("##ITERATION", &sph->iteration, 1, 100);
+				}
+
+				ImGui::EndTable();
+
+				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", double(1000.0 / (ImGui::GetIO().Framerate)), double(ImGui::GetIO().Framerate));
+
+				ImGui::PopStyleVar();
+				ImGui::TreePop();
+			}
+		}
+	
+		if (name == "Cloth")
+		{
+			Cloth* cloth = dynamic_cast<Cloth*>(clicked_object.get());
+			bool expand_fluid = ImGui::TreeNode("Cloth");
+			if (expand_fluid)
+			{
+				static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
+				ImVec2 cell_padding(0.0f, 5.0f);
+				ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
+				ImGui::BeginTable("Simulation", 2);
+				ImU32 cell_bg_color = ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.7f, 0.65f));
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::AlignTextToFramePadding();
+
+				static int clicked = 0;
+				if (ImGui::Button("Click to simulate"))
+				{
+					clicked++;
+				}
+
+				if (clicked & 1)
+				{
+					ImGui::TableNextColumn();
+					if (ImGui::Button("Start") && cloth->getSimulate() == false)
+					{
+						cloth->setSimulate(true);
+						//cout << sph->getSimulate() << endl;
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Stop") && cloth->getSimulate() == true)
+					{
+						cloth->setSimulate(false);
+					}
+
+					ImGui::SameLine();
+					if (ImGui::Button("Reset"))
+					{
+						cloth->setSimulate(false);
+						//cloth->reset();
+					}
+
+
+					//ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
+					//ImGui::TableNextColumn();
+					//ImGui::Text("Particle Radius");
+					//ImGui::TableNextColumn();
+					//float h = sph->H;
+					//if (ImGui::SliderFloat("##H", &h, 0.0f, 10.0f, "%.3f", 0))
+					//	sph->setParticleRadius(h);
+
+
+					//ImGui::TableNextColumn();
+					//ImGui::Text("Speed");
+					//ImGui::TableNextColumn();
+					//ImGui::SliderFloat("##t", &sph->t, 0.0f, 0.01f, "%.4f", 0);
+
+					//ImGui::TableNextColumn();
+					//ImGui::Text("Gas Constant");
+					//ImGui::TableNextColumn();
+					//ImGui::SliderFloat("##K", &sph->K, 0.0f, 10.0f, "%.3f", 0);
+
+					//ImGui::TableNextColumn();
+					//ImGui::Text("Rest Density");
+					//ImGui::TableNextColumn();
+					//ImGui::SliderFloat("##rDENSITY", &sph->rDENSITY, 0.0f, 1000.0f, "%.3f", 0);
+
+					//ImGui::TableNextColumn();
+					//ImGui::Text("Viscousity");
+					//ImGui::TableNextColumn();
+					//ImGui::SliderFloat("##VISC", &sph->VISC, -1.0f, 10.0f, "%.3f", 0);
+
+					//ImGui::TableNextColumn();
+					//ImGui::Text("Wall Damping");
+					//ImGui::TableNextColumn();
+					//ImGui::SliderFloat("##WALL", &sph->WALL, -1.0f, 0.0f, "%.3f", 0);
+
+					//ImGui::TableNextColumn();
+					//ImGui::Text("Particle Size");
+					//ImGui::TableNextColumn();
+					//ImGui::SliderFloat("##SCALE", &sph->SCALE, 0.0f, 1.5f, "%.3f", 0);
+
+					//ImGui::TableNextColumn();
+					//ImGui::Text("Render Type");
+					//ImGui::TableNextColumn();
+					//ImGui::SliderInt("##TYPE", &sph->render_type, 0, 1);
+
+					//ImGui::TableNextColumn();
+					//ImGui::Text("Iteration");
+					//ImGui::TableNextColumn();
+					//ImGui::SliderInt("##ITERATION", &sph->iteration, 1, 100);
 
 				}
 
@@ -557,7 +666,7 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 				ImGui::TreePop();
 			}
 		}
-	}
+}
 	ImGui::End();
 }
 

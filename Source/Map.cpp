@@ -18,7 +18,17 @@ ShadowMap::ShadowMap(int width, int height) :
 	m_shadow_buffer(shared_ptr<ShadowBuffer>()),
 	m_proj(glm::mat4(0.0f)), m_view(glm::mat4(0.0f)), m_light_position(glm::vec3(0.0f)),
 	m_perspective(false)
-{}
+{
+	cout << "Depth map with " << m_width << ", " << m_height << endl;
+	vector<string> shader_path = { "Shaders/ShadowMap.vert", "Shaders/ShadowMap.frag" };
+	m_shader = make_shared<Shader>(shader_path);
+	m_shader->processShader();
+
+	m_shadow_buffer = make_shared<ShadowBuffer>();
+	m_shadow_buffer->createBuffers(m_width, m_height);
+	cout << "Depth map loaded" << endl;
+	cout << endl;
+}
 
 ShadowMap::ShadowMap(int width, int height, glm::vec3 position, bool perspective) :
 	Map(width, height, "ShadowMap"), m_perspective(perspective)
@@ -26,6 +36,7 @@ ShadowMap::ShadowMap(int width, int height, glm::vec3 position, bool perspective
 	cout << "Shadow map constructor with " << m_width << ", " << m_height << endl;
 	
 	float aspect = static_cast<float>(width) / static_cast<float>(height);
+	
 	if(perspective)
 		m_proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 	else
@@ -50,15 +61,26 @@ ShadowMap::~ShadowMap() {}
 void ShadowMap::draw(vector<shared_ptr<GameObject>>& gameobjects)
 {
 	glViewport(0, 0, m_width, m_height);
+	
 	m_shadow_buffer->bind();
-	glClear(GL_DEPTH_BUFFER_BIT);
-	for (auto& it : gameobjects)
-	{
-		if (it->getMesh() == nullptr) continue;
+		glClear(GL_DEPTH_BUFFER_BIT);
+		for (auto& it : gameobjects)
+		{
+			if (it->getMesh() == nullptr) continue;
 		
-		m_shader->load();
-		it->getMesh()->draw(m_proj, m_view, *m_shader);
-	}
+			if (it->getName() == "Fluid") continue;
+
+			m_shader->load();
+
+			if (it->getMesh()->getBuffer().getIndices().size() > 1)
+			{
+				it->getMesh()->draw(m_proj, m_view, *m_shader);
+			}
+			else
+			{
+				it->getMesh()->draw(m_proj, m_view, *m_shader, true);
+			}
+		}
 	m_shadow_buffer->unbind();
 }
 
@@ -367,3 +389,4 @@ void EnvironmentMap::draw(vector<shared_ptr<GameObject>>& scene, Light& light)
 	}
 	m_cubemap_buffer->unbind();
 }
+

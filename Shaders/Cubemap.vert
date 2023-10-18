@@ -1,4 +1,4 @@
-#version 410 core
+#version 450 core
 layout (location=0) in vec3 in_pos;
 
 out vec3 frag_pos;

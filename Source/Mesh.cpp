@@ -73,14 +73,16 @@ Mesh::Mesh() :
 	m_directory(""), m_name(""), m_buffer(make_unique<VertexBuffer>()),
 	m_textures({}), m_material(make_unique<Material>()),
 	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
-	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f))
+	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f)),
+	t_min(FLT_MAX), t_max(FLT_MIN)
 {}
 
 Mesh::Mesh(string name, const string& path) : 
 	m_directory(path), m_name(name), m_buffer(make_unique<VertexBuffer>()),
 	m_textures({}), m_material(make_unique<Material>()), 
 	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
-	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f))
+	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f)),
+	t_min(FLT_MAX), t_max(FLT_MIN)
 {
 }
 
@@ -88,22 +90,24 @@ Mesh::Mesh(string name, vector<info::VertexLayout> layouts) :
 	m_directory(""), m_name(name), m_buffer(make_unique<VertexBuffer>()),
 	m_textures({}), m_material(make_unique<Material>()),
 	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
-	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f))
+	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f)),
+	t_min(FLT_MAX), t_max(FLT_MIN)
 {
-	//cout << "Create a mesh without indexing: " << name << endl;
+	//cout << "Create a mesh without indexing: " << name << " with size " << layouts.size() << endl;
 	m_buffer->createBuffers(layouts);
-	m_bbox = computeBoundingBox();
+	computeBoundingBox();
 }
 
 Mesh::Mesh(string name, vector<info::VertexLayout> layouts, vector<unsigned int> indices) :
 	m_directory(""), m_name(name), m_buffer(make_unique<VertexBuffer>()),
 	m_textures({}), m_material(make_unique<Material>()),
 	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
-	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f))
+	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f)),
+	t_min(FLT_MAX), t_max(FLT_MIN)
 {
 	//cout << "Create a mesh: " << name << endl;
 	m_buffer->createBuffers(layouts, indices);
-	m_bbox = computeBoundingBox();
+	computeBoundingBox();
 }
 
 Mesh::Mesh(string name, vector<info::VertexLayout> layouts, 
@@ -111,21 +115,23 @@ Mesh::Mesh(string name, vector<info::VertexLayout> layouts,
 	m_directory(""), m_name(name), m_buffer(make_unique<VertexBuffer>()),
 	m_textures({}), m_material(make_unique<Material>()),
 	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
-	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f))
+	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f)),
+	t_min(FLT_MAX), t_max(FLT_MIN)
 {
 	//cout << "Create a mesh: " << name << endl;
 	m_buffer->setMatrices(matrices);
 	m_buffer->createBuffers(layouts, indices);
-	m_bbox = computeBoundingBox();
+	computeBoundingBox();
 }
 
 Mesh::Mesh(string name, shared_ptr<VertexBuffer> buffer, vector<shared_ptr<Texture>> textures, shared_ptr<Material> material) :
 	m_directory(""), m_name(name), 
 	m_buffer(buffer), m_textures(textures), m_material(material), 
 	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
-	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f))
+	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f)),
+	t_min(FLT_MAX), t_max(FLT_MIN)
 {
-	m_bbox = computeBoundingBox();
+	computeBoundingBox();
 }
 
 void Mesh::processMesh()
@@ -212,12 +218,11 @@ void Mesh::processMesh()
 	}
 
 	m_buffer->createBuffers(layouts, indices);
-	m_bbox = computeBoundingBox();
+	computeBoundingBox();
 }
 
 void Mesh::drawArrays()
 {
-	//cout << "Draw" << endl;
 	m_buffer->bind();
 	glDrawArrays(GL_TRIANGLES, 0, GLsizei(m_buffer->getLayouts().size()));
 	m_buffer->unbind();
@@ -253,13 +258,15 @@ void Mesh::draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool ter
 
 	glm::mat4 M = m_transform_pos * m_transform_rot * m_transform_scale;
 	shader.setPVM(P, V, M);
+	
+	//cout << "DRAW : " << m_name << endl;
+	//cout << M << endl;
+	//cout << endl;
 
 	shader.setInt("has_texture", 0);
 
 	if (m_material->getTexture() != nullptr)
 	{
-		//cout << "Add texture to the object" << endl;
-		//cout << m_buffer->getLayouts().at(0).texCoord << endl;
 		shader.setInt("has_texture", 1);
 		shader.setInt("texture_map", 4);
 		glActiveTexture(GL_TEXTURE0 + 4);
@@ -269,7 +276,6 @@ void Mesh::draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool ter
 	// Set texture before draw a mesh
 	if (m_textures.size() > 0)
 	{
-		//cout << "FBX" << endl;
 		shader.setInt("has_texture", 2);
 		for (int i = 0; i < m_textures.size(); ++i)
 		{
@@ -279,12 +285,6 @@ void Mesh::draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool ter
 			string type = m_textures[i]->getType();
 			if (type == "color")
 				index = to_string(color_index++);
-			//else if (type == "texture_specular")
-			//	index = to_string(specular_index++);
-			//else if (type == "texture_normal")
-			//	index = to_string(normal_index++);
-			//else if (type == "texture_height")
-			//	index = to_string(height_index++);
 
 			shader.setInt(("tex_fbx." + type + index).c_str(), i+4);
 			m_textures[i]->setActive();
@@ -311,10 +311,9 @@ void Mesh::drawLowQuality(Shader& shader)
 
 bool Mesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 {
-	//cout << "Intersect with mesh: " << m_name << endl;
-	float t_min;
-	float t_max;
-	m_bbox = computeBoundingBox();
+	t_min;
+	t_max;
+	computeBoundingBox();
 	return m_bbox->intersect(ray_dir, ray_pos, t_min, t_max);
 }
 
@@ -338,7 +337,7 @@ void Mesh::setScale(glm::mat4 t)
 	m_transform_scale = t;
 }
 
-shared_ptr<BoundingBox> Mesh::computeBoundingBox()
+void Mesh::computeBoundingBox()
 {
 	glm::vec3 min;
 	glm::vec3 max;
@@ -371,7 +370,7 @@ shared_ptr<BoundingBox> Mesh::computeBoundingBox()
 	//cout << m_name << ": " << endl;
 	//cout << "Max: " << max << endl;
 	//cout << "Min: " << min << endl;
-	return make_shared<BoundingBox>(min, max);
+	m_bbox = make_shared<BoundingBox>(min, max);
 }
 
 FBXMesh::FBXMesh() 
@@ -508,7 +507,6 @@ shared_ptr<VertexBuffer> FBXMesh::processBuffer(const aiMesh* mesh, const aiScen
 		layout.position = positions[i];
 		layout.normal = normals[i];
 		layout.texCoord = texCoords[i];
-
 		layouts.push_back(layout);
 	}
 
@@ -667,7 +665,10 @@ bool FBXMesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 	{
 		//cout << "Intersect with mesh " << it->getName() << endl;
 		if (it->intersect(ray_dir, ray_pos))
+		{
 			inter = true;
+			break;
+		}
 	}
 
 	return inter;
@@ -748,28 +749,25 @@ ostream& operator<<(ostream& os, const glm::mat4& m)
 		<< m[0][3] << " " << m[1][3] << " " << m[2][3] << " " << m[3][3];
 }
 
-ParticleMesh::ParticleMesh()
+ParticleMesh::ParticleMesh(const vector<info::VertexLayout>& layouts)
 {
 	m_buffer = make_unique<VertexBuffer>();
+	m_buffer->createBuffers(layouts);
 }
 
 ParticleMesh::~ParticleMesh()
 {
 }
 
-void ParticleMesh::setupMesh(vector<info::VertexLayout> layouts)
+void ParticleMesh::updateBuffer(vector<info::VertexLayout> layouts)
 {
-	m_buffer->createBuffers(layouts);
+	m_buffer->updateBuffer(layouts);
 }
 
 void ParticleMesh::drawInstance(const glm::mat4& P, const glm::mat4& V)
 {
 	m_buffer->bind();
-
-	//glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-	//glDrawArraysInstanced(GL_POINTS, 0, GLsizei(m_buffer->getLayouts().size()), m_buffer->getSizeOfInstance());
-	//glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
-	
+		
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 	glDrawArrays(GL_POINTS, 0, GLsizei(m_buffer->getLayouts().size()));
 	glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);

@@ -1,11 +1,12 @@
-#version 330 core
+#version 450 core
 // out vec4 frag_color;
 
 float near = 0.1;
 float far = 100.0;
 
+uniform mat4 projection;
+
 in vec3 frag_pos;
-in mat4 proj;
 in float r;
 
 void main()
@@ -22,8 +23,7 @@ void main()
     n.z = sqrt(1.0 - r2);
 
     vec4 eye = vec4(frag_pos + n * r, 1.0); // EYE
-    vec4 clip = proj * eye; // CLIP 
-    
+    vec4 clip = projection * eye; // CLIP 
     float z = (clip.z / clip.w)*0.5 + 0.5; // NDC converted from [-1,1] to [0,1]
 	gl_FragDepth  = z; 
 }

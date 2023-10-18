@@ -17,6 +17,8 @@ public:
 	~Cloth();
 
 	virtual void update();
+	virtual bool getSimulate() { return m_simulate; };
+	virtual void setSimulate(bool s) { m_simulate = s; };
 
 private:
 	void initParticles();
@@ -33,6 +35,7 @@ private:
 	vector<shared_ptr<ClothParticle>> m_particles;
 	unordered_map<uint, ClothParticle*> m_hash;
 
+	float m_scale;
 	float m_width;
 	float m_height;
 	float m_depth;
@@ -41,7 +44,7 @@ private:
 	float n_sub_steps;
 	float t_sub;
 
-	float kd;
-	float ks;
-	float seperation;
+	float m_rest;
+
+	bool m_simulate;
 };

@@ -35,12 +35,11 @@ public:
         SPICKY = -45.0f / (PI * pow(h, 6));
         SPICKY2 = -SPICKY;
     }
-
-
+    
     virtual void update();
     virtual void draw();
     
-    virtual void setupFrame(const glm::mat4& P, const glm::mat4& V, CubeMap& cubemap);
+    virtual void setupFrame(const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap, Camera& camera);
 
     float H;
     float H2;
@@ -93,8 +92,19 @@ private:
 
     void updateDensPress();
     void updateForces();
-    void getDepth(const glm::mat4& P, const glm::mat4& V);
-    void blurDepth();
+
+    void getDepth(const glm::mat4& P, const glm::mat4& V, Camera& camera);
     void getCurvature(const glm::mat4& P, const glm::mat4& V);
-    void getNormal(const glm::mat4& P, const glm::mat4& V, CubeMap& cubemap);
+    void getNormal(const glm::mat4& P, const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap);
+    void blurDepth();
+
+    vector<glm::vec3> m_vertices;
+    vector<glm::vec3> m_normals;
+    vector<shared_ptr<TriMesh>> m_trimeshes;
+
+    glm::vec3 interpolate(glm::vec3, glm::vec3, float, float, float);
+    float getGridValue(int index);
+    void polygonize(vector<glm::ivec3>, vector<float> gridValues);
+    void createVertex();
+    void updateVertex();
 };

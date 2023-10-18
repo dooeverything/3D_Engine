@@ -10,7 +10,7 @@ Particle::Particle(glm::vec3 p) :
 
 FluidParticle::FluidParticle(glm::vec3 p) :
 	Particle(p), m_next(nullptr),
-	m_pressure(0.0f), m_density(0.0f)
+	m_pressure(0.0f), m_density(0.0f), m_weight(0.0f)
 {
 }
 

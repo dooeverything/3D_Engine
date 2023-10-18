@@ -3,7 +3,7 @@
 // 2. https://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
 // 3. http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 
-#version 410 core
+#version 450 core
 
 out vec4 frag_color;
 in vec3 frag_pos;

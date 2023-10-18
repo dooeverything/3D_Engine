@@ -29,7 +29,7 @@ protected:
 	shared_ptr<Mesh> m_mesh;
 };
 
-class ShadowMap : protected Map
+class ShadowMap : public Map
 {
 public:
 	ShadowMap(int width, int height);
@@ -43,6 +43,9 @@ public:
 	inline glm::mat4* getProj() { return &m_proj; };
 	inline glm::mat4* getView() { return &m_view; };
 	inline glm::vec3* getPosition() { return &m_light_position; };
+
+	inline void setProj(const glm::mat4& P) { m_proj = P; };
+	inline void setView(const glm::mat4& V) { m_view = V; };
 
 private:
 	shared_ptr<ShadowBuffer> m_shadow_buffer;

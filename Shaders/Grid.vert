@@ -1,7 +1,7 @@
 // Reference: 3D Graphics Rendering Cookbook, Chapter5 
 // https://github.com/PacktPublishing/3D-Graphics-Rendering-Cookbook/tree/master/Chapter5/GL01_Grid
 
-#version 330 core
+#version 450 core
 layout (location = 0) in vec3 in_pos;
 layout (location = 1) in vec3 in_norm;
 

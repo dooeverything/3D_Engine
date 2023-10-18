@@ -88,7 +88,8 @@ bool Object::isClick(glm::vec3& ray_dir, glm::vec3& ray_pos)
 {
 	if (m_mesh == nullptr) return false;
 
-	return m_mesh->intersect(ray_dir, ray_pos);
+	m_click = m_mesh->intersect(ray_dir, ray_pos);
+	return m_click;
 }
 
 void Object::setProperty(int index, glm::vec3 t)
@@ -126,7 +127,7 @@ void Object::setPosition(glm::vec3 pos)
 
 void Object::setRotation(glm::vec3 rot)
 {
-	cout << m_name << " : set rotation " << rot <<  endl;
+	//cout << m_name << " : set rotation " << rot <<  endl;
 	m_property[1] = rot;
 	glm::mat4 t = glm::mat4(1.0f);
 	
@@ -154,12 +155,13 @@ void Object::setScale(glm::vec3 scale)
 	m_mesh->setScale(t);
 };
 
-Gizmo::Gizmo(GameObject& root, int axis) : 
-	m_root(root), m_axis(axis)
+Gizmo::Gizmo(int axis) : m_axis(axis)
 {
-	cout << "Gizmo constructor " << axis << " : " << root.getName() << endl;
+	cout << "Gizmo constructor " << axis << endl;
+
 	m_mesh = make_shared<FBXMesh>("Models/Arrow.fbx");
 	m_mesh->processMesh();
+
 	vector<string> shader_paths = {"Shaders/Arrow.vert", "Shaders/Arrow.frag"};
 	m_shader = make_shared<Shader>(shader_paths);
 	m_shader->processShader();
@@ -168,11 +170,14 @@ Gizmo::Gizmo(GameObject& root, int axis) :
 Gizmo::~Gizmo()
 {}
 
-void Gizmo::draw(const glm::mat4& P, const glm::mat4& V, glm::mat4& M)
+void Gizmo::draw(GameObject& go, const glm::mat4& P, const glm::mat4& V, glm::vec3 cam_pos)
 {
 	glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f);
 
-	M = *(m_root.getMesh()->getPosition()) * M;
+	glm::mat4 M = glm::mat4(1.0f);
+	glm::vec3 scale = glm::vec3(glm::length(m_property[0] - cam_pos) * 0.05f);
+	M = glm::scale(M, scale);
+	M = *(go.getMesh()->getPosition()) * M;
 	
 	if (m_axis == 1)
 		M = glm::rotate(M, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -189,6 +194,11 @@ void Gizmo::draw(const glm::mat4& P, const glm::mat4& V, glm::mat4& M)
 	m_shader->load();
 	m_shader->setVec3("object_color", color);
 	m_mesh->draw(P, V, *m_shader);
+}
+
+bool Gizmo::isClick(glm::vec3& ray_dir, glm::vec3& ray_pos)
+{
+	return m_mesh->intersect(ray_dir, ray_pos);
 }
 
 Grid::Grid()
@@ -215,38 +225,26 @@ void Grid::draw(const glm::mat4& P, const glm::mat4& V, glm::vec3 cam_pos)
 }
 
 GameObject::GameObject() : Object(), 
-	m_gizmos({}), m_color(glm::vec3(1.0f, 0.5f, 0.31f)),
+	m_color(glm::vec3(1.0f, 0.5f, 0.31f)),
 	m_move_axis(-1), m_irradiance(0), m_prefilter(0), m_lut(0)
 {}
 
 GameObject::GameObject(const string& mesh_path) : Object(mesh_path),
-	m_gizmos({}), m_color(glm::vec3(1.0f, 0.5f, 0.31f)),
+	m_color(glm::vec3(1.0f, 0.5f, 0.31f)),
 	m_move_axis(-1)
 {
 	loadMesh();
 	loadShader();
-
-	for (int axis = 0; axis < 3; ++axis)
-	{
-		shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
-		m_gizmos.push_back(gizmo);
-	}
 
 	cout << m_name << " successfully loaded..." << endl;
 	cout << endl;
 }
 
 GameObject::GameObject(const string& mesh_path, const vector<string>& shader_path) : Object(mesh_path, shader_path),
-	m_gizmos({}), m_color(glm::vec3(1.0f, 0.5f, 0.31f)), m_move_axis(-1)
+	m_color(glm::vec3(1.0f, 0.5f, 0.31f)), m_move_axis(-1)
 {
 	loadMesh();
 	loadShader();
-
-	//for (int axis = 0; axis < 3; ++axis)
-	//{
-	//	shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
-	//	m_gizmos.push_back(gizmo);
-	//}
 
 	cout << m_name << " successfully loaded..." << endl;
 	cout << endl;
@@ -356,22 +354,12 @@ void GameObject::draw(const glm::mat4& P, const glm::mat4& V,
 	m_irradiance = irradiance.getCubemapBuffer()->getCubemapTexture();
 	m_lut = lut.getFrameBuffer()->getTextureID();
 	
-	if(!m_click)
-	{
-		m_move_axis = -1;
-	}
-	
 	m_shader->load();
 	glm::mat4 shadow_proj = (*shadow.getProj()) * (*shadow.getView());
 	m_shader->setMat4("light_matrix", shadow_proj);
 	m_shader->setVec3("light_pos", *shadow.getPosition());
-	m_shader->setFloat("animation", 0);
 	m_shader->setVec3("view_pos", view_pos);
 	m_shader->setLight(light);
-
-	//m_shader->setFloat("width", m_screen_w);
-	//m_shader->setFloat("height", m_screen_h);
-
 	m_shader->setInt("preview", 0);
 
 	// Load shadow map as texture
@@ -388,7 +376,14 @@ void GameObject::draw(const glm::mat4& P, const glm::mat4& V,
 	glActiveTexture(GL_TEXTURE0 + 3);
 	lut.getFrameBuffer()->bindFrameTexture();
 
-	m_mesh->draw(P, V, *m_shader);
+	if (m_mesh->getBuffer().getIndices().size() > 1)
+	{
+		m_mesh->draw(P, V, *m_shader);
+	}
+	else
+	{
+		m_mesh->draw(P, V, *m_shader, true);
+	}
 }
 
 void GameObject::drawInstance(glm::mat4& P, glm::mat4& V)
@@ -396,36 +391,9 @@ void GameObject::drawInstance(glm::mat4& P, glm::mat4& V)
 	m_mesh->drawInstance(P, V);
 }
 
-void GameObject::drawGizmos(const glm::mat4& P, const glm::mat4& V, glm::vec3& view_pos)
-{
-	glm::mat4 M = glm::mat4(1.0f);
-	glm::vec3 scale = glm::vec3(glm::length(m_property[0] - view_pos) * 0.05f);
-	for (int axis = 0; axis < 3; ++axis)
-	{
-		//cout << "Draw " << axis << endl;
-		M = glm::mat4(1.0f);
-		M = glm::scale(M, scale);
-		m_gizmos[axis]->draw(P, V, M);
-	}
-}
-
 void GameObject::loadMesh()
 {
 	m_mesh->processMesh();
-}
-
-bool GameObject::isGizmoClick(glm::vec3& ray_dir, glm::vec3& ray_pos)
-{
-	for (int axis = 0; axis < 3; ++axis)
-	{
-		if (m_gizmos.at(axis)->isClick(ray_dir, ray_pos))
-		{
-			m_move_axis = axis;
-			return true;
-		}
-	}
-	m_move_axis = -1;
-	return false;
 }
 
 Geometry::Geometry() : GameObject()
@@ -434,18 +402,16 @@ Geometry::Geometry() : GameObject()
 Geometry::~Geometry()
 {}
 
-Point::Point() 
+Point::Point(const vector<info::VertexLayout>& layouts)
 {
-	m_mesh = make_unique<ParticleMesh>();
+	m_mesh = make_unique<ParticleMesh>(layouts);
 
 	vector<string> shader_path = { "Shaders/Point.vert", "Shaders/Point.frag" };
 	m_shader = make_unique<Shader>(shader_path);
 	m_shader->processShader();
 }
 
-Point::~Point()
-{
-}
+Point::~Point() {}
 
 void Point::drawPoint(const glm::mat4& P, const glm::mat4& V)
 {	
@@ -456,8 +422,7 @@ void Point::drawPoint(const glm::mat4& P, const glm::mat4& V)
 	m_mesh->drawInstance(P, V);
 }
 
-Sphere::~Sphere()
-{}
+Sphere::~Sphere() {}
 
 Sphere::Sphere(bool is_create_gizmo, vector<glm::mat4> matrices) :
 	Geometry(), m_division(32.0f), m_radius(1.0f)
@@ -473,22 +438,12 @@ Sphere::Sphere(bool is_create_gizmo, vector<glm::mat4> matrices) :
 	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	loadShader();
-
-	if (is_create_gizmo)
-	{
-		for (int axis = 0; axis < 3; ++axis)
-		{
-			shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(*this, axis);
-			m_gizmos.push_back(gizmo);
-		}
-	}
 }
 
 vector<info::VertexLayout> Sphere::calculateVertex()
 {
 	float angle_sector = float(2 * M_PI) / m_division; // 0 to 360
 	float angle_stack = float(M_PI / m_division); // 90 to -90
-	//float length_inv = 1.0f / 
 
 	vector<glm::vec3> vertices;
 	vector<glm::vec3> normals;
@@ -516,8 +471,6 @@ vector<info::VertexLayout> Sphere::calculateVertex()
 			float s = float(lon + M_PI) / float(2 * M_PI);
 			float t = float(log(tan(lat / 2 + M_PI / 4)) + M_PI) / float(2 * M_PI);
 
-			//float s = (float)j / angle_sector;
-			//float t = (float)i / angle_stack;
 			glm::vec2 texCoord = {s, t};
 			texCoords.push_back(texCoord);
 		}
@@ -530,7 +483,6 @@ vector<info::VertexLayout> Sphere::calculateVertex()
 		layout.position = vertices[i]* m_radius;
 		layout.normal = normals[i];
 		layout.texCoord = texCoords[i];
-
 		layouts.push_back(layout);
 	}
 
@@ -600,10 +552,19 @@ void Outline::setupBuffers(GameObject& go, const glm::mat4& V, float width, floa
 	float aspect = width / height;
 	glm::mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
+	glViewport(0, 0, m_outline_buffers[0]->getWidth(), m_outline_buffers[0]->getHeight());
+
 	m_outline_buffers.at(0)->bind();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		m_mask_shader->load();  
-		go.getMesh()->draw(P, V, *m_mask_shader);
+		if (go.getMesh()->getBuffer().getIndices().size() > 1)
+		{
+			go.getMesh()->draw(P, V, *m_mask_shader);
+		}
+		else
+		{
+			go.getMesh()->draw(P, V, *m_mask_shader, true);
+		}
 	m_outline_buffers.at(0)->unbind();
 
 	m_debug->setProperty(2, go.getMesh()->getSize());
@@ -647,15 +608,17 @@ void Outline::setupBuffers(GameObject& go, const glm::mat4& V, float width, floa
 void Outline::draw(GameObject& go)
 {
 	m_outline_shader->load();
+
 	glActiveTexture(GL_TEXTURE0);
 	m_outline_buffers.back()->bindFrameTexture();
 	m_outline_shader->setInt("outline_map", 0);
+
 	glActiveTexture(GL_TEXTURE0+1);
 	m_outline_buffers.at(0)->bindFrameTexture();
 	m_outline_shader->setInt("mask_map", 1);
-	m_outline_shader->setFloat("width", 1400);
-	m_outline_shader->setFloat("height", 800);
+
 	m_outline_shader->setInt("pass", 2);
+
 	m_debug->getMesh()->draw();
 }
 

@@ -4,20 +4,24 @@
 Cloth::Cloth()
 {
 	m_name = "Cloth";
+	m_simulate = false;
+	m_scale = 0.5f;
+
+	t = 0.02f;
+	n_sub_steps = 3;
+	t_sub = t / n_sub_steps;
 
 	string mesh_path = "Models/Cloth.fbx";
 	m_mesh = make_shared<FBXMesh>(mesh_path);
+	m_property[2] = glm::vec3(m_scale);
+	glm::mat4 t = glm::mat4(1.0f);
+	t = glm::scale(t, m_property[2]);
+	m_mesh->setScale(t);
 	m_mesh->processMesh();
 	
 	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	m_shader->processShader();
-
-	ks = 0.8f;
-	kd = 18.0f;
-	t = 0.007f;
-	n_sub_steps = 3;
-	t_sub = t / n_sub_steps;
 	
 	initParticles();
 }
@@ -31,20 +35,12 @@ void Cloth::initParticles()
 	const vector<info::VertexLayout>& temp = m_mesh->getBuffer().getLayouts();
 
 	glm::vec3 diff = temp[0].position - temp[1].position;
-	seperation = glm::length(diff);
-	glm::vec3 size_cloth = m_mesh->getSize() * (1.0f / seperation);
+	m_rest = glm::length(diff);
 
-	cout << "Cloth size : " << size_cloth << " rest distance : " << seperation << endl;
-	
+	glm::vec3 size_cloth = m_mesh->getSize() * (1.0f / m_rest);
 	m_width = size_cloth.x <= 0.0001f ? 0 : size_cloth.x;
 	m_height = size_cloth.y <= 0.0001f ? 0 : size_cloth.y;
 	m_depth = size_cloth.z <= 0.0001f ? 0 : size_cloth.z;
-
-	cout << "Width : " << m_width << endl;
-	cout << "Height : " << m_height << endl;
-	cout << "Depth : " << m_depth << endl;
-	cout << "Size of layout : " << temp.size() << endl;
-
 	m_particles.resize( size_t((m_width+1) * (m_height+1) * (m_depth+1)) );
 
 	for (int i = 0; i < m_particles.size(); ++i)
@@ -53,17 +49,22 @@ void Cloth::initParticles()
 	}
 
 	vector<unsigned int> indices = m_mesh->getBuffer().getIndices();
+
+	cout << endl;
+	cout << "*************************Cloth Information**************************" << endl;
+	cout << "Cloth size : " << size_cloth << " rest distance : " << m_rest << endl;
+	cout << "Width : " << m_width << endl;
+	cout << "Height : " << m_height << endl;
+	cout << "Depth : " << m_depth << endl;
+	cout << "Size of layout : " << temp.size() << endl;
 	cout << "Size of indices : " << indices.size() << endl;
+	cout << "********************************end*********************************" << endl;
 	cout << endl;
 
 	m_hash.reserve(HASH_SIZE);
 
 	for (int i = 0; i < temp.size(); ++i)
 	{
-		//m_hash[i] = nullptr;
-		
-		cout << "At " << i << " Normal : " << temp[i].normal << endl;
-
 		glm::ivec3 grid_pos = getGridPos(temp[i].position);
 		uint grid_index = getIndex(grid_pos);		
 		if (m_particles[grid_index] == nullptr)
@@ -115,7 +116,7 @@ uint Cloth::getIndex(glm::ivec3& pos)
 
 glm::ivec3 Cloth::getGridPos(glm::vec3 pos)
 {
-	return glm::ivec3(pos * (1.0f / seperation));
+	return glm::ivec3(pos * (1.0f / m_rest));
 }
 
 uint Cloth::getHashIndex(glm::ivec3& pos)
@@ -137,15 +138,13 @@ void Cloth::update()
 	vector<shared_ptr<ClothParticle>> predict(m_particles.size());
 	vector<ClothParticle*> predict2(update_layouts.size(), nullptr);
 
-	//int offset = int(max(m_width, max(m_height, m_depth))) + 1;
-
 	for (int i = 0; i < m_particles.size(); ++i)
 	{
 		ClothParticle* pi = m_particles[i].get();
 		pi->m_velocity += pi->m_gravity * t_sub;
 		glm::vec3 predict_pos = pi->m_position + pi->m_velocity * t_sub;
 		predict[i] = make_shared<ClothParticle>(predict_pos);
-		predict[i]->m_ids = pi->m_ids; // ->m_ids.push_back(1);
+		predict[i]->m_ids = pi->m_ids;
 
 		if (pi->m_pinned)
 		{
@@ -154,7 +153,6 @@ void Cloth::update()
 
 		for (int j = 0; j < pi->m_ids.size(); ++j)
 		{
-			//m_hash[pi->m_ids[j]] = predict[i].get();
 			predict2[pi->m_ids[j]] = predict[i].get();
 		}
 	}
@@ -211,7 +209,6 @@ void Cloth::update()
 		}
 	}
 
-
 	// Update Normal
 	vector<unsigned int> indices = m_mesh->getBuffer().getIndices();
 	for (int i = 0; i < indices.size()-2; i+=3)
@@ -236,7 +233,7 @@ void Cloth::update()
 		ClothParticle* p = m_particles.at(i).get();
 		for (int i = 0; i < p->m_ids.size(); ++i)
 		{
-			update_layouts[p->m_ids[i]].position = p->m_position;
+			update_layouts[p->m_ids[i]].position = p->m_position; // *m_scale;
 		}
 	}
 
@@ -262,9 +259,9 @@ void Cloth::updateStretch(int index, vector<shared_ptr<ClothParticle>>& predict)
 		glm::vec3 diff = p1 - p2;
 		float dist = glm::length(diff);
 
-		if (dist > seperation && w1 + w2 > 0.0f)
+		if (dist > m_rest && w1 + w2 > 0.0f)
 		{
-			float lamda = (dist - seperation) / (w1 + w2);
+			float lamda = (dist - m_rest) / (w1 + w2);
 			glm::vec3 gradient = diff / dist;
 			predict[index]->m_position  -= w1 * lamda * gradient;
 			predict[index2]->m_position += w2 * lamda * gradient;
@@ -281,9 +278,9 @@ void Cloth::updateStretch(int index, vector<shared_ptr<ClothParticle>>& predict)
 		glm::vec3 diff = p1 - p2;
 		float dist = glm::length(diff);
 
-		if (dist > seperation && w1 + w2 > 0.0f)
+		if (dist > m_rest && w1 + w2 > 0.0f)
 		{
-			float lamda = (dist - seperation) / (w1 + w2);
+			float lamda = (dist - m_rest) / (w1 + w2);
 			glm::vec3 gradient = diff / dist;
 			predict[index]->m_position  -= w1 * lamda * gradient;
 			predict[index2]->m_position += w2 * lamda * gradient;
@@ -300,7 +297,7 @@ void Cloth::updateStretch(int index, vector<shared_ptr<ClothParticle>>& predict)
 		glm::vec3 diff = p1 - p2;
 		float dist = glm::length(diff);
 
-		float seperation_diagonal = glm::length(2 * seperation);
+		float seperation_diagonal = glm::length(2 * m_rest);
 		if (dist > seperation_diagonal && w1 + w2 > 0.0f)
 		{
 			float lamda = (dist - seperation_diagonal) / (w1 + w2);
@@ -381,10 +378,10 @@ void Cloth::updateCollision(vector<shared_ptr<ClothParticle>>& predict)
 						glm::vec3 diff = p1 - p2;
 						float dist = glm::length(p1 - p2);
 
-						if (dist < seperation && w1 + w2 > 0.0f && curr != neighbor)
+						if (dist < m_rest && w1 + w2 > 0.0f && curr != neighbor)
 						{
 							glm::vec3 gradient = diff / (dist + 0.000001f);
-							float lamda = (dist - seperation) / (w1 + w2);
+							float lamda = (dist - m_rest) / (w1 + w2);
 							predict[i]->m_position -= w1 * lamda * gradient;
 							neighbor->m_position   += w2 * lamda * gradient;
 						}

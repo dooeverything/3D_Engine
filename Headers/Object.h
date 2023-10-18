@@ -17,9 +17,9 @@ public:
 	~Object();
 
 	virtual bool isClick(glm::vec3& ray_dir, glm::vec3& ray_pos);
-
-	//virtual inline void isClick(bool click) { m_click = click; };
 	virtual inline void loadShader() { m_shader->processShader(); };
+	virtual inline void resetRayHit() { m_mesh->setRayHitMin(FLT_MAX); };
+
 	virtual inline shared_ptr<Shader> getShader() { return m_shader; };
 	virtual inline shared_ptr<Mesh> getMesh() { return m_mesh; };
 	virtual inline bool getIsClick() { return m_click; };
@@ -37,7 +37,11 @@ public:
 	}
 	virtual inline string getPath() { return m_path; };
 	virtual inline glm::vec3* getProperty(int index) { return &m_property[index]; };
+	
 	virtual void setProperty(int index, glm::vec3 t);
+	virtual void setPosition(glm::vec3 pos);
+	virtual void setRotation(glm::vec3 rot);
+	virtual void setScale(glm::vec3 scale);
 	virtual inline void setIsClick(bool click) { m_click = click; };
 	virtual inline void setName(string& name) { m_name = name; };
 	virtual inline void setId(int id) { m_id = id; };
@@ -47,11 +51,6 @@ public:
 	virtual bool getSimulate() = 0;
 	virtual void update() = 0;
 	virtual void setupFrame(const glm::mat4& P, const glm::mat4& V, CubeMap& cubemap) = 0;
-
-private:
-	virtual void setPosition(glm::vec3 pos);
-	virtual void setRotation(glm::vec3 rot);
-	virtual void setScale(glm::vec3 scale);
 	
 protected:
 	shared_ptr<Mesh> m_mesh;
@@ -85,33 +84,31 @@ private:
 
 class Grid : public Object
 {
-	public:
-		Grid();
-		void draw(const glm::mat4& P, const glm::mat4& V, glm::vec3 cam_pos);
+public:
+	Grid();
+	void draw(const glm::mat4& P, const glm::mat4& V, glm::vec3 cam_pos);
 
-		virtual void draw() { return; };
-		virtual bool getSimulate() { return false; };
-		virtual void update() { return; };
-		virtual void setupFrame(const glm::mat4& P, const glm::mat4& V, CubeMap& cubemap) { return; };
-
+	virtual void draw() { return; };
+	virtual void update() { return; };
+	virtual void setupFrame(const glm::mat4& P, const glm::mat4& V, CubeMap& cubemap) { return; };
+	virtual bool getSimulate() { return false; };
 };
 
 class Gizmo : public Object
 {
 public:
-	Gizmo(GameObject& root, int axis);
+	Gizmo(int axis);
 	~Gizmo();
 
-	void draw(const glm::mat4& P, const glm::mat4& V, glm::mat4& M);
+	void draw(GameObject& go, const glm::mat4& P, const glm::mat4& V, glm::vec3 cam_pos);
+	virtual bool isClick(glm::vec3& ray_dir, glm::vec3& ray_pos);
 
 	virtual void draw() { return; };
 	virtual bool getSimulate() { return false; };
 	virtual void update() { return; };
 	virtual void setupFrame(const glm::mat4& P, const glm::mat4& V, CubeMap& cubemap) { return; };
 
-
 private:
-	GameObject& m_root;
 	int m_axis;
 };
 
@@ -129,15 +126,13 @@ public:
 					Light& light, glm::vec3& view_pos, ShadowMap& shadow, 
 					IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut);
 	virtual void drawInstance(glm::mat4& P, glm::mat4& V);
-	virtual void drawGizmos(const glm::mat4& P, const glm::mat4& V, glm::vec3& view_pos);
 	virtual void loadMesh();
-	virtual bool isGizmoClick(glm::vec3& ray_dir, glm::vec3& ray_pos);
 
-	virtual inline void setColor(glm::vec3 color) { m_color = color; };
-	virtual inline shared_ptr<Gizmo> getGizmo(int index) { return m_gizmos[index]; };
 	virtual inline unsigned int getIrradiance() { return m_irradiance; };
 	virtual inline unsigned int getPrefiler() { return m_prefilter; };
 	virtual inline GLuint getLUT() { return m_lut; };
+
+	virtual inline void setColor(glm::vec3 color) { m_color = color; };
 	virtual inline void setIrradiance(unsigned int irradiance) { m_irradiance = irradiance; };
 	virtual inline void setPrefiler(unsigned int prefilter) { m_prefilter=prefilter; };
 	virtual inline void setLUT(GLuint lut) { m_lut = lut; };
@@ -151,8 +146,6 @@ private:
 	glm::vec3 m_color;
 
 protected:
-	vector<shared_ptr<Gizmo>> m_gizmos;
-
 	unsigned int m_irradiance;
 	unsigned int  m_prefilter;
 	GLuint m_lut;
@@ -175,7 +168,7 @@ private:
 class Point
 {
 public:
-	Point();
+	Point(const vector<info::VertexLayout>& layouts);
 	~Point();
 
 	void drawPoint(const glm::mat4& P, const glm::mat4& V);

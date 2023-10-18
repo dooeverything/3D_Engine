@@ -99,9 +99,6 @@
     <ClInclude Include="Headers\MarchingCube.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Headers\ImGuiPanel.h">
-      <Filter>헤더 파일\ImGui</Filter>
-    </ClInclude>
     <ClInclude Include="Headers\FastNoiseLite.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -117,44 +114,11 @@
     <ClInclude Include="Headers\SPHSystem.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Headers\ImGuiPanel.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Sources\Buffer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Camera.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\FileDialog.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Object.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Light.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\main.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Mesh.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Picker.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Renderer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\SDL_GL_Window.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Shader.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Texture.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui.cpp">
       <Filter>소스 파일\ImGui</Filter>
     </ClCompile>
@@ -176,32 +140,73 @@
     <ClCompile Include="C:\vclib\imgui-docking\imgui_widgets.cpp">
       <Filter>소스 파일\ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Material.cpp">
+    <ClCompile Include="Source\Buffer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Map.cpp">
+    <ClCompile Include="Source\Camera.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Quaternion.cpp">
+    <ClCompile Include="Source\Cloth.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\MarchingCube.cpp">
+    <ClCompile Include="Source\FileDialog.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\ImGuiPanel.cpp">
-      <Filter>소스 파일\ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="Sources\Particle.cpp">
+    <ClCompile Include="Source\Force.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Force.cpp">
+    <ClCompile Include="Source\ImGuiPanel.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\SPHSystem.cpp">
+    <ClCompile Include="Source\Light.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Cloth.cpp">
+    <ClCompile Include="Source\main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Map.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MarchingCube.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Material.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Mesh.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Object.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Particle.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Picker.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Quaternion.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SDL_GL_Window.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Shader.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SPHSystem.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Texture.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Headers\Test.cuh">
+      <Filter>헤더 파일</Filter>
+    </None>
   </ItemGroup>
 </Project>

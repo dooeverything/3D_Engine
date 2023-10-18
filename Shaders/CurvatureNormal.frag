@@ -1,10 +1,12 @@
-#version 330 core
+#version 450 core
 out vec4 frag_color;
 
 in vec2 texCoords;
 
 uniform sampler2D map;
+uniform sampler2D depth_map;
 uniform samplerCube cubemap;
+
 uniform mat4 projection;
 uniform mat4 view;
 uniform vec2 inverse_tex;
@@ -38,6 +40,14 @@ void main()
 {
     vec2 texel = inverse_tex;
     float depth = texture(map, texCoords).r;
+	float depth_other = texture(depth_map, texCoords).r;
+
+	if(depth > depth_other)
+	{
+		frag_color = vec4(1.0);
+		return;
+		// discard;
+	}
 
 	if (depth == 0.0) 
 	{

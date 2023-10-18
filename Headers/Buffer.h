@@ -44,6 +44,11 @@ public:
 	inline unsigned int getSizeOfIndices() { return n_indices; };
 	inline unsigned int getSizeOfInstance() { return unsigned int(m_matrices.size()); };
 
+	inline void setLayouts(vector<info::VertexLayout> layouts)
+	{
+		m_layouts = layouts;
+		n_layouts = layouts.size();
+	}
 	inline void setMatrices(vector<glm::mat4> ms) { m_matrices = ms; };
 };
 
@@ -53,6 +58,10 @@ protected:
 	GLuint m_FBO;
 	GLuint m_RBO;
 	GLuint m_framebuffer_texture;
+
+	int m_width;
+	int m_height;
+
 public:
 
 	FrameBuffer();
@@ -63,6 +72,8 @@ public:
 	virtual void bindFrameTexture();
 
 	virtual GLuint getTextureID() { return m_framebuffer_texture; };
+	virtual int getWidth() { return m_width; };
+	virtual int getHeight() { return m_height; };
 };
 
 class DepthBuffer : public FrameBuffer

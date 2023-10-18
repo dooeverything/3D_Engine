@@ -40,6 +40,7 @@ private:
 	unique_ptr<Grid> m_grid;
 	unique_ptr<FrameBuffer> m_framebuffer;
 
+	unique_ptr<ShadowMap> m_depth_map;
 	unique_ptr<ShadowMap> m_shadow_map;
 	unique_ptr<CubeMap> m_cubemap;
 	unique_ptr<IrradianceMap> m_irradiancemap;
@@ -49,9 +50,11 @@ private:
 	
 	unique_ptr<Outline> m_outline;
 	shared_ptr<GameObject> m_click_object;
+	shared_ptr<SPHSystem> m_sph;
 
 	vector<SDL_Event> m_frame_events;
 	vector<shared_ptr<GameObject>> m_scene_objects;
+	vector<shared_ptr<Gizmo>> m_gizmos;
 	vector<shared_ptr<Light>> m_lights;
 	vector<shared_ptr<ImGuiPanel>> m_panels;
 	

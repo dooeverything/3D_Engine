@@ -65,6 +65,8 @@ public:
 	inline float getLastFrame() { return m_last_frame; };
 	inline float getWidth() { return m_width; };
 	inline float getHeight() { return m_height; };
+	inline float getSceneWidth() { return m_scene_width; };
+	inline float getSceneHeight() { return m_scene_height; };
 
 	inline int getMouseX() { return m_mouse_x; };
 	inline int getMouseY() { return m_mouse_y; };

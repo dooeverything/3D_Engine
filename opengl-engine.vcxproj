@@ -117,10 +117,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)Headers;$(ProjectDir)Source;C:\vclib;C:\vclib\imgui-docking;C:\vclib\glew-2.1.0\include;C:\vclib\SDL2-2.0.22\include;C:\vclib\assimp\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.7\include;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -180,27 +182,30 @@
     <ClCompile Include="C:\vclib\imgui-docking\imgui_impl_sdl2.cpp" />
     <ClCompile Include="C:\vclib\imgui-docking\imgui_tables.cpp" />
     <ClCompile Include="C:\vclib\imgui-docking\imgui_widgets.cpp" />
-    <ClCompile Include="Sources\Buffer.cpp" />
-    <ClCompile Include="Sources\Camera.cpp" />
-    <ClCompile Include="Sources\Cloth.cpp" />
-    <ClCompile Include="Sources\FileDialog.cpp" />
-    <ClCompile Include="Sources\Force.cpp" />
-    <ClCompile Include="Sources\Map.cpp" />
-    <ClCompile Include="Sources\MarchingCube.cpp" />
-    <ClCompile Include="Sources\Material.cpp" />
-    <ClCompile Include="Sources\Object.cpp" />
-    <ClCompile Include="Sources\ImGuiPanel.cpp" />
-    <ClCompile Include="Sources\Light.cpp" />
-    <ClCompile Include="Sources\main.cpp" />
-    <ClCompile Include="Sources\Mesh.cpp" />
-    <ClCompile Include="Sources\Particle.cpp" />
-    <ClCompile Include="Sources\Picker.cpp" />
-    <ClCompile Include="Sources\Quaternion.cpp" />
-    <ClCompile Include="Sources\Renderer.cpp" />
-    <ClCompile Include="Sources\SDL_GL_Window.cpp" />
-    <ClCompile Include="Sources\Shader.cpp" />
-    <ClCompile Include="Sources\SPHSystem.cpp" />
-    <ClCompile Include="Sources\Texture.cpp" />
+    <ClCompile Include="Source\Buffer.cpp" />
+    <ClCompile Include="Source\Camera.cpp" />
+    <ClCompile Include="Source\Cloth.cpp" />
+    <ClCompile Include="Source\FileDialog.cpp" />
+    <ClCompile Include="Source\Force.cpp" />
+    <ClCompile Include="Source\ImGuiPanel.cpp" />
+    <ClCompile Include="Source\Light.cpp" />
+    <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Source\Map.cpp" />
+    <ClCompile Include="Source\MarchingCube.cpp" />
+    <ClCompile Include="Source\Material.cpp" />
+    <ClCompile Include="Source\Mesh.cpp" />
+    <ClCompile Include="Source\Object.cpp" />
+    <ClCompile Include="Source\Particle.cpp" />
+    <ClCompile Include="Source\Picker.cpp" />
+    <ClCompile Include="Source\Quaternion.cpp" />
+    <ClCompile Include="Source\Renderer.cpp" />
+    <ClCompile Include="Source\SDL_GL_Window.cpp" />
+    <ClCompile Include="Source\Shader.cpp" />
+    <ClCompile Include="Source\SPHSystem.cpp" />
+    <ClCompile Include="Source\Texture.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Headers\Test.cuh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

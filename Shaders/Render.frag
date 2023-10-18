@@ -1,4 +1,4 @@
-#version 460 core
+#version 450 core
 out vec4 frag_color;
 
 in vec2 texCoords;
@@ -10,10 +10,12 @@ void main()
 
     if(color == vec3(1.0))
     {
-        frag_color = vec4(0.0);
+        discard;
+        // frag_color = vec4(0.0);
     }
     else
     {
         frag_color = vec4(color, 1.0);
+        // gl_FragDepth = -0.5;
     }
 }

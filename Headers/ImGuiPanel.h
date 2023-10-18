@@ -10,6 +10,7 @@
 #include "Buffer.h"
 #include "FileDialog.h"
 #include "SPHSystem.h"
+#include "Cloth.h"
 
 class ImGuiPanel
 {

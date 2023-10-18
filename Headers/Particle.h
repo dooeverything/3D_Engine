@@ -33,6 +33,7 @@ public:
 	
 	float m_density;
 	float m_pressure;
+	float m_weight;
 };
 
 class ClothParticle : public Particle
