@@ -42,8 +42,8 @@ I am making this engine just for learning computer graphics using OpenGL and C++
 - [ ] Environment mapping
 - [ ] enhanced fbx loader
 - [ ] Bump mapping
-- [X] Marching Cube
-- [X] Terrain
+- [X] ~~Marching Cube~~
+- [X] ~~Terrain~~
 - [ ] 3D gizmos for rotation and scale
-- [x] Optimize SPH Simulation (multi-thread)
+- [x] ~~Optimize SPH Simulation (multi-thread)~~
 - [ ] Cloth - Object Collision
