@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CudaCompile Include="src\SPHSolverKernel.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="include\SPHSolverKernel.cuh" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{c0ca66ed-69c5-4837-91ef-fb8e7fe1804d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{9f418d8f-3121-4cd4-a649-7f5394dffa61}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Buffer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Camera.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Cloth.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FileDialog.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Force.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ImGuiPanel.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Light.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Map.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MarchingCube.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Material.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mesh.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Object.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Particle.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Picker.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Quaternion.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SDL_GL_Window.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Shader.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SPHSystem.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SPHSystemCuda.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Texture.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Buffer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Camera.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Cloth.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FastNoiseLite.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FileDialog.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Force.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ImGuiPanel.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\kernel.cuh">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Light.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Map.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MarchingCube.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Material.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mesh.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Object.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Particle.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Picker.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Quaternion.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SDL_GL_Window.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Shader.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SPHSystem.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SPHSystemCuda.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Texture.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utils.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
