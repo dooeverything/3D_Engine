@@ -20,7 +20,7 @@ ShadowMap::ShadowMap(int width, int height) :
 	m_perspective(false)
 {
 	cout << "Depth map with " << m_width << ", " << m_height << endl;
-	vector<string> shader_path = { "Shaders/ShadowMap.vert", "Shaders/ShadowMap.frag" };
+	vector<string> shader_path = { "assets/shaders/ShadowMap.vert", "assets/shaders/ShadowMap.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	m_shader->processShader();
 
@@ -45,7 +45,7 @@ ShadowMap::ShadowMap(int width, int height, glm::vec3 position, bool perspective
 	m_view = glm::lookAt(position, glm::vec3(0.0f), glm::vec3(0.0, -1.0, 0.0));
 
 	m_light_position = position;
-	vector<string> shader_path = { "Shaders/ShadowMap.vert", "Shaders/ShadowMap.frag" };
+	vector<string> shader_path = { "assets/shaders/ShadowMap.vert", "assets/shaders/ShadowMap.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	m_shader->processShader();
 
@@ -102,17 +102,17 @@ CubeMap::CubeMap(int width, int height) :
 	m_cubemap_buffer = make_shared<CubemapBuffer>();
 	m_cubemap_buffer->createBuffers(m_width, m_height, false);
 
-	vector<string> shader_path = { "Shaders/Cubemap.vert", "Shaders/Cubemap.frag" };
+	vector<string> shader_path = { "assets/shaders/Cubemap.vert", "assets/shaders/Cubemap.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	m_shader->processShader();
 
-	m_mesh = make_shared<Mesh>(m_name, "Models/Cube.txt");
+	m_mesh = make_shared<Mesh>(m_name, "assets/models/Cube.txt");
 	m_mesh->processMesh();
 
-	m_hdr_texture = make_shared<Texture>("Textures/sky.hdr");
+	m_hdr_texture = make_shared<Texture>("assets/textures/sky.hdr");
 	m_hdr_texture->loadTexture();
 
-	vector<string> shader_background_path = { "Shaders/Background.vert", "Shaders/Background.frag" };
+	vector<string> shader_background_path = { "assets/shaders/Background.vert", "assets/shaders/Background.frag" };
 	m_shader_background = make_unique<Shader>(shader_background_path);
 	m_shader_background->processShader();
 
@@ -174,14 +174,14 @@ IrradianceMap::IrradianceMap(int width, int height) :
 	m_irradiance_buffer = make_shared<CubemapBuffer>();
 	m_irradiance_buffer->createBuffers(m_width, m_height, false);
 
-	vector<string> shader_path = { "Shaders/Cubemap.vert", "Shaders/Irradiancemap.frag" };
+	vector<string> shader_path = { "assets/shaders/Cubemap.vert", "assets/shaders/Irradiancemap.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	m_shader->processShader();
 
-	m_mesh = make_shared<Mesh>(m_name, "Models/Cube.txt");
+	m_mesh = make_shared<Mesh>(m_name, "assets/models/Cube.txt");
 	m_mesh->processMesh();
 
-	vector<string> shader_background_path = { "Shaders/Background.vert", "Shaders/Background.frag" };
+	vector<string> shader_background_path = { "assets/shaders/Background.vert", "assets/shaders/Background.frag" };
 	m_shader_background = make_unique<Shader>(shader_background_path);
 	m_shader_background->processShader();
 
@@ -246,11 +246,11 @@ PrefilterMap::PrefilterMap(int width, int height) :
 	m_prefilter_buffer = make_shared<CubemapBuffer>();
 	m_prefilter_buffer->createBuffers(m_width, m_height, true);
 
-	vector<string> shader_path = { "Shaders/Cubemap.vert", "Shaders/PrefilterMap.frag" };
+	vector<string> shader_path = { "assets/shaders/Cubemap.vert", "assets/shaders/PrefilterMap.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	m_shader->processShader();
 
-	m_mesh = make_shared<Mesh>(m_name, "Models/Cube.txt");
+	m_mesh = make_shared<Mesh>(m_name, "assets/models/Cube.txt");
 	m_mesh->processMesh();
 
 	cout << "Prefilter map constructor successfully loaded" << endl;
@@ -310,11 +310,11 @@ LUTMap::LUTMap(int width, int height) : Map(width, height, "LUTMap")
 	m_fb = make_shared<FrameBuffer>();
 	m_fb->createBuffers(width, height);
 
-	vector<string> shader_path = { "Shaders/LUTMap.vert", "Shaders/LUTMap.frag" };
+	vector<string> shader_path = { "assets/shaders/LUTMap.vert", "assets/shaders/LUTMap.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	m_shader->processShader();
 
-	m_mesh = make_shared<Mesh>(m_name, "Models/Plane.txt");
+	m_mesh = make_shared<Mesh>(m_name, "assets/models/Plane.txt");
 	m_mesh->processMesh();
 
 	cout << "LUT map constructor successfully loaded" << endl;
@@ -343,7 +343,7 @@ EnvironmentMap::EnvironmentMap(glm::vec3 position)
 	m_cubemap_buffer = make_shared<CubemapBuffer>();
 	m_cubemap_buffer->createBuffers(WIDTH, HEIGHT, false);
 
-	vector<string> shader_path = { "Shaders/Environmentmap.vert", "Shaders/Environmentmap.frag", "Shaders/Environmentmap.geom" };
+	vector<string> shader_path = { "assets/shaders/Environmentmap.vert", "assets/shaders/Environmentmap.frag", "assets/shaders/Environmentmap.geom" };
 	m_shader = make_shared<Shader>(shader_path);
 	m_shader->processShader();
 	cout << "Environment map constructor successfully loaded" << endl;

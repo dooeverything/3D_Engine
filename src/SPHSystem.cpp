@@ -16,15 +16,15 @@ SPHSystem::SPHSystem(float width, float height, float depth)
 	m_fb_height = 800;
 
 	MASS = 0.02f;
-	K = 3.0f;
-	rDENSITY = 150.0f;
+	K = 1.5f;
+	rDENSITY = 500.0f;
 	VISC = 0.50f;
 	WALL = -0.5f;
 	SCALE = 1.0f;
 
 	t = 0.0085f;
-	render_type = 1;
-	iteration = 1;
+	render_type = 0;
+	iteration = 10;
 
 	int num_particles = int(m_grid_width * m_grid_height * m_grid_depth);
 	m_hash_table.reserve(TABLE_SIZE);
@@ -84,18 +84,18 @@ void SPHSystem::setupFB()
 
 void SPHSystem::setupShader()
 {
-	vector<string> depth_shader = { "Shaders/Point.vert", "Shaders/Point.frag" };
+	vector<string> depth_shader = { "assets/shaders/Point.vert", "assets/shaders/Point.frag" };
 	m_shader_depth = make_unique<Shader>(depth_shader);
 	m_shader_depth->processShader();
 
-	vector<string> blur_shader = { "Shaders/Debug.vert", "Shaders/Smooth.frag" };
-	m_screen = make_unique<GameObject>("Models/Debug.txt", blur_shader);
+	vector<string> blur_shader = { "assets/shaders/Debug.vert", "assets/shaders/Smooth.frag" };
+	m_screen = make_unique<GameObject>("assets/models/Debug.txt", blur_shader);
 
-	vector<string> curvature_shader = { "Shaders/Debug.vert", "Shaders/CurvatureFlow.frag" };
+	vector<string> curvature_shader = { "assets/shaders/Debug.vert", "assets/shaders/CurvatureFlow.frag" };
 	m_shader_curvature = make_unique<Shader>(curvature_shader);
 	m_shader_curvature->processShader();
 
-	vector<string> curvature_normal_shader = { "Shaders/Debug.vert", "Shaders/CurvatureNormal.frag" };
+	vector<string> curvature_normal_shader = { "assets/shaders/Debug.vert", "assets/shaders/CurvatureNormal.frag" };
 	m_shader_curvature_normal = make_unique<Shader>(curvature_normal_shader);
 	m_shader_curvature_normal->processShader();
 
@@ -103,7 +103,7 @@ void SPHSystem::setupShader()
 	//m_shader_normal = make_unique<Shader>(normal_shader);
 	//m_shader_normal->processShader();
 
-	vector<string> render_shader = { "Shaders/Debug.vert", "Shaders/Render.frag" };
+	vector<string> render_shader = { "assets/shaders/Debug.vert", "assets/shaders/Render.frag" };
 	m_shader_render = make_unique<Shader>(render_shader);
 	m_shader_render->processShader();
 }
@@ -207,21 +207,6 @@ void SPHSystem::update()
 		p->m_velocity += t * (p->m_force / p->m_density + p->m_gravity);
 		p->m_position += t * p->m_velocity;
 		
-
-		//if (i == 10)
-		//{
-		//	//printf("At %d ", i);
-
-		//	printf("Pos : (%.3f, %.3f, %.3f)  Density : %.3f  Force : (%.3f, %.3f, %.3f) \n",
-		//		p->m_position.x, p->m_position.y, p->m_position.z,
-		//		p->m_density,
-		//		p->m_force.x, p->m_force.y, p->m_force.z);
-
-		//	printf("Box : (%.3f, %.3f, %.3f)", b.x, b.y, b.z);
-
-		//	printf("\n");
-		//}
-
 		if (p->m_position.x  > -H + b.x)
 		{
 			p->m_velocity.x *= WALL;
@@ -259,6 +244,7 @@ void SPHSystem::update()
 	buildHash();
 	//updateVertex();
 	
+	// Update positions in a vertex buffer
 	vector<info::VertexLayout> layouts = m_point->getMesh().getBuffer().getLayouts();
 	for (int i = 0; i < m_particles.size(); ++i)
 	{
@@ -273,7 +259,6 @@ void SPHSystem::updateDensPress()
 {
 	for (int i = 0; i < m_particles.size(); ++i)
 	{
-		int count = 0;
 		float sum = 0.0f;
 		FluidParticle* p1 = m_particles[i].get();
 		glm::ivec3 grid_pos = snapToGrid(p1->m_position);
@@ -290,29 +275,10 @@ void SPHSystem::updateDensPress()
 
 					while (p2)
 					{
-						const float r = glm::length(p2->m_position - p1->m_position);
-						const float r2 = r * r;
+						const float r2 = glm::length2(p2->m_position - p1->m_position);
 						if (r2 < H2 && p1 != p2)
 						{
-							++count;
-
-							//if (i == 10)
-							//{
-							//	printf("At %d sum : %f \n", i, sum);
-							//}
-
-							float a = pow(H2 - r2, 3);
-							sum += float(MASS * POLY6 * a);
-							//if (i == 10)
-							//{
-							//	//printf("At %d, count : %d /  %f = %f * %f * %.10f \n",
-							//	//		i, count, 
-							//	//		sum, MASS, POLY6, a);
-
-							//	printf("{%.3f %.3f %.3f} - {%.3f %.3f %.3f} \n",
-							//			p1->m_position.x, p1->m_position.y, p1->m_position.z, 
-							//			p2->m_position.x, p2->m_position.y, p2->m_position.z);
-							//}
+							sum += float(MASS * POLY6 * pow(H2 - r2, 3));
 						}
 						p2 = p2->m_next;
 					}
@@ -320,11 +286,8 @@ void SPHSystem::updateDensPress()
 			}
 		}
 
-		//if (i == 100) cout << "Count : " << count << endl;
-
 		p1->m_density = float(MASS * POLY6 * pow(H, 6)) + sum;
 		p1->m_pressure = K * (p1->m_density - rDENSITY);
-		p1->m_weight = p1->m_density;
 	}
 }
 
@@ -332,7 +295,6 @@ void SPHSystem::updateForces()
 {
 	for (int i = 0; i < m_particles.size(); ++i)
 	{
-		float sum = 0.0f;
 		FluidParticle* p1 = m_particles[i].get();
 		glm::ivec3 grid_pos = snapToGrid(p1->m_position);
 		p1->m_force = glm::vec3(0);
@@ -356,8 +318,7 @@ void SPHSystem::updateForces()
 							
 							// Calculate Pressrue force
 							float W = SPICKY * pow(H - r, 2);
-							float temp = MASS * (p1->m_pressure + p2->m_pressure) / (2 * p1->m_density);
-							glm::vec3 a = -p_dir * temp;
+							glm::vec3 a = -p_dir * MASS * (p1->m_pressure + p2->m_pressure) / (2 * p1->m_density);
 							glm::vec3 f1 = a * W ;
 
 							// Calculate Viscousity force
@@ -367,24 +328,6 @@ void SPHSystem::updateForces()
 							glm::vec3 f2 = b * W2;
 
 							p1->m_force += f1 + f2;
-
-							//if (i == 10)
-							//{
-							//	printf("At %d ", i);
-							//	
-							//	printf("p_dir = (%f, %f, %f) = (%f, %f, %f) - (%f, %f, %f) \n",
-							//			p_dir.x, p_dir.y, p_dir.z,
-							//			p1->m_position.x, p1->m_position.y, p1->m_position.z,
-							//			p2->m_position.x, p2->m_position.y, p2->m_position.z);
-
-							//	printf("%f = %f * (%f - %f) / (2 * %f) \n",
-							//			temp, MASS, p1->m_pressure, p2->m_pressure, p1->m_density);
-
-							//	printf("Force : (%f, %f, %f) = (%f, %f, %f) + (%f, %f, %f) \n",
-							//			p1->m_force.x, p1->m_force.y, p1->m_force.z,
-							//			f1.x, f1.y, f1.z,
-							//			f2.x, f2.y, f2.z);
-							//}
 						}
 						p2 = p2->m_next;
 					}
@@ -572,6 +515,7 @@ void SPHSystem::getNormal(const glm::mat4& P, const glm::mat4& V, ShadowMap& dep
 	}
 	m_fb_normal->unbind();
 }
+
 void SPHSystem::draw()
 {
 	m_shader_render->load();
@@ -601,184 +545,4 @@ void SPHSystem::reset()
 
 	initParticles();
 	buildHash();
-}
-
-
-/*****************Marching Cube Rendering*****************/
-
-glm::vec3 SPHSystem::interpolate(glm::vec3 grid1, glm::vec3 grid2,
-	float gridValue1, float gridValue2, float threshold)
-{
-	float newX;
-	float newY;
-	float newZ;
-	float t = (threshold - gridValue1) / (gridValue2 - gridValue1);;
-
-	newX = grid1.x + t * (grid2.x - grid1.x);
-	newY = grid1.y + t * (grid2.y - grid1.y);
-	newZ = grid1.z + t * (grid2.z - grid1.z);
-
-	return { newX, newY, newZ };
-}
-
-float SPHSystem::getGridValue(int index)
-{
-	FluidParticle* p = m_hash_table[index];
-	if (p != nullptr)
-	{
-		return p->m_weight;
-	}
-
-	return 0.0f;
-}
-
-void SPHSystem::polygonize(vector<glm::ivec3> grids, vector<float> values)
-{
-	vector<glm::vec3> vertices(12, glm::vec3(0.0f));
-	int index = 0;
-
-	float t = 31.0f;
-	
-	//cout << values[0] << endl;
-
-	if (values[0] >= t) index |= 1;
-	if (values[1] >= t) index |= 2;
-	if (values[2] >= t) index |= 4;
-	if (values[3] >= t) index |= 8;
-	if (values[4] >= t) index |= 16;
-	if (values[5] >= t) index |= 32;
-	if (values[6] >= t) index |= 64;
-	if (values[7] >= t) index |= 128;
-
-	if (table::edgeTable[index] == 0) return;
-
-	if (table::edgeTable[index] & 1)
-		vertices.at(0) = interpolate(grids[0], grids[1], values[0], values[1], t);
-	if (table::edgeTable[index] & 2)
-		vertices.at(1) = interpolate(grids[1], grids[2], values[1], values[2], t);
-	if (table::edgeTable[index] & 4)
-		vertices.at(2) = interpolate(grids[2], grids[3], values[2], values[3], t);
-	if (table::edgeTable[index] & 8)
-		vertices.at(3) = interpolate(grids[3], grids[0], values[3], values[0], t);
-	if (table::edgeTable[index] & 16)
-		vertices.at(4) = interpolate(grids[4], grids[5], values[4], values[5], t);
-	if (table::edgeTable[index] & 32)
-		vertices.at(5) = interpolate(grids[5], grids[6], values[5], values[6], t);
-	if (table::edgeTable[index] & 64)
-		vertices.at(6) = interpolate(grids[6], grids[7], values[6], values[7], t);
-	if (table::edgeTable[index] & 128)
-		vertices.at(7) = interpolate(grids[7], grids[4], values[7], values[4], t);
-	if (table::edgeTable[index] & 256)
-		vertices.at(8) = interpolate(grids[0], grids[4], values[0], values[4], t);
-	if (table::edgeTable[index] & 512)
-		vertices.at(9) = interpolate(grids[1], grids[5], values[1], values[5], t);
-	if (table::edgeTable[index] & 1024)
-		vertices.at(10) = interpolate(grids[2], grids[6], values[2], values[6], t);
-	if (table::edgeTable[index] & 2048)
-		vertices.at(11) = interpolate(grids[3], grids[7], values[3], values[7], t);
-
-	// Create triangles with vertices on edges
-	for (int i = 0; table::triTable[index][i] != -1; i += 3)
-	{
-		glm::vec3 a = vertices[table::triTable[index][i]];
-		glm::vec3 b = vertices[table::triTable[index][i + 1]];
-		glm::vec3 c = vertices[table::triTable[index][i + 2]];
-
-		glm::vec3 ab = b - a;
-		glm::vec3 ac = c - a;
-		glm::vec3 n1 = -glm::normalize(glm::cross(ab, ac));
-
-		glm::vec3 ba = a - b;
-		glm::vec3 bc = c - b;
-		glm::vec3 n2 = -glm::normalize(glm::cross(ba, bc));
-
-		glm::vec3 ca = a - c;
-		glm::vec3 cb = b - c;
-		glm::vec3 n3 = -glm::normalize(glm::cross(ca, cb));
-
-		glm::vec3 n = (n1 + n2 + n3) / 3.0f;
-
-		m_vertices.push_back(a);
-		m_vertices.push_back(c);
-		m_vertices.push_back(b);
-
-		m_trimeshes.emplace_back(make_shared<TriMesh>(a, b, c));
-
-		m_normals.push_back(n1);
-		m_normals.push_back(n1);
-		m_normals.push_back(n1);
-	}
-}
-
-void SPHSystem::createVertex()
-{
-	vector<glm::ivec3> grid_points;
-	vector<float> grid_values;
-	
-	for (int i = 0; i < m_particles.size(); ++i)
-	{
-		FluidParticle* p1 = m_particles[i].get();
-		glm::ivec3 grid_pos = snapToGrid(p1->m_position);
-		
-		float x = grid_pos.x;
-		float y = grid_pos.y;
-		float z = grid_pos.z;
-
-		grid_points.push_back({ x, y, z });
-		int index = getHashIndex(grid_points.back());
-		grid_values.push_back(getGridValue(index));
-
-		grid_points.push_back({ x + 1, y, z });
-		index = getHashIndex(grid_points.back());
-		grid_values.push_back(getGridValue(index));
-
-		grid_points.push_back({ x + 1, y, z + 1 });
-		index = getHashIndex(grid_points.back());
-		grid_values.push_back(getGridValue(index));
-
-		grid_points.push_back({ x, y, z + 1 });
-		index = getHashIndex(grid_points.back());
-		grid_values.push_back(getGridValue(index));
-
-		grid_points.push_back({ x, y + 1, z });
-		index = getHashIndex(grid_points.back());
-		grid_values.push_back(getGridValue(index));
-
-		grid_points.push_back({ x + 1, y + 1, z });
-		index = getHashIndex(grid_points.back());
-		grid_values.push_back(getGridValue(index));
-
-		grid_points.push_back({ x + 1, y + 1, z + 1 });
-		index = getHashIndex(grid_points.back());
-		grid_values.push_back(getGridValue(index));
-
-		grid_points.push_back({ x, y + 1, z + 1 });
-		index = getHashIndex(grid_points.back());
-		grid_values.push_back(getGridValue(index));
-
-		polygonize(grid_points, grid_values);
-
-		grid_points.clear();
-		grid_values.clear();
-	}
-
-	vector<info::VertexLayout> layouts;
-	for (int i = 0; i < m_vertices.size(); ++i)
-	{
-		info::VertexLayout layout;
-		layout.position = m_vertices[i] * H;
-		layout.normal = m_normals[i];
-		layouts.push_back(layout);
-	}
-
-	m_mesh = make_shared<Mesh>(m_name, layouts);
-	//cout << "Number of Vertices : " << m_mesh->getBuffer().getLayouts().size() << endl;
-}
-
-void SPHSystem::updateVertex()
-{
-	m_vertices.clear();
-	m_normals.clear();
-	m_trimeshes.clear();
-	createVertex();
 }

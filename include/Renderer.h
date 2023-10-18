@@ -12,6 +12,7 @@
 #include "Light.h"
 #include "ImGuiPanel.h"
 #include "SPHSystem.h"
+#include "SPHSystemCuda.h"
 #include "Cloth.h"
 
 using namespace std;
@@ -50,7 +51,7 @@ private:
 	
 	unique_ptr<Outline> m_outline;
 	shared_ptr<GameObject> m_click_object;
-	shared_ptr<SPHSystem> m_sph;
+	shared_ptr<SPHSystemCuda> m_sph;
 
 	vector<SDL_Event> m_frame_events;
 	vector<shared_ptr<GameObject>> m_scene_objects;

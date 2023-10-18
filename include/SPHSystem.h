@@ -1,6 +1,9 @@
 #pragma once
+#include <unordered_map>
 
-#include "MarchingCube.h"
+#include "Particle.h"
+#include "Object.h"
+#include "Camera.h"
 
 const int TABLE_SIZE = 100000;
 
@@ -62,8 +65,8 @@ public:
 private:
     vector<shared_ptr<FluidParticle>> m_particles;
     unordered_map<uint, FluidParticle*> m_hash_table;
+    
     unique_ptr<Point> m_point;
-    unique_ptr<Sphere> m_sphere;
 
     unique_ptr<GameObject> m_screen;
 
@@ -97,14 +100,4 @@ private:
     void getCurvature(const glm::mat4& P, const glm::mat4& V);
     void getNormal(const glm::mat4& P, const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap);
     void blurDepth();
-
-    vector<glm::vec3> m_vertices;
-    vector<glm::vec3> m_normals;
-    vector<shared_ptr<TriMesh>> m_trimeshes;
-
-    glm::vec3 interpolate(glm::vec3, glm::vec3, float, float, float);
-    float getGridValue(int index);
-    void polygonize(vector<glm::ivec3>, vector<float> gridValues);
-    void createVertex();
-    void updateVertex();
 };

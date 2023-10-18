@@ -11,7 +11,7 @@ Cloth::Cloth()
 	n_sub_steps = 3;
 	t_sub = t / n_sub_steps;
 
-	string mesh_path = "Models/Cloth.fbx";
+	string mesh_path = "assets/models/Cloth.fbx";
 	m_mesh = make_shared<FBXMesh>(mesh_path);
 	m_property[2] = glm::vec3(m_scale);
 	glm::mat4 t = glm::mat4(1.0f);
@@ -19,7 +19,7 @@ Cloth::Cloth()
 	m_mesh->setScale(t);
 	m_mesh->processMesh();
 	
-	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
+	vector<string> shader_path = { "assets/shaders/BRDF.vert", "assets/shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	m_shader->processShader();
 	
@@ -61,7 +61,7 @@ void Cloth::initParticles()
 	cout << "********************************end*********************************" << endl;
 	cout << endl;
 
-	m_hash.reserve(HASH_SIZE);
+	m_hash.reserve(info::HASH_SIZE);
 
 	for (int i = 0; i < temp.size(); ++i)
 	{
@@ -123,7 +123,7 @@ uint Cloth::getHashIndex(glm::ivec3& pos)
 {
 	return ((uint)(pos.x * 73856093) ^
 			(uint)(pos.y * 19349663) ^
-			(uint)(pos.z * 83492791)) % HASH_SIZE;
+			(uint)(pos.z * 83492791)) % info::HASH_SIZE;
 }
 
 void Cloth::update()

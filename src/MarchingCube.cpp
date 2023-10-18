@@ -214,7 +214,7 @@ Metaball::Metaball(float size) : MarchingCube(size)
 
 	createVertex();
 
-	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
+	vector<string> shader_path = { "assets/shaders/BRDF.vert", "assets/shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	m_shader->processShader();
 
@@ -307,7 +307,7 @@ Terrain::Terrain(float size) : MarchingCube(size)
 	createWeights();
 	createVertex();
 
-	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
+	vector<string> shader_path = { "assets/shaders/BRDF.vert", "assets/shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	loadShader();
 

@@ -8,7 +8,6 @@
 #include "Particle.h"
 
 using namespace std;
-const int HASH_SIZE = 100000;
 
 class Cloth : public GameObject
 {

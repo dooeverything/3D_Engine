@@ -9,7 +9,7 @@
 #include "Shader.h"
 #include "Buffer.h"
 #include "FileDialog.h"
-#include "SPHSystem.h"
+#include "SPHSystemCuda.h"
 #include "Cloth.h"
 
 class ImGuiPanel

@@ -13,6 +13,8 @@ using namespace std;
 
 namespace info
 {
+    const int HASH_SIZE = 100000;
+
 	struct VertexLayout
 	{
 		glm::vec3 position = { 0.0f, 0.0f, 0.0f };
@@ -20,6 +22,29 @@ namespace info
 		glm::vec3 tangent = { 0.0f, 0.0f, 0.0f };
 		glm::vec2 texCoord = { 0.0f, 0.0f };
 	};
+
+    struct SPHParams
+    {
+        glm::vec3 box;
+        
+        float grid_cell;
+        float H;
+        float H2;
+        float POLY6;
+        float SPICKY;
+        float SPICKY2;
+
+        float MASS;
+        float K;
+        float rDENSITY;
+        float VISC;
+        float WALL;
+        float SCALE;
+
+        float t;
+
+        int max_num_neighbors;
+    };
 }
 
 namespace table

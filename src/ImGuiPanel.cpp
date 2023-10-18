@@ -59,17 +59,17 @@ void ImGuiMenuBar::render(vector<shared_ptr<GameObject>>& scene_objects, shared_
 			ImGui::SeparatorText("Primitives");
 			if (ImGui::MenuItem("Cube"))
 			{
-				shared_ptr<GameObject> object = make_shared<GameObject>("Models/Cube.txt");
+				shared_ptr<GameObject> object = make_shared<GameObject>("assets/models/Cube.txt");
 				addObject(scene_objects, object);
 			}
 			if (ImGui::MenuItem("Plane"))
 			{
-				shared_ptr<GameObject> object = make_shared<GameObject>("Models/Plane.txt");
+				shared_ptr<GameObject> object = make_shared<GameObject>("assets/models/Plane.txt");
 				addObject(scene_objects, object);
 			}
 			if (ImGui::MenuItem("Floor"))
 			{
-				shared_ptr<GameObject> object = make_shared<GameObject>("Models/Floor.txt");
+				shared_ptr<GameObject> object = make_shared<GameObject>("assets/models/Floor.txt");
 				addObject(scene_objects, object);
 			}
 			if (ImGui::MenuItem("Sphere"))
@@ -83,17 +83,19 @@ void ImGuiMenuBar::render(vector<shared_ptr<GameObject>>& scene_objects, shared_
 				addObject(scene_objects, metaball);
 			}
 
-			ImGui::SeparatorText("Others");
+			ImGui::SeparatorText("Terrain Generation");
 			if (ImGui::MenuItem("Terrain"))
 			{
 				shared_ptr<GameObject> terrain = make_shared<Terrain>(16.0f);
 				addObject(scene_objects, terrain);
 			}
-			if (ImGui::MenuItem("Fluid"))
-			{
-				shared_ptr<GameObject> sph = make_shared<SPHSystem>(32.0f, 32.0f, 16.0f);
-				addObject(scene_objects, sph);
-			}
+			
+			ImGui::SeparatorText("Simulator");
+			//if (ImGui::MenuItem("Fluid"))
+			//{
+			//	shared_ptr<GameObject> sph = make_shared<SPHSystem>(32.0f, 32.0f, 16.0f);
+			//	addObject(scene_objects, sph);
+			//}
 			if (ImGui::MenuItem("Cloth"))
 			{
 				shared_ptr<GameObject> cloth = make_shared<Cloth>();
@@ -469,7 +471,7 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 
 		if (name == "Fluid")
 		{
-			SPHSystem* sph = dynamic_cast<SPHSystem*>(clicked_object.get());
+			SPHSystemCuda* sph = dynamic_cast<SPHSystemCuda*>(clicked_object.get());
 			bool expand_fluid = ImGui::TreeNode("Fluid");
 			if (expand_fluid)
 			{
@@ -492,33 +494,30 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 				if (clicked_sph & 1)
 				{ 
 					ImGui::TableNextColumn();
-					if (ImGui::Button("Start") && sph->getSimulate() == false)
+					if (ImGui::Button("Start") && sph->m_simulation == false)
 					{
-						sph->setSimulate(true);
+						sph->m_simulation = true;
 						//cout << sph->getSimulate() << endl;
 					}
 					ImGui::SameLine();
-					if (ImGui::Button("Stop") && sph->getSimulate() == true)
+					if (ImGui::Button("Stop") && sph->m_simulation == true)
 					{
-						sph->setSimulate(false);
-						t_simulate = 0.0f;
+						sph->m_simulation = false;
 					}
 
-					ImGui::SameLine();
-					if (ImGui::Button("Reset"))
-					{
-						sph->setSimulate(false);
-						t_simulate = 0.0f;
-						sph->reset();
-					}
-
-
+					//ImGui::SameLine();
+					//if (ImGui::Button("Reset"))
+					//{
+					//	sph->setSimulate(false);
+					//	sph->reset();
+					//}
+					
 					ImGui::Dummy(ImVec2(0.0f, 10.0f));
 
-					ImGui::TableNextColumn();
-					ImGui::Text("Particle Radius");
-					ImGui::TableNextColumn();
-					ImGui::SliderFloat("##SCALE", &sph->SCALE, 0.0f, 10.0f, "%.3f", 0);
+					//ImGui::TableNextColumn();
+					//ImGui::Text("Particle Radius");
+					//ImGui::TableNextColumn();
+					//ImGui::SliderFloat("##SCALE", &sph->SCALE, 0.0f, 10.0f, "%.3f", 0);
 					
 					ImGui::TableNextColumn();
 					ImGui::Text("Speed");
@@ -528,22 +527,22 @@ void PropertyPanel::render(vector<shared_ptr<GameObject>>& scene_objects, shared
 					ImGui::TableNextColumn();
 					ImGui::Text("Gas Constant");
 					ImGui::TableNextColumn();
-					ImGui::SliderFloat("##K", &sph->K, 0.0f, 10.0f, "%.3f", 0);
+					ImGui::SliderFloat("##K", &sph->m_params.K, 0.0f, 10.0f, "%.3f", 0);
 
 					ImGui::TableNextColumn();
 					ImGui::Text("Rest Density");
 					ImGui::TableNextColumn();
-					ImGui::SliderFloat("##rDENSITY", &sph->rDENSITY, 0.0f, 1000.0f, "%.3f", 0);
+					ImGui::SliderFloat("##rDENSITY", &sph->m_params.rDENSITY, 0.0f, 1000.0f, "%.3f", 0);
 
 					ImGui::TableNextColumn();
 					ImGui::Text("Viscousity");
 					ImGui::TableNextColumn();
-					ImGui::SliderFloat("##VISC", &sph->VISC, -1.0f, 10.0f, "%.3f", 0);
+					ImGui::SliderFloat("##VISC", &sph->m_params.VISC, -1.0f, 10.0f, "%.3f", 0);
 
 					ImGui::TableNextColumn();
 					ImGui::Text("Wall Damping");
 					ImGui::TableNextColumn();
-					ImGui::SliderFloat("##WALL", &sph->WALL, -1.0f, 0.0f, "%.3f", 0);
+					ImGui::SliderFloat("##WALL", &sph->m_params.WALL, -1.0f, 0.0f, "%.3f", 0);
 
 					ImGui::TableNextColumn();
 					ImGui::Text("Render Type");

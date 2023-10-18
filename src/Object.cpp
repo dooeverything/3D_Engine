@@ -44,7 +44,7 @@ Object::Object(const string& mesh_path) :
 	m_property.push_back(glm::vec3(0.0f)); // Rotation
 	m_property.push_back(glm::vec3(1.0f)); // Scale
 
-	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
+	vector<string> shader_path = { "assets/shaders/BRDF.vert", "assets/shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 }
 
@@ -159,10 +159,10 @@ Gizmo::Gizmo(int axis) : m_axis(axis)
 {
 	cout << "Gizmo constructor " << axis << endl;
 
-	m_mesh = make_shared<FBXMesh>("Models/Arrow.fbx");
+	m_mesh = make_shared<FBXMesh>("assets/models/Arrow.fbx");
 	m_mesh->processMesh();
 
-	vector<string> shader_paths = {"Shaders/Arrow.vert", "Shaders/Arrow.frag"};
+	vector<string> shader_paths = {"assets/shaders/Arrow.vert", "assets/shaders/Arrow.frag"};
 	m_shader = make_shared<Shader>(shader_paths);
 	m_shader->processShader();
 }
@@ -204,8 +204,8 @@ bool Gizmo::isClick(glm::vec3& ray_dir, glm::vec3& ray_pos)
 Grid::Grid()
 {
 	m_name = "Grid";
-	m_mesh = make_shared<Mesh>(m_name, "Models/Grid.txt");
-	vector<string> shader_path = { "Shaders/Grid.vert", "Shaders/Grid.frag" };
+	m_mesh = make_shared<Mesh>(m_name, "assets/models/Grid.txt");
+	vector<string> shader_path = { "assets/shaders/Grid.vert", "assets/shaders/Grid.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 
 	m_mesh->processMesh();
@@ -406,7 +406,7 @@ Point::Point(const vector<info::VertexLayout>& layouts)
 {
 	m_mesh = make_unique<ParticleMesh>(layouts);
 
-	vector<string> shader_path = { "Shaders/Point.vert", "Shaders/Point.frag" };
+	vector<string> shader_path = { "assets/shaders/Point.vert", "assets/shaders/Point.frag" };
 	m_shader = make_unique<Shader>(shader_path);
 	m_shader->processShader();
 }
@@ -435,7 +435,7 @@ Sphere::Sphere(bool is_create_gizmo, vector<glm::mat4> matrices) :
 	vector<unsigned int> indices = calculateIndex();
 	m_mesh = make_shared<Mesh>(m_name, layouts, indices, matrices);
 
-	vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
+	vector<string> shader_path = { "assets/shaders/BRDF.vert", "assets/shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
 	loadShader();
 }
@@ -522,11 +522,11 @@ vector<unsigned int> Sphere::calculateIndex()
 Outline::Outline(int width, int height)
 {
 	cout << "Create an outline constructor" << endl;
-	vector<string> outline_shader_paths = { "Shaders/Outline.vert", "Shaders/Outline.frag" };
+	vector<string> outline_shader_paths = { "assets/shaders/Outline.vert", "assets/shaders/Outline.frag" };
 	m_outline_shader = make_unique<Shader>(outline_shader_paths);
 	m_outline_shader->processShader();
 
-	vector<string> mask_shader_paths = { "Shaders/Mask.vert", "Shaders/Mask.frag" };
+	vector<string> mask_shader_paths = { "assets/shaders/Mask.vert", "assets/shaders/Mask.frag" };
 	m_mask_shader = make_unique<Shader>(mask_shader_paths);
 	m_mask_shader->processShader();
 
@@ -536,8 +536,8 @@ Outline::Outline(int width, int height)
 		m_outline_buffers.at(i)->createBuffers(width, height);
 	}
 
-	vector<string> debug_shader = { "Shaders/Debug.vert", "Shaders/Debug.frag" };
-	m_debug = make_unique<GameObject>("Models/Debug.txt", debug_shader);
+	vector<string> debug_shader = { "assets/shaders/Debug.vert", "assets/shaders/Debug.frag" };
+	m_debug = make_unique<GameObject>("assets/models/Debug.txt", debug_shader);
 	cout << "Outline finish loading" << endl;
 	cout << endl;
 }

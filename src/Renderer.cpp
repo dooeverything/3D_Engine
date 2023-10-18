@@ -14,6 +14,7 @@ Renderer::~Renderer() {}
 
 void Renderer::init()
 {
+
 	cout << "Initialize Renderer" << endl;
 	m_start_time = SDL_GetTicks64();
 
@@ -50,8 +51,12 @@ void Renderer::init()
 	//shared_ptr<GameObject> cloth = make_shared<Cloth>();
 	//m_scene_objects.push_back(cloth);
 
-	m_sph = make_shared<SPHSystem>(32.0f, 32.0f, 16.0f);
-	m_scene_objects.push_back(m_sph);
+	//m_sph = make_shared<SPHSystem>(32.0f, 32.0f, 32.0f);
+	//m_scene_objects.push_back(m_sph);
+
+	shared_ptr<SPHSystemCuda> test = make_shared<SPHSystemCuda>(64.0f, 64.0f, 32.0f);
+	m_scene_objects.push_back(test);
+	m_sph = test;
 
 	// Setup lights
 	glm::vec3 dir = -light_pos; //{ -0.2f, -1.0f, -0.3f };
@@ -285,8 +290,8 @@ void Renderer::renderImGui()
 	ImGui::NewFrame();
 	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
-	bool demo = true;
-	ImGui::ShowDemoWindow(&demo);
+	//bool demo = true;
+	//ImGui::ShowDemoWindow(&demo);
 
 	for (int i = 0; i < m_scene_objects.size(); ++i)
 	{
@@ -353,7 +358,7 @@ void Renderer::renderImGui()
 
 			if (m_sph != nullptr)
 			{
-				m_sph->setupFrame(V, *m_depth_map, *m_cubemap, *m_camera);
+				m_sph->setupFramebuffer(V, *m_depth_map, *m_cubemap, *m_camera);
 			}
 
 			if (m_click_object != nullptr)
@@ -372,20 +377,20 @@ void Renderer::renderImGui()
 	}
 	ImGui::End();
 
-	ImGui::Begin("Debug");
-	{
-		ImGui::BeginChild("DebugRenderer");
-		{
-			ImVec2 wsize = ImGui::GetWindowSize();
-			if (m_sph != nullptr)
-			{
-				//ImGui::Image((ImTextureID)m_depth_map->getBuffer().getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
-				ImGui::Image((ImTextureID)m_sph->getNormalFB().getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
-			}
-		}
-		ImGui::EndChild();
-	}
-	ImGui::End();
+	//ImGui::Begin("Debug");
+	//{
+	//	ImGui::BeginChild("DebugRenderer");
+	//	{
+	//		ImVec2 wsize = ImGui::GetWindowSize();
+	//		if (m_sph != nullptr)
+	//		{
+	//			//ImGui::Image((ImTextureID)m_depth_map->getBuffer().getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
+	//			ImGui::Image((ImTextureID)m_sph->getNormalFB().getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
+	//		}
+	//	}
+	//	ImGui::EndChild();
+	//}
+	//ImGui::End();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -501,9 +506,9 @@ void Renderer::renderScene()
 
 	if (m_sph != nullptr)
 	{
-		if (m_sph->getSimulate())
+		if (m_sph->m_simulation)
 		{
-			m_sph->update();
+			m_sph->simulate();
 		}
 		m_sph->draw();
 	}
