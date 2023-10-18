@@ -15,12 +15,8 @@ I am making this engine just for learning computer graphics using OpenGL and C++
  9. 3D grid
  10. Marching Cube (Terrain, Metaball)
  11. Terrain Editor (Sculpting and removing)
-<<<<<<< HEAD
- 12. SPH Simulation with Screen Space Rendering ([Bilateral filter](https://developer.nvidia.com/content/fluid-simulation-alice-madness-returns) & [Curvature Flow](https://dl.acm.org/doi/10.1145/1507149.1507164))
- 13. Cloth Simulation
-=======
  12. SPH Simulation with Screen Space Rendering on GPU ([Bilateral filter](https://developer.nvidia.com/content/fluid-simulation-alice-madness-returns) & [Curvature Flow](https://dl.acm.org/doi/10.1145/1507149.1507164))
->>>>>>> master
+ 13. Cloth Simulation
 
 ### Libraries
  1. C++17
