@@ -45,9 +45,5 @@ I am making this engine just for learning computer graphics using OpenGL and C++
 - [X] Marching Cube
 - [X] Terrain
 - [ ] 3D gizmos for rotation and scale
-<<<<<<< HEAD
-- [ ] Optimize SPH Simulation (multi-thread)
+- [x] Optimize SPH Simulation (multi-thread)
 - [ ] Cloth - Object Collision
-=======
-- [ ] Optimize SPH Simulation
->>>>>>> master
