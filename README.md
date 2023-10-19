@@ -1,7 +1,4 @@
-# OpenGL_Engine
-
-### About this project 
-I am making this engine just for learning computer graphics using OpenGL and C++, and it is just a hobby project. This project is mostly inspired by [learnopengl.com](learnopengl.com), which is a perfect tutorial for computer graphics beginners, and later I found some more interesting references to understand and build 3D engine features, such as [Real Time Rendering](https://www.amazon.com/Real-Time-Rendering-Fourth-Tomas-Akenine-M%C3%B6ller/dp/1138627003), [Physically Based Rendering](https://www.amazon.com/Physically-Based-Rendering-Theory-Implementation/dp/0128006455), which helped me to dive deep into mathematical and computational theories behind computer graphics.  
+# 3D Renderer
 
 ### Features include
  1. 3D model loading (.fbx)
@@ -33,8 +30,9 @@ I am making this engine just for learning computer graphics using OpenGL and C++
  5. [Physically Based Rendering, 3rd edition](https://www.amazon.com/Physically-Based-Rendering-Theory-Implementation/dp/0128006455)
 
 ### Mouse Inputs
- 1. With the left mouse button being clicked, press W/A/S/D to move around
- 2. Right mouse button to pick and move the object and to play around with GUI
+ 1. W/A/S/D to move
+ 2. Right mouse click to rotate the camera 
+ 3. Left mouse click for object picking
  
 ### Features to be added
 - [ ] Shadow (Point light)
