@@ -12,7 +12,7 @@
  9. 3D grid
  10. Marching Cube (Terrain, Metaball)
  11. Terrain Editor (Sculpting and removing)
- 12. SPH Simulation with Screen Space Rendering on GPU ([Bilateral filter](https://developer.nvidia.com/content/fluid-simulation-alice-madness-returns) & [Curvature Flow](https://dl.acm.org/doi/10.1145/1507149.1507164))
+ 12. SPH Simulation with Screen Space Rendering on GPU ([Curvature Flow](https://dl.acm.org/doi/10.1145/1507149.1507164))
  13. Cloth Simulation ([Small Steps in Physics Simulation](https://dl.acm.org/doi/10.1145/3309486.3340247), [A Survey on Position Based Dynamics, 2017](https://dl.acm.org/doi/10.2312/egt.20171034))
 
 ### Libraries
