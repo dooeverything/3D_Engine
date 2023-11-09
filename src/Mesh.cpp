@@ -69,8 +69,8 @@ void BoundingBox::draw()
 	glm::mat4 transform = glm::translate(glm::mat4(1), center) * glm::scale(glm::mat4(1), size);
 }
 
-Mesh::Mesh() :
-	m_directory(""), m_name(""), m_buffer(make_unique<VertexBuffer>()),
+Mesh::Mesh(string name) :
+	m_directory(""), m_name(name), m_buffer(make_unique<VertexBuffer>()),
 	m_textures({}), m_material(make_unique<Material>()),
 	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
 	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f)),
@@ -86,47 +86,12 @@ Mesh::Mesh(string name, const string& path) :
 {
 }
 
-Mesh::Mesh(string name, vector<info::VertexLayout> layouts) :
-	m_directory(""), m_name(name), m_buffer(make_unique<VertexBuffer>()),
-	m_textures({}), m_material(make_unique<Material>()),
-	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
-	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f)),
-	t_min(FLT_MAX), t_max(FLT_MIN)
-{
-	//cout << "Create a mesh without indexing: " << name << " with size " << layouts.size() << endl;
-	m_buffer->createBuffers(layouts);
-	computeBoundingBox();
-}
-
-Mesh::Mesh(string name, vector<info::VertexLayout> layouts, vector<unsigned int> indices) :
-	m_directory(""), m_name(name), m_buffer(make_unique<VertexBuffer>()),
-	m_textures({}), m_material(make_unique<Material>()),
-	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
-	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f)),
-	t_min(FLT_MAX), t_max(FLT_MIN)
-{
-	//cout << "Create a mesh: " << name << endl;
-	m_buffer->createBuffers(layouts, indices);
-	computeBoundingBox();
-}
-
-Mesh::Mesh(string name, vector<info::VertexLayout> layouts, 
-			vector<unsigned int> indices , vector<glm::mat4> matrices) :
-	m_directory(""), m_name(name), m_buffer(make_unique<VertexBuffer>()),
-	m_textures({}), m_material(make_unique<Material>()),
-	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
-	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f)),
-	t_min(FLT_MAX), t_max(FLT_MIN)
-{
-	//cout << "Create a mesh: " << name << endl;
-	m_buffer->setMatrices(matrices);
-	m_buffer->createBuffers(layouts, indices);
-	computeBoundingBox();
-}
-
-Mesh::Mesh(string name, shared_ptr<VertexBuffer> buffer, vector<shared_ptr<Texture>> textures, shared_ptr<Material> material) :
-	m_directory(""), m_name(name), 
-	m_buffer(buffer), m_textures(textures), m_material(material), 
+// Call from FBXMesh
+Mesh::Mesh(string name, shared_ptr<VertexBuffer> buffer, 
+		   vector<shared_ptr<Texture>> textures, 
+		   shared_ptr<Material> material) :
+	m_name(name), m_bbox(), 
+	m_textures(textures), m_buffer(buffer), m_material(material),
 	m_transform_pos(glm::mat4(1.0f)), m_transform_rot(glm::mat4(1.0f)),
 	m_transform_scale(glm::mat4(1.0f)), m_center(glm::vec3(0.0f)),
 	t_min(FLT_MAX), t_max(FLT_MIN)
@@ -258,16 +223,11 @@ void Mesh::draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool ter
 
 	glm::mat4 M = m_transform_pos * m_transform_rot * m_transform_scale;
 	shader.setPVM(P, V, M);
-	
-	//cout << "DRAW : " << m_name << endl;
-	//cout << M << endl;
-	//cout << endl;
-
-	shader.setInt("has_texture", 0);
+	shader.setInt("type", 0);
 
 	if (m_material->getTexture() != nullptr)
 	{
-		shader.setInt("has_texture", 1);
+		shader.setInt("type", 1);
 		shader.setInt("texture_map", 4);
 		glActiveTexture(GL_TEXTURE0 + 4);
 		m_material->getTexture()->setActive();
@@ -276,7 +236,7 @@ void Mesh::draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool ter
 	// Set texture before draw a mesh
 	if (m_textures.size() > 0)
 	{
-		shader.setInt("has_texture", 2);
+		shader.setInt("type", 2);
 		for (int i = 0; i < m_textures.size(); ++i)
 		{
 			glActiveTexture(GL_TEXTURE0 + i + 4);
@@ -317,26 +277,6 @@ bool Mesh::intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
 	return m_bbox->intersect(ray_dir, ray_pos, t_min, t_max);
 }
 
-void Mesh::updateBuffer(const vector<info::VertexLayout>& layouts)
-{
-	m_buffer->updateBuffer(layouts);
-}
-
-void Mesh::setPosition(glm::mat4 t)
-{
-	m_transform_pos = t;
-}
-
-void Mesh::setRotation(glm::mat4 t)
-{
-	m_transform_rot = t;
-}
-
-void Mesh::setScale(glm::mat4 t)
-{
-	m_transform_scale = t;
-}
-
 void Mesh::computeBoundingBox()
 {
 	glm::vec3 min;
@@ -366,20 +306,16 @@ void Mesh::computeBoundingBox()
 		if (it.z > max.z) max.z = it.z;
 	}
 	m_center = glm::vec3((max.x + min.x) / 2, (max.y + min.y) / 2, (max.z + min.z) / 2);	
-	
-	//cout << m_name << ": " << endl;
-	//cout << "Max: " << max << endl;
-	//cout << "Min: " << min << endl;
 	m_bbox = make_shared<BoundingBox>(min, max);
 }
 
-FBXMesh::FBXMesh() 
-	: m_meshes({}), m_textures_loaded({}), m_path(""),
+FBXMesh::FBXMesh() : Mesh(""),
+	m_meshes({}), m_textures_loaded({}), m_path(""),
 	  m_aiScene(nullptr), m_importer()
 {}
 
-FBXMesh::FBXMesh(const string& path)
-	: m_meshes({}), m_textures_loaded({}), m_path(path),
+FBXMesh::FBXMesh(const string& path) : Mesh(""),
+	m_meshes({}), m_textures_loaded({}), m_path(path),
 	  m_aiScene(nullptr), m_importer()
 {}
 
@@ -408,7 +344,9 @@ void FBXMesh::processMesh()
 		last = int(m_path.find_last_of("\\"));
 	}
 	m_directory = m_path.substr(0, last);
+	
 	cout << "Process mesh: " << m_directory.size() << " last: " << last << endl;
+	
 	// Process ASSIMP's root node, and then recursively process its child node
 	aiNode* root_node = m_aiScene->mRootNode;
 	processNode(root_node, m_aiScene);
@@ -545,39 +483,16 @@ shared_ptr<Material> FBXMesh::processMaterial(const aiMesh* mesh, const aiScene*
 	if (AI_SUCCESS == ai_material->Get(AI_MATKEY_COLOR_AMBIENT, color))
 	{
 		material->setBaseColor({ color.r, color.g, color.b });
-		//cout << "Set ambient " << material.ambient.x << endl;
 	}
 	else
 	{
 		material->setBaseColor(glm::vec3(0.0f));
 	}
 
-	//if (AI_SUCCESS == ai_material->Get(AI_MATKEY_COLOR_DIFFUSE, color))
-	//{
-	//	material->setDiffuse({ color.r, color.g, color.b });
-	//	//cout << "Set Diffuse" << material.diffuse.x << endl;
-	//}
-	//else
-	//{
-	//	material->setDiffuse(glm::vec3(0.0f));
-	//}
-
-	//if (AI_SUCCESS == ai_material->Get(AI_MATKEY_COLOR_SPECULAR, color))
-	//{
-	//	material->setSpecular({ color.r, color.g, color.b });
-	//	//cout << "Set specular" << material.specular.x << endl;
-	//}
-	//else
-	//{
-	//	material->setSpecular(glm::vec3(0.0f));
-	//}
-
 	float metal_factor = 0.0;
-
 	if (AI_SUCCESS == ai_material->Get(AI_MATKEY_SHININESS, metal_factor))
 	{
-		//material->setShininess(metal_factor);
-		//cout << "Metallic Factor is " << material.shininess << endl;
+		material->setMetallic(metal_factor);
 	}
 
 	return material;

@@ -21,16 +21,8 @@ __device__ glm::vec3* d_force;
 __device__ float* d_density;
 __device__ float* d_pressure;
 
-//__device__ int* foo;
-
-//__device__ glm::vec3** d_hash;
-
 __device__ glm::ivec3 getHashPos_kernel(const glm::vec3&);
 __device__ uint getHashKey_kernel(const glm::ivec3&);
-//__device__ void copyFromCuda_kernel(
-//	int n,
-//	glm::vec3* pos,
-//	glm::vec3* h_pos);
 
 void computeBlocks(int n);
 cudaError_t setParams(info::SPHParams* params);
@@ -47,8 +39,7 @@ cudaError_t copyFromCuda(
 	int n,
 	vector<glm::vec3>& h_pos);
 
-cudaError_t simulateCuda(int n, float t, glm::vec3& box,
-	vector<glm::vec3>& pos);
+cudaError_t simulateCuda(int n, float t, vector<glm::vec3>& pos);
 
 cudaError_t freeResources();
 

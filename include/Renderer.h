@@ -40,6 +40,7 @@ private:
 	unique_ptr<Camera> m_camera;
 	unique_ptr<Grid> m_grid;
 	unique_ptr<FrameBuffer> m_framebuffer;
+	unique_ptr<PopupPanel> m_popup;
 
 	unique_ptr<ShadowMap> m_depth_map;
 	unique_ptr<ShadowMap> m_shadow_map;

@@ -16,6 +16,9 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{eaf07c9b-29c5-459e-88f7-de7edd72763c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="quartet">
+      <UniqueIdentifier>{a8c4d242-6bb8-441b-8339-33e71c3b7252}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Buffer.cpp">
@@ -104,6 +107,45 @@
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui.cpp">
       <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SoftBodySolver.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\vclib\quartet\src\feature.cpp">
+      <Filter>quartet</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\vclib\quartet\src\geometry_queries.cpp">
+      <Filter>quartet</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\vclib\quartet\src\make_signed_distance.cpp">
+      <Filter>quartet</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\vclib\quartet\src\make_tet_mesh.cpp">
+      <Filter>quartet</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\vclib\quartet\src\match_features.cpp">
+      <Filter>quartet</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\vclib\quartet\src\optimize_tet_mesh.cpp">
+      <Filter>quartet</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\vclib\quartet\src\predicates.cpp">
+      <Filter>quartet</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\vclib\quartet\src\read_obj.cpp">
+      <Filter>quartet</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\vclib\quartet\src\sdf.cpp">
+      <Filter>quartet</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\vclib\quartet\src\tet_mesh.cpp">
+      <Filter>quartet</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\vclib\quartet\src\tet_quality.cpp">
+      <Filter>quartet</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\vclib\quartet\src\trimesh.cpp">
+      <Filter>quartet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -202,6 +244,51 @@
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imconfig.h">
       <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SoftBodySolver.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\quartet\src\array3.h">
+      <Filter>quartet</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\quartet\src\feature.h">
+      <Filter>quartet</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\quartet\src\geometry_queries.h">
+      <Filter>quartet</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\quartet\src\make_signed_distance.h">
+      <Filter>quartet</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\quartet\src\make_tet_mesh.h">
+      <Filter>quartet</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\quartet\src\match_features.h">
+      <Filter>quartet</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\quartet\src\optimize_tet_mesh.h">
+      <Filter>quartet</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\quartet\src\read_obj.h">
+      <Filter>quartet</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\quartet\src\sdf.h">
+      <Filter>quartet</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\quartet\src\tet_mesh.h">
+      <Filter>quartet</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\quartet\src\tet_quality.h">
+      <Filter>quartet</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\quartet\src\trimesh.h">
+      <Filter>quartet</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\quartet\src\util.h">
+      <Filter>quartet</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\vclib\quartet\src\vec.h">
+      <Filter>quartet</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

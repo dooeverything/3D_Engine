@@ -10,21 +10,28 @@
 #include "Particle.h"
 #include "Camera.h"
 
-using namespace std;
-
-class TriMesh
+class Tri
 {
 public:
-    TriMesh(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3);
+    Tri(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3);
 
     glm::vec3 getClosest(glm::vec3 pos);
 
-    bool intersect(glm::vec3 ray_dir, glm::vec3 ray_pos, float& t);
+    bool intersectWithRay(
+        glm::vec3 ray_dir,
+        glm::vec3 ray_pos,
+        float& t
+    );
 
-private:
+    bool intersectWithBox(
+        glm::vec3 box_center,
+        glm::vec3 box_r
+    );
+
     glm::vec3 m_a;
     glm::vec3 m_b;
     glm::vec3 m_c;
+private:
 };
 
 class MarchingCube : public GameObject
@@ -55,7 +62,7 @@ protected:
 
     vector<glm::vec3> m_vertices;
     vector<glm::vec3> m_normals;
-    vector<shared_ptr<TriMesh>> m_trimeshes;
+    vector<shared_ptr<Tri>> m_trimeshes;
     vector<float> m_weights;
 };
 
@@ -92,13 +99,16 @@ public:
     inline void setStrength(float strength) { m_strength = strength; };
     inline void setIsEdit(bool edit) { m_is_edit = edit; };
 
+    virtual void renderProperty();
+
 private:
     int m_noise_scale;
     int m_octaves;
+
     float m_frequency;
-    
     float m_brush_size;
     float m_strength;
+
     bool m_is_edit;
 };
 

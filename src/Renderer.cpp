@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include "imgui_internal.h"
 
 Renderer::Renderer() :
 	m_shadow_map(nullptr), m_click_object(nullptr),
@@ -14,13 +15,12 @@ Renderer::~Renderer() {}
 
 void Renderer::init()
 {
-
 	cout << "Initialize Renderer" << endl;
 	m_start_time = SDL_GetTicks64();
 
 	int width = 1400;
 	int height = 800;
-	m_sdl_window->init(width, height, "OpenGL Engine");
+	m_sdl_window->init(width, height, "Renderer");
 
 	m_framebuffer = make_unique<FrameBuffer>();
 	m_framebuffer->createBuffers(1024, 1024);
@@ -30,7 +30,7 @@ void Renderer::init()
 
 	m_camera = make_unique<Camera>(glm::vec3(0.0f, 7.5f, 27.0f), -90.0f, -11.0f);
 	
-	glm::vec3 light_pos = { 1.0f, 1.0f, 1.0f };
+	glm::vec3 light_pos = { 10.0f, 10.0f, 10.0f };
 	m_depth_map = make_unique<ShadowMap>(1024, 1024);
 	m_shadow_map = make_unique<ShadowMap>(1024, 1024, light_pos, false);
 	m_cubemap = make_unique<CubeMap>(1024, 1024);
@@ -38,28 +38,24 @@ void Renderer::init()
 	m_prefilter = make_unique<PrefilterMap>(256, 256);
 	m_lut = make_unique<LUTMap>(512, 512);
 
-	m_panels.push_back(make_shared<ImGuiMenuBar>());
-	m_panels.push_back(make_shared<ObjectPanel>());
-	m_panels.push_back(make_shared<PropertyPanel>());
-
-	for (int axis = 0; axis < 3; ++axis)
+	m_popup = make_unique<PopupPanel>("Popup");
+	m_panels.push_back(make_shared<ObjectPanel>("SceneObjects"));
+	m_panels.push_back(make_shared<PropertyPanel>("Properties"));
+	
+	cout << "********************Loading Gizmos********************" << endl;
+	for (int axis = 0; axis < 4; ++axis)
 	{
 		shared_ptr<Gizmo> gizmo = make_shared<Gizmo>(axis);
 		m_gizmos.push_back(gizmo);
 	}
+	cout << "********************Finish loading gizmo********************\n" << endl;
 
-	//shared_ptr<GameObject> cloth = make_shared<Cloth>();
-	//m_scene_objects.push_back(cloth);
-
-	//m_sph = make_shared<SPHSystem>(32.0f, 32.0f, 32.0f);
-	//m_scene_objects.push_back(m_sph);
-
-	shared_ptr<SPHSystemCuda> test = make_shared<SPHSystemCuda>(64.0f, 32.0f, 64.0f);
-	m_scene_objects.push_back(test);
-	m_sph = test;
+	//shared_ptr<SPHSystemCuda> sph = make_shared<SPHSystemCuda>(64.0f, 32.0f, 64.0f);
+	//m_sph = sph;
+	//m_scene_objects.push_back(sph);
 
 	// Setup lights
-	glm::vec3 dir = -light_pos; //{ -0.2f, -1.0f, -0.3f };
+	glm::vec3 dir = -light_pos;
 	glm::vec3 amb = { 1.0f, 1.0f, 1.0f };
 	glm::vec3 diff = { 0.8f, 0.8f, 0.8f };
 	glm::vec3 spec = { 0.5f, 0.5f, 0.5f };
@@ -96,9 +92,15 @@ void Renderer::render()
 	m_camera->setLastFrame(current_frame);
 	m_camera->processInput();
 
+	for (int i = 0; i < m_scene_objects.size(); ++i)
+	{
+		m_scene_objects.at(i)->setIsClick(false);
+		m_scene_objects.at(i)->resetRayHit();
+	}
+
 	handleInput();
 
-	// Draw a shadow map first to get shadows
+	// Get shadows
 	m_shadow_map->draw(m_scene_objects);
 	renderImGui();
 	m_sdl_window->swapWindow();
@@ -114,6 +116,9 @@ void Renderer::handleInput()
 
 		if (!io.WantCaptureMouse)
 		{
+			ImGui_ImplSDL2_ProcessEvent(&event);
+			ImVec2 pos = io.MousePos;
+
 			switch (event.type)
 			{
 				case SDL_QUIT:
@@ -138,26 +143,35 @@ void Renderer::handleInput()
 		else if(!m_is_click_gizmo)
 		{
 			ImVec2 pos = io.MousePos;
+			ImVec2 scene_min = m_sdl_window->getSceneMin();
+			ImVec2 scene_max = m_sdl_window->getSceneMax();
+			
+			ImGui_ImplSDL2_ProcessEvent(&event);
 
-			//cout << "Mouse Position " << pos.x << " " << pos.y << endl;
-			for (auto& it : m_panels)
+			if (m_click_object)
 			{
-				if (it->mouseInPanel(int(pos.x), int(pos.y)) && !m_is_drag)
+				if (m_click_object->getIsPopup())
 				{
-					//cout << "Mouse in panel" << endl;
-					m_mouse_in_panel = true;
-					break;
-				}
-				else
-				{
-					//cout << "Mouse not in panel" << endl;
-					m_mouse_in_panel = false;
+					if (event.button.button == SDL_BUTTON_LEFT)
+					{
+						m_frame_events.clear();
+						return;
+					}
 				}
 			}
-			
-			if (m_mouse_in_panel) continue;
 
-			ImGui_ImplSDL2_ProcessEvent(&event);
+			// if mouse is out of scene, then do nothing
+			if (pos.x < scene_min.x || pos.y < scene_min.y)
+			{
+				m_frame_events.clear();
+				return;
+			}
+			if (pos.x > scene_max.x || pos.y > scene_max.y)
+			{
+				m_frame_events.clear();
+				return;
+			}
+
 			switch (event.type)
 			{
 				case SDL_MOUSEBUTTONUP:
@@ -167,19 +181,36 @@ void Renderer::handleInput()
 					break;
 
 				case SDL_MOUSEBUTTONDOWN:
-					if (!m_mouse_in_panel && event.button.button == SDL_BUTTON_RIGHT)
-						m_is_drag = true;
-					else if (!m_mouse_in_panel && event.button.button == SDL_BUTTON_LEFT)
+					if (event.button.button == SDL_BUTTON_RIGHT)
+					{
+						m_is_drag = true;				
+						if (m_click_object)
+						{
+							m_click_object->setIsPopup(true);
+						}
+					}
+					else if (event.button.button == SDL_BUTTON_LEFT)
+					{
 						m_is_mouse_down = true;
+					}
+
 					m_camera->processMouseDown(event);
 					m_frame_events.clear();
 					return; // To avoid dragging when mouse is clicked
 
 				case SDL_MOUSEMOTION:
 					if (m_is_drag)
+					{
+						if (m_click_object)
+						{
+							if (m_click_object->getIsPopup())
+								break;
+						}
 						m_camera->processMouseDrag(event);
+					}
 					break;
 			}
+
 			m_frame_events.clear();
 		}
 	}
@@ -189,92 +220,31 @@ void Renderer::moveObject(GameObject& go)
 {
 	SDL_Event event;
 	ImGuiIO& io = ImGui::GetIO();
-	float moveCellSize = 0.1f;
 	for(auto& it : m_frame_events)
 	{
 		event = it;
-		ImGui_ImplSDL2_ProcessEvent(&event);
-		//cout << "Event: " << event.type << " move along " << go.m_move_axis << " Click? " << m_gizmos[go.m_move_axis]->getIsClick() << endl;
-		
+		ImGui_ImplSDL2_ProcessEvent(&event);		
 		switch (event.type)
 		{
 		case SDL_MOUSEBUTTONUP:
 			m_is_mouse_down = false;
 			m_is_moving_gizmo = false;
-			m_gizmos[go.m_move_axis]->setIsClick(false);
+			m_gizmos[go.getMoveAxis()]->setIsClick(false);
 			break;
 
 		case SDL_MOUSEBUTTONDOWN:
-			m_gizmos[go.m_move_axis]->setIsClick(true);
-			m_is_moving_gizmo = true;
-			break;
+			if (event.button.button == SDL_BUTTON_LEFT)
+			{
+				//cout << "Click gizmo: " << go.getMoveAxis() << endl;
+				m_gizmos[go.getMoveAxis()]->setIsClick(true);
+				m_is_moving_gizmo = true;
+				break;
+			}
 
 		case SDL_MOUSEMOTION:
-			//cout << "move " << go.getName() << " along axis : " << go.m_move_axis << endl;
-			if (m_gizmos[go.m_move_axis]->getIsClick())
+			if (m_gizmos[go.getMoveAxis()]->getIsClick())
 			{
-				int final_x;
-				int final_y;
-				SDL_GetRelativeMouseState(&final_x, &final_y);
-				glm::vec3 pos = glm::vec3(0.0, 0.0, 0.0);
-				if (go.m_move_axis == 0)
-				{
-					if (m_camera->getForward().z <= 0)
-					{
-						if (final_x < -1.0)
-							pos[go.m_move_axis] = -moveCellSize;
-						else if(final_x > 1.0)
-							pos[go.m_move_axis] = moveCellSize;
-					}
-					else
-					{
-						if(final_x > 1.0)
-							pos[go.m_move_axis] = -moveCellSize;
-						else if(final_x < -1.0)
-							pos[go.m_move_axis] = moveCellSize;
-					}
-				}
-				else if (go.m_move_axis == 1)
-				{
-					if (final_y < -1.0)
-						pos[go.m_move_axis] = moveCellSize;
-					else if(final_y > 1.0)
-						pos[go.m_move_axis] = -moveCellSize;
-				}
-				else
-				{
-					if (m_camera->getForward().x >= 0.85f)
-					{
-						if (final_x < -1.0)
-							pos[go.m_move_axis] = -moveCellSize;
-						else if (final_x > 1.0)
-							pos[go.m_move_axis] = moveCellSize;
-					}
-					else if (m_camera->getForward().x <= -0.9f)
-					{
-						if (final_x > 1.0)
-							pos[go.m_move_axis] = -moveCellSize;
-						else if (final_x < -1.0)
-							pos[go.m_move_axis] = moveCellSize;
-					}
-					else if (m_camera->getForward().z < 0)
-					{
-						if (final_y < -1.0)
-							pos[go.m_move_axis] = -moveCellSize;
-						else if (final_y > 1.0)
-							pos[go.m_move_axis] = moveCellSize;					
-					}
-					else
-					{
-						if (final_y > 1.0)
-							pos[go.m_move_axis] = -moveCellSize;
-						else if (final_y < -1.0)
-							pos[go.m_move_axis] = moveCellSize;
-					}
-				}
-				glm::vec3 curr_pos = *(go.getProperty(0));
-				curr_pos += pos;
-				go.setProperty(0, curr_pos);
+				go.move(*m_camera);
 				break;
 			}
 		}
@@ -290,43 +260,27 @@ void Renderer::renderImGui()
 	ImGui::NewFrame();
 	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
-	//bool demo = true;
-	//ImGui::ShowDemoWindow(&demo);
-
-	for (int i = 0; i < m_scene_objects.size(); ++i)
-	{
-		if (m_scene_objects[i]->getName() == "Fluid")
-		{
-			continue;
-		}
-
-		m_scene_objects.at(i)->setIsClick(false);
-		m_scene_objects.at(i)->resetRayHit();
-	}
+	bool demo = true;
+	ImGui::ShowDemoWindow(&demo);
 
 	// Draw panels
 	for (auto& it : m_panels)
-	{
-		//cout << "Render ImGui" << endl;
 		it->render(m_scene_objects, m_click_object);
-	}
 
-	if (m_mouse_in_panel)
+	bool open = true;
+	ImGui::Begin("Scenes", &open, ImGuiWindowFlags_MenuBar);
 	{
-		SDL_Event event;
-		ImGuiIO& io = ImGui::GetIO();
-		//float moveCellSize = 0.1f;
-		for (auto& it : m_frame_events)
+		if (ImGui::BeginMenuBar())
 		{
-			event = it;
-			ImGui_ImplSDL2_ProcessEvent(&event);
+			if (ImGui::BeginMenu("Add"))
+			{
+				ImGuiMenuBar mb("SceneMenuBar");
+				mb.render(m_scene_objects, m_click_object);
+				ImGui::EndMenu();
+			}
+			ImGui::EndMenuBar();
 		}
-		m_frame_events.clear();		
-		//m_mouse_in_panel = false;
-	}
 
-	ImGui::Begin("Scenes");
-	{
 		ImGui::BeginChild("SceneRender");
 		{
 			ImVec2 scene_min = ImGui::GetWindowContentRegionMin();
@@ -377,21 +331,7 @@ void Renderer::renderImGui()
 	}
 	ImGui::End();
 
-	//ImGui::Begin("Debug");
-	//{
-	//	ImGui::BeginChild("DebugRenderer");
-	//	{
-	//		ImVec2 wsize = ImGui::GetWindowSize();
-	//		if (m_sph != nullptr)
-	//		{
-	//			//ImGui::Image((ImTextureID)m_depth_map->getBuffer().getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
-	//			ImGui::Image((ImTextureID)m_sph->getNormalFB().getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
-	//		}
-	//	}
-	//	ImGui::EndChild();
-	//}
-	//ImGui::End();
-
+	// imGui docking
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -409,12 +349,6 @@ void Renderer::renderScene()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glViewport(0, 0, m_framebuffer->getWidth(), m_framebuffer->getHeight());
 
-	vector<shared_ptr<GameObject>> render_objects;
-	for (auto& it : m_scene_objects)
-	{
-		render_objects.push_back(it);
-	}
-
 	glm::vec3 cam_pos = m_camera->getPos();
 
 	// Setup world to pixel coordinate transformation 
@@ -431,7 +365,7 @@ void Renderer::renderScene()
 	glm::vec3 ray_pos = m_camera->getPos();
 
 	// Check whether any object is clicked 
-	if (m_is_mouse_down && !m_mouse_in_panel && !m_is_drag && !m_is_click_gizmo)
+	if (m_is_mouse_down && !m_is_drag && !m_is_click_gizmo)
 	{
 		for (int i = 0; i < m_scene_objects.size(); ++i)
 		{
@@ -440,7 +374,7 @@ void Renderer::renderScene()
 
 		if (!m_scene_objects.empty())
 		{
-			std::sort(render_objects.begin(), render_objects.end(),
+			std::sort(m_scene_objects.begin(), m_scene_objects.end(),
 				[](const shared_ptr<GameObject>& lhs, const shared_ptr<GameObject>& rhs)
 				{
 					float d1 = lhs->getMesh()->getRayHitMin();
@@ -448,69 +382,67 @@ void Renderer::renderScene()
 					return d1 < d2;
 				});
 		
-			if(render_objects.at(0)->getIsClick())
+			if(m_scene_objects.at(0)->getIsClick())
 			{
-				m_click_object = render_objects.at(0);
+				m_click_object = m_scene_objects.at(0);
 			}
 			else
 			{
-				m_click_object = nullptr;
+				if (m_click_object != nullptr)
+				{		
+					if(m_click_object->getIsPopup() == false)
+						m_click_object = nullptr;
+				}
 			}
 		}
+
 	}
+
+	bool is_popup = false;
+	m_popup->popup(m_scene_objects, m_click_object, is_popup, m_is_click_gizmo);
 
 	// Check whether any gizmos is clicked
-	if (m_click_object != nullptr)
+	if (m_is_moving_gizmo)
 	{
-		if (m_is_moving_gizmo)
+		moveObject(*m_click_object);
+	}
+	else if(m_click_object != nullptr && is_popup == false && !m_is_drag)
+	{
+		for (int axis = 0; axis < 3; ++axis)
 		{
-			moveObject(*m_click_object);
-		}
-		else
-		{
-			for (int axis = 0; axis < 3; ++axis)
+			//cout << "Axis: " << axis << endl;
+			if (m_gizmos.at(axis)->isClick(ray_dir, ray_pos))
 			{
-				if (m_gizmos.at(axis)->isClick(ray_dir, ray_pos))
-				{
-
-					m_click_object->m_move_axis = axis;
-					moveObject(*m_click_object);
-					m_is_click_gizmo = true;
-					break;
-				}
-				else
-				{
-					m_click_object->m_move_axis = -1;
-					m_is_click_gizmo = false;
-				}
+				m_is_click_gizmo = true;
+				m_click_object->setMoveAxis(axis);
+				moveObject(*m_click_object);
+				break;
+			}
+			else
+			{
+				m_click_object->setMoveAxis(-1);
+				m_is_click_gizmo = false;
 			}
 		}
 	}
+
+	m_scene_objects.erase(
+		remove_if(m_scene_objects.begin(), m_scene_objects.end(),
+			[](const shared_ptr<GameObject>& go) {return go->getIsDelete() == true; }
+		),
+		m_scene_objects.end()
+	);
 
 	// Draw objects
-	for (auto it = render_objects.rbegin(); it != render_objects.rend(); ++it)
+	for (int i = 0; i < m_scene_objects.size(); ++i)
 	{
-		if (it->get()->getName() == "Fluid") continue;
-
-		if (it->get()->getName() == "Cloth")
+		if (m_scene_objects.at(i)->getSoftBodySolver())
 		{
-			if (it->get()->getSimulate())
-			{
-				it->get()->update();
-			}
+			m_scene_objects.at(i)->getSoftBodySolver()->simulate();
 		}
 
-		it->get()->draw(P, V, *m_lights.at(0), cam_pos, 
+		m_scene_objects.at(i)->draw(P, V, *m_lights.at(0), cam_pos,
 			*m_shadow_map, *m_irradiancemap, *m_prefilter, *m_lut);
-	}
-
-	if (m_sph != nullptr)
-	{
-		if (m_sph->m_simulation)
-		{
-			m_sph->simulate();
-		}
-		m_sph->draw();
 	}
 
 	// Draw background
@@ -519,27 +451,20 @@ void Renderer::renderScene()
 	// Draw Grid
 	m_grid->draw(P, V, cam_pos);
 
-	// Draw Outline
 	if (m_click_object != nullptr)
 	{
-		if (m_click_object->getName() != "Fluid")
-		{
-			glDisable(GL_DEPTH_TEST);
-			m_outline->draw(*m_click_object);
-			glEnable(GL_DEPTH_TEST);
-		}
+		// Draw Outline
+		glDisable(GL_DEPTH_TEST);
+		m_outline->draw(*m_click_object);
+		glEnable(GL_DEPTH_TEST);
+
+		// Draw gizmos for clicked objects
+		glDisable(GL_DEPTH_TEST);
+		for (int axis = 0; axis < 4; ++axis)
+			m_gizmos[axis]->draw(*m_click_object, P, V, cam_pos);
+		glEnable(GL_DEPTH_TEST);
 	}
 
-	// Draw gizmos for clicked objects
-	glDisable(GL_DEPTH_TEST);
-	if (m_click_object != nullptr && m_click_object->getName() != "Fluid")
-	{
-		for (int axis = 0; axis < 3; ++axis)
-		{
-			m_gizmos[axis]->draw(*m_click_object, P, V, cam_pos);
-		}
-	}
-	glEnable(GL_DEPTH_TEST);
 }
 
 void Renderer::end()

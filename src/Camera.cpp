@@ -91,7 +91,7 @@ void Camera::processMouseDown(SDL_Event event)
 {
 	if (event.button.button == SDL_BUTTON_RIGHT)
 	{
-		cout << "Mouse Down" << endl;
+		//cout << "Mouse Down" << endl;
 		SDL_GetMouseState(&m_mouse_x, &m_mouse_y);
 	}
 }

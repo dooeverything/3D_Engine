@@ -5,7 +5,7 @@ SPHSystem::SPHSystem(float width, float height, float depth)
 	m_name = "Fluid";
 
 	cout << endl;
-	cout << "*************************Fluid Information**************************" << endl;
+	cout << "********************Fluid on Single CPU Information********************" << endl;
 	setParticleRadius(0.10f);
 
 	m_simulation = false;
@@ -29,21 +29,15 @@ SPHSystem::SPHSystem(float width, float height, float depth)
 	int num_particles = int(m_grid_width * m_grid_height * m_grid_depth);
 	m_hash_table.reserve(TABLE_SIZE);
 
-	//vector<string> shader_path = { "Shaders/BRDF.vert", "Shaders/BRDF.frag" };
-	//m_shader = make_shared<Shader>(shader_path);
-	//m_shader->processShader();
-
 	setupFB();
 	setupShader();
 	
-	//cout << "Mesh!!" << endl;
-	m_mesh = make_shared<Mesh>();
+	m_mesh = make_shared<Mesh>("Fluid Boundary");
 	initParticles();
 	buildHash();
-	//createVertex();
 
 	cout << "Number of particles : " << m_particles.size() << endl;
-	cout << "********************************end*********************************" << endl;
+	cout << "********************Fluid on Single CPU********************" << endl;
 	cout << endl;
 }
 
@@ -98,10 +92,6 @@ void SPHSystem::setupShader()
 	vector<string> curvature_normal_shader = { "assets/shaders/Debug.vert", "assets/shaders/CurvatureNormal.frag" };
 	m_shader_curvature_normal = make_unique<Shader>(curvature_normal_shader);
 	m_shader_curvature_normal->processShader();
-
-	//vector<string> normal_shader = { "Shaders/Debug.vert", "Shaders/Normal.frag" };
-	//m_shader_normal = make_unique<Shader>(normal_shader);
-	//m_shader_normal->processShader();
 
 	vector<string> render_shader = { "assets/shaders/Debug.vert", "assets/shaders/Render.frag" };
 	m_shader_render = make_unique<Shader>(render_shader);
@@ -242,7 +232,6 @@ void SPHSystem::update()
 	}
 
 	buildHash();
-	//updateVertex();
 	
 	// Update positions in a vertex buffer
 	vector<info::VertexLayout> layouts = m_point->getMesh().getBuffer().getLayouts();
@@ -262,6 +251,9 @@ void SPHSystem::updateDensPress()
 		float sum = 0.0f;
 		FluidParticle* p1 = m_particles[i].get();
 		glm::ivec3 grid_pos = snapToGrid(p1->m_position);
+
+		cout << p1->m_position << " "
+			 << grid_pos.x << " " << grid_pos.y << " " << grid_pos.z << endl;
 
 		for (int x = -1; x <= 1; x++)
 		{

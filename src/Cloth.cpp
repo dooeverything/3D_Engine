@@ -126,8 +126,10 @@ uint Cloth::getHashIndex(glm::ivec3& pos)
 			(uint)(pos.z * 83492791)) % info::HASH_SIZE;
 }
 
-void Cloth::update()
+void Cloth::simulate()
 {
+	if (!m_simulate) return;
+
 	vector<info::VertexLayout> update_layouts = m_mesh->getBuffer().getLayouts();
 
 	for (int i = 0; i < update_layouts.size(); ++i)
@@ -141,8 +143,8 @@ void Cloth::update()
 	for (int i = 0; i < m_particles.size(); ++i)
 	{
 		ClothParticle* pi = m_particles[i].get();
-		pi->m_velocity += pi->m_gravity * t_sub;
-		glm::vec3 predict_pos = pi->m_position + pi->m_velocity * t_sub;
+		glm::vec3 predict_vel = pi->m_velocity + pi->m_gravity * t_sub;
+		glm::vec3 predict_pos = pi->m_position + predict_vel * t_sub;
 		predict[i] = make_shared<ClothParticle>(predict_pos);
 		predict[i]->m_ids = pi->m_ids;
 
@@ -165,8 +167,9 @@ void Cloth::update()
 		for (int i = 0; i < m_particles.size(); ++i)
 		{
 			ClothParticle* pi = m_particles[i].get();
-			pi->m_velocity += pi->m_gravity * t_sub;
-			glm::vec3 predict_pos = pi->m_position + pi->m_velocity * t_sub;
+			//pi->m_velocity += pi->m_gravity * t_sub;
+			glm::vec3 predict_vel = pi->m_velocity + pi->m_gravity * t_sub;
+			glm::vec3 predict_pos = pi->m_position + predict_vel * t_sub;
 			predict[i]->m_position = predict_pos;
 		}
 
@@ -242,7 +245,6 @@ void Cloth::update()
 
 void Cloth::updateStretch(int index, vector<shared_ptr<ClothParticle>>& predict)
 {
-	//uint index1 = getIndex(grid_pos);
 	glm::vec3 p1 = predict[index]->m_position;
 	float w1 = predict[index]->m_mass;
 
@@ -322,9 +324,6 @@ void Cloth::updateBending(int index, float rest_angle, vector<ClothParticle*>& p
 
 	glm::vec3 n1 = glm::normalize(glm::cross(p2 - p1, p3 - p1));
 	glm::vec3 n2 = glm::normalize(glm::cross(p2 - p1, p4 - p1));
-	
-	//n1 /= glm::length2(n1);
-	//n2 /= glm::length2(n2);
 
 	float d = glm::clamp(glm::dot(n1, n2), 0.0f, 1.0f);
 	float angle = acos(d);
@@ -337,8 +336,9 @@ void Cloth::updateBending(int index, float rest_angle, vector<ClothParticle*>& p
 					-glm::cross(p4, n1) + glm::cross(p4, n2) * d / glm::length(glm::cross(p2, p4));
 	glm::vec3 u1 = -u2-u3-u4;
 
-	float lamda = 10.0f/ (t_sub*t_sub) + m1 * (glm::dot(u1, u1) + m2 * glm::dot(u2, u2) + 
-				m3 * glm::dot(u3, u3) + m4 * glm::dot(u4, u4));
+	float lamda = 10.0f/ (t_sub*t_sub) + m1 * glm::dot(u1, u1) + 
+					m2 * glm::dot(u2, u2) + m3 * glm::dot(u3, u3) + 
+					m4 * glm::dot(u4, u4);
 	
 	if (lamda != 0.0f)
 	{
@@ -395,4 +395,53 @@ void Cloth::updateCollision(vector<shared_ptr<ClothParticle>>& predict)
 
 }
 
+void Cloth::renderProperty()
+{
+	bool expand_fluid = ImGui::TreeNode("Cloth");
+	if (expand_fluid)
+	{
+		static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
+		ImVec2 cell_padding(0.0f, 5.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
+		ImGui::BeginTable("Simulation", 2);
+		ImU32 cell_bg_color = ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.7f, 0.65f));
 
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+		ImGui::AlignTextToFramePadding();
+
+		static int clicked = 0;
+		if (ImGui::Button("Click to simulate"))
+		{
+			clicked++;
+		}
+
+		if (clicked & 1)
+		{
+			ImGui::TableNextColumn();
+			if (ImGui::Button("Start") && m_simulate == false)
+			{
+				m_simulate = true;
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Stop") && m_simulate == true)
+			{
+				m_simulate = false;
+			}
+		}
+
+		ImGui::EndTable();
+
+		ImGui::Text("Simulation average: %.3f ms/frame (%.1f FPS)", double(1000.0 / (ImGui::GetIO().Framerate)), double(ImGui::GetIO().Framerate));
+
+		ImGui::PopStyleVar();
+		ImGui::TreePop();
+	}
+}
+
+void Cloth::draw(const glm::mat4& P, const glm::mat4& V, Light& light, glm::vec3& view_pos, ShadowMap& shadow, IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut)
+{
+	simulate();
+	GameObject::draw(P, V, light, view_pos, shadow, irradiance, prefilter, lut);
+}

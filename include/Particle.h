@@ -47,4 +47,14 @@ public:
 	bool m_pinned;
 };
 
+class SoftParticle : public Particle
+{
+public:
+	SoftParticle(glm::vec3);
+
+	vector<int> m_indices;
+	float m_mass;
+	bool m_pinned;
+};
+
 #endif

@@ -47,13 +47,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)assets;$(ProjectDir)include;C:\vclib;C:\vclib\imgui-docking;C:\vclib\glew-2.1.0\include;C:\vclib\SDL2-2.0.22\include;C:\vclib\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)assets;$(ProjectDir)include;C:\vclib;C:\vclib\imgui-docking;C:\vclib\glew-2.1.0\include;C:\vclib\SDL2-2.0.22\include;C:\vclib\assimp\include;C:\vclib\quartet\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>assimp-vc142-mt.lib;SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\vclib\SDL2-2.0.22\lib\x64;C:\vclib\glew-2.1.0\lib\Release\x64;C:\vclib\assimp\lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>tetwild.lib;assimp-vc142-mt.lib;SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\vclib\SDL2-2.0.22\lib\x64;C:\vclib\glew-2.1.0\lib\Release\x64;C:\vclib\assimp\lib\Release;C:\vclib\TetWild\build\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -90,6 +90,18 @@
     <ClCompile Include="C:\vclib\imgui-docking\imgui_impl_sdl2.cpp" />
     <ClCompile Include="C:\vclib\imgui-docking\imgui_tables.cpp" />
     <ClCompile Include="C:\vclib\imgui-docking\imgui_widgets.cpp" />
+    <ClCompile Include="C:\vclib\quartet\src\feature.cpp" />
+    <ClCompile Include="C:\vclib\quartet\src\geometry_queries.cpp" />
+    <ClCompile Include="C:\vclib\quartet\src\make_signed_distance.cpp" />
+    <ClCompile Include="C:\vclib\quartet\src\make_tet_mesh.cpp" />
+    <ClCompile Include="C:\vclib\quartet\src\match_features.cpp" />
+    <ClCompile Include="C:\vclib\quartet\src\optimize_tet_mesh.cpp" />
+    <ClCompile Include="C:\vclib\quartet\src\predicates.cpp" />
+    <ClCompile Include="C:\vclib\quartet\src\read_obj.cpp" />
+    <ClCompile Include="C:\vclib\quartet\src\sdf.cpp" />
+    <ClCompile Include="C:\vclib\quartet\src\tet_mesh.cpp" />
+    <ClCompile Include="C:\vclib\quartet\src\tet_quality.cpp" />
+    <ClCompile Include="C:\vclib\quartet\src\trimesh.cpp" />
     <ClCompile Include="src\Buffer.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Cloth.cpp" />
@@ -109,6 +121,7 @@
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\SDL_GL_Window.cpp" />
     <ClCompile Include="src\Shader.cpp" />
+    <ClCompile Include="src\SoftBodySolver.cpp" />
     <ClCompile Include="src\SPHSystem.cpp" />
     <ClCompile Include="src\SPHSystemCuda.cpp" />
     <ClCompile Include="src\Texture.cpp" />
@@ -123,6 +136,20 @@
     <ClInclude Include="C:\vclib\imgui-docking\imstb_rectpack.h" />
     <ClInclude Include="C:\vclib\imgui-docking\imstb_textedit.h" />
     <ClInclude Include="C:\vclib\imgui-docking\imstb_truetype.h" />
+    <ClInclude Include="C:\vclib\quartet\src\array3.h" />
+    <ClInclude Include="C:\vclib\quartet\src\feature.h" />
+    <ClInclude Include="C:\vclib\quartet\src\geometry_queries.h" />
+    <ClInclude Include="C:\vclib\quartet\src\make_signed_distance.h" />
+    <ClInclude Include="C:\vclib\quartet\src\make_tet_mesh.h" />
+    <ClInclude Include="C:\vclib\quartet\src\match_features.h" />
+    <ClInclude Include="C:\vclib\quartet\src\optimize_tet_mesh.h" />
+    <ClInclude Include="C:\vclib\quartet\src\read_obj.h" />
+    <ClInclude Include="C:\vclib\quartet\src\sdf.h" />
+    <ClInclude Include="C:\vclib\quartet\src\tet_mesh.h" />
+    <ClInclude Include="C:\vclib\quartet\src\tet_quality.h" />
+    <ClInclude Include="C:\vclib\quartet\src\trimesh.h" />
+    <ClInclude Include="C:\vclib\quartet\src\util.h" />
+    <ClInclude Include="C:\vclib\quartet\src\vec.h" />
     <ClInclude Include="include\Buffer.h" />
     <ClInclude Include="include\Camera.h" />
     <ClInclude Include="include\Cloth.h" />
@@ -142,6 +169,7 @@
     <ClInclude Include="include\Renderer.h" />
     <ClInclude Include="include\SDL_GL_Window.h" />
     <ClInclude Include="include\Shader.h" />
+    <ClInclude Include="include\SoftBodySolver.h" />
     <ClInclude Include="include\SPHSystem.h" />
     <ClInclude Include="include\SPHSystemCuda.h" />
     <ClInclude Include="include\Texture.h" />

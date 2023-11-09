@@ -25,8 +25,9 @@ namespace info
 
     struct SPHParams
     {
-        glm::vec3 box;
-        
+        glm::vec3 min_box;
+        glm::vec3 max_box;
+
         float grid_cell;
         float H;
         float H2;

@@ -7,11 +7,11 @@
 // https://polycoding.net/marching-cubes/part-2/
 // http://paulbourke.net/geometry/polygonise/
 
-TriMesh::TriMesh(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3) :
+Tri::Tri(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3) :
 	m_a(v1), m_b(v2), m_c(v3)
 {}
 
-glm::vec3 TriMesh::getClosest(glm::vec3 pos)
+glm::vec3 Tri::getClosest(glm::vec3 pos)
 {
 	float pv1 = glm::length(m_a - pos);
 	float pv2 = glm::length(m_b - pos);
@@ -31,7 +31,7 @@ glm::vec3 TriMesh::getClosest(glm::vec3 pos)
 	return glm::vec3(-1.0f);
 }
 
-bool TriMesh::intersect(glm::vec3 ray_dir, glm::vec3 ray_pos, float& t)
+bool Tri::intersectWithRay(glm::vec3 ray_dir, glm::vec3 ray_pos, float& t)
 {
 	glm::vec3 ab = m_b - m_a;
 	glm::vec3 ac = m_c - m_a;
@@ -84,6 +84,112 @@ bool TriMesh::intersect(glm::vec3 ray_dir, glm::vec3 ray_pos, float& t)
 
 	return true;
 }
+
+bool Tri::intersectWithBox(glm::vec3 box_center, glm::vec3 box_r)
+{
+	//cout << "Intersect with box " << box_center.x << " " << box_center.y << " " << box_center.z << endl;
+	//cout << "Intersect with box " << m_b.x << " " << m_b.y << " " << m_b.z << endl;
+
+	glm::vec3 v0 = m_a - box_center;
+	glm::vec3 v1 = m_b - box_center;
+	glm::vec3 v2 = m_c - box_center;
+
+	glm::vec3 e0 = v1 - v0;
+	glm::vec3 e1 = v2 - v1;
+	glm::vec3 e2 = v0 - v2;
+
+	float p0, p1, p2, r;
+
+	// Test #1
+	p0 = e0.z * v0.y - e0.y * v0.z;
+	p2 = e0.z * v2.y - e0.y * v2.z;
+	r = box_r.y * abs(e0.z) + box_r.z * abs(e0.y);
+	if (glm::min(p0, p2) > r || glm::max(p0, p2) < -r) return false;
+
+	p0 = -e0.z * v0.x + e0.x * v0.z;
+	p2 = -e0.z * v2.x + e0.x * v2.z;
+	r = box_r.x * abs(e0.z) + box_r.z * abs(e0.x);
+	if (glm::min(p0, p2) > r || glm::max(p0, p2) < -r) return false;
+
+	p1 = e0.y * v0.x - e0.x * v0.y;
+	p2 = e0.y * v1.x - e0.x * v1.y;
+	r = box_r.x * abs(e0.y) + box_r.y * abs(e0.x);
+	if (glm::min(p1, p2) > r || glm::max(p1, p2) < -r) return false;
+
+	// Test #2
+	p0 = e1.z * v0.y - e1.y * v0.z;
+	p2 = e1.z * v2.y - e1.y * v2.z;
+	r = box_r.y * abs(e1.z) + box_r.z * abs(e1.z);
+	if (glm::min(p0, p2) > r || glm::max(p0, p2) < -r) return false;
+
+	p0 = -e1.z * v0.x + e1.x * v0.z;
+	p2 = -e1.z * v2.x + e1.x * v2.z;
+	r = box_r.x * abs(e1.z) + box_r.z * abs(e1.x);
+	if (glm::min(p0, p2) > r || glm::max(p0, p2) < -r) return false;
+
+	p0 = e1.y * v0.x - e1.x * v0.y;
+	p1 = e1.y * v1.x - e1.x * v1.y;
+	r = box_r.x * abs(e1.y) + box_r.y * abs(e1.x);
+	if (glm::min(p0, p1) > r || glm::max(p0, p1) < -r) return false;
+
+	// Test #3
+	p0 = e2.x * v0.y - e2.y * v0.z;
+	p1 = e2.x * v1.y - e2.y * v1.z;
+	r = box_r.y * abs(e2.z) + box_r.z * abs(e2.y);
+	if (glm::min(p0, p1) > r || glm::max(p0, p1) < -r) return false;
+
+	p0 = -e2.z * v0.x + e2.x * v0.z;
+	p1 = -e2.z * v1.x + e2.x * v1.z;
+	r = box_r.x * abs(e2.z) + box_r.z * abs(e2.x);
+	if (glm::min(p0, p1) > r || glm::max(p0, p1) < -r) return false;
+
+	p1 = e2.y * v1.x - e2.x * v1.y;
+	p2 = e2.y * v2.x - e2.x * v2.y;
+	r = box_r.x * abs(e2.y) + box_r.y * abs(e2.x);
+	if (glm::min(p1, p2) > r || glm::max(p1, p2) < -r) return false;
+
+
+	// Test #4
+	float min_x = glm::min(v0.x, glm::min(v1.x, v2.x));
+	float max_x = glm::max(v0.x, glm::max(v1.x, v2.x));
+	if (min_x > box_r.x || max_x < -box_r.x) return false;
+
+	float min_y = glm::min(v0.y, glm::min(v1.y, v2.y));
+	float max_y = glm::max(v0.y, glm::max(v1.y, v2.y));
+	if (min_y > box_r.y || max_y < -box_r.y) return false;
+
+	float min_z = glm::min(v0.z, glm::min(v1.z, v2.z));
+	float max_z = glm::max(v0.z, glm::max(v1.z, v2.z));
+	if (min_z > box_r.z || max_z < -box_r.z) return false;
+
+	// Test 5
+	glm::vec3 n = glm::cross(e0, e1);
+	glm::vec3 tmin = glm::vec3(0.0f);
+	glm::vec3 tmax = glm::vec3(0.0f);
+
+	for (int i = 0; i < 3; ++i)
+	{
+		float dir = n[i];
+
+		if (n[i] > 0.0f)
+		{
+			tmin[i] = -box_r[i] - dir;
+			tmax[i] = box_r[i] - dir;
+		}
+		else
+		{
+			tmin[i] = box_r[i] - dir;
+			tmax[i] = -box_r[i] - dir;
+		}
+	}
+
+	if (glm::dot(n, tmin) > 0.0f) return false; // not overlap
+	else if (glm::dot(n, tmax) >= 0.0f) return true; // overlap
+	else return false;
+
+	return true;
+}
+
 
 MarchingCube::MarchingCube() :
 	GameObject(), m_size(10), m_grid_size(0.1f), m_threshold(1.0f),
@@ -193,7 +299,7 @@ void MarchingCube::polygonize(vector<glm::vec3> grids, vector<float> gridValues)
 		m_vertices.push_back(c);
 		m_vertices.push_back(b);
 
-		m_trimeshes.emplace_back(make_shared<TriMesh>(a, b, c));
+		m_trimeshes.emplace_back(make_shared<Tri>(a, b, c));
 
 		m_normals.push_back(n1);
 		m_normals.push_back(n1);
@@ -285,7 +391,10 @@ void Metaball::createVertex()
 		layouts.push_back(layout);
 	}
 
-	m_mesh = make_shared<Mesh>(m_name, layouts);
+	m_mesh = make_shared<Mesh>(m_name);
+	m_mesh->getBuffer().createBuffers(layouts);
+	m_mesh->computeBoundingBox();
+
 	cout << "Number of Vertices : " << m_mesh->getBuffer().getLayouts().size() << endl;
 }
 
@@ -309,7 +418,7 @@ Terrain::Terrain(float size) : MarchingCube(size)
 
 	vector<string> shader_path = { "assets/shaders/BRDF.vert", "assets/shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
-	loadShader();
+	m_shader->processShader();
 
 	cout << "Terrain Constructor successfullly loaded" << endl;
 	cout << endl;
@@ -370,7 +479,9 @@ void Terrain::createVertex()
 		layouts.push_back(layout);
 	}
 
-	m_mesh = make_shared<Mesh>(m_name, layouts);
+	m_mesh = make_shared<Mesh>(m_name);
+	m_mesh->getBuffer().createBuffers(layouts);
+	m_mesh->computeBoundingBox();
 }
 
 void Terrain::createWeights()
@@ -409,7 +520,7 @@ void Terrain::updateWeights(glm::vec3 ray_dir, glm::vec3 ray_pos)
 	float t = 0.0f;
 	
 	std::sort(m_trimeshes.begin(), m_trimeshes.end(),
-		[ray_pos](const shared_ptr<TriMesh>& lhs, const shared_ptr<TriMesh>& rhs)
+		[ray_pos](const shared_ptr<Tri>& lhs, const shared_ptr<Tri>& rhs)
 		{
 			float d1 = glm::length(ray_pos - (lhs->getClosest(ray_pos)));
 			float d2 = glm::length(ray_pos - (rhs->getClosest(ray_pos)));
@@ -419,7 +530,7 @@ void Terrain::updateWeights(glm::vec3 ray_dir, glm::vec3 ray_pos)
 	glm::vec3 hit_pos = glm::vec3(0.0f);
 	for (int i = 0; i < m_trimeshes.size(); ++i)
 	{
-		if (m_trimeshes[i]->intersect(ray_dir, ray_pos, t))
+		if (m_trimeshes[i]->intersectWithRay(ray_dir, ray_pos, t))
 		{
 			hit_pos = ray_pos + ray_dir * t;
 			int index = int(hit_pos.x + m_size * (hit_pos.y + m_size * hit_pos.z));
@@ -445,4 +556,151 @@ void Terrain::updateWeights(glm::vec3 ray_dir, glm::vec3 ray_pos)
 	}
 
 	updateVertex();
+}
+
+void Terrain::renderProperty()
+{
+	bool expand_terrain = ImGui::TreeNode("Terrain");
+	if (expand_terrain)
+	{
+		static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
+		ImVec2 cell_padding(0.0f, 2.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
+		ImGui::BeginTable("Terrain", 2);
+		ImU32 cell_bg_color = ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.7f, 0.65f));
+
+		bool update = false;
+
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text("Size");
+		ImGui::TableNextColumn();
+		string id_size = "##size";
+		if (ImGui::SliderFloat(id_size.c_str(), &m_size, 0.0f, 1.0f, "%.1f", 0))
+		{
+			//t->setSize(size);
+			update = true;
+		}
+
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text("Grid Size");
+		ImGui::TableNextColumn();
+		string id_grid = "##grid";
+		if (ImGui::SliderFloat(id_grid.c_str(), &m_grid_size, 0.0f, 1.0f, "%.1f", 0))
+		{
+			//t->setGridSize(grid_size);
+			update = true;
+		}
+
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text("Threshold");
+		ImGui::TableNextColumn();
+		string id_threshold = "##threshold";
+		if (ImGui::SliderFloat(id_threshold.c_str(), &m_threshold, 0.0f, 1.0f, "%.1f", 0))
+		{
+			//t->setThreshold(threshold);
+			update = true;
+		}
+
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text("Noise Scale");
+		ImGui::TableNextColumn();
+		string id_scale = "##noiseScale";
+		if (ImGui::SliderInt(id_scale.c_str(), &m_noise_scale, 1, 10))
+		{
+			//t->setNoiseScale(mnoise_scale);
+			update = true;
+		}
+
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text("Octaves");
+		ImGui::TableNextColumn();
+		string id_octave = "##octaves";
+		if (ImGui::SliderInt(id_octave.c_str(), &m_octaves, 1, 20))
+		{
+			//t->setOctave(octaves);
+			update = true;
+		}
+
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text("Frequency");
+		ImGui::TableNextColumn();
+		string id_freq = "##frequency";
+		if (ImGui::SliderFloat(id_freq.c_str(), &m_threshold, 0.0f, 1.0f, "%.3f", 0))
+		{
+			//t->setFrequency(frequency);
+			update = true;
+		}
+
+		if (update)
+		{
+			createWeights();
+			updateVertex();
+		}
+
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+		ImGui::AlignTextToFramePadding();
+		static int clicked = 0;
+		if (ImGui::Button("Click to edit terrain"))
+		{
+			clicked++;
+		}
+
+		static int selected = -1;
+		if (clicked & 1)
+		{
+			//t->setIsEdit(true);
+			m_is_edit = true;
+			ImGui::TableNextColumn();
+			char buf1[32];
+			sprintf_s(buf1, "Sculpting");
+			if (ImGui::Selectable(buf1, selected == 0, 0, ImVec2(64, 16)))
+				selected = 0;
+
+			//ImGui::TableNextColumn();
+			char buf2[32];
+			sprintf_s(buf2, "Remove");
+			if (ImGui::Selectable(buf2, selected == 1, 0, ImVec2(64, 16)))
+				selected = 1;
+
+		}
+		else
+		{
+			selected = -1;
+			//t->setIsEdit(false);
+			m_is_edit = false;
+		}
+
+		if (selected == 0)
+		{
+			//t->setStrength(1.0f);
+			m_strength = 1.0f;
+		}
+		else if (selected == 1)
+		{
+			//t->setStrength(-1.0f);
+			m_strength = -1.0f;
+		}
+
+		ImGui::EndTable();
+		ImGui::PopStyleVar();
+		ImGui::TreePop();
+	}
+	else
+	{
+		//t->setIsEdit(false);
+		m_is_edit = false;
+	}
 }

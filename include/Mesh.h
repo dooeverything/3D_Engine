@@ -9,6 +9,7 @@
 #include "Material.h"
 
 #include <assimp/Importer.hpp>
+#include <assimp/Exporter.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
@@ -35,33 +36,15 @@ public:
 
 class Mesh
 {
-protected:
-	string m_directory;
-	shared_ptr<BoundingBox> m_bbox;
-
-private:
-	string m_name;
-	shared_ptr<VertexBuffer> m_buffer;
-	vector<shared_ptr<Texture>> m_textures;
-	shared_ptr<Material> m_material;
-	glm::mat4 m_transform_pos;
-	glm::mat4 m_transform_rot;
-	glm::mat4 m_transform_scale;
-	glm::vec3 m_center;
-	float t_min;
-	float t_max;
-
 public:
-	Mesh();
+	Mesh(string name);
 	Mesh(string name, const string& path);
-	Mesh(string name, vector<info::VertexLayout> layouts);
-	Mesh(string name, vector<info::VertexLayout> layouts, vector<unsigned int> indices);
-	Mesh(string name, vector<info::VertexLayout> layouts, vector<unsigned int> indices, vector<glm::mat4> matrices);
-	Mesh(string name, shared_ptr<VertexBuffer> buffer, vector<shared_ptr<Texture>> textures,
+	Mesh(string name, 
+		 shared_ptr<VertexBuffer> buffer, 
+		 vector<shared_ptr<Texture>> textures,
 		 shared_ptr<Material> material);
 
 	virtual void processMesh();
-
 	void drawArrays();
 	void drawInstance(glm::mat4& P, glm::mat4& V);
 	void draw();
@@ -71,12 +54,12 @@ public:
 	virtual void draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool terrain=false);
 	virtual void drawLowQuality(Shader& shader);
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
-	virtual void updateBuffer(const vector<info::VertexLayout>& pos);
-
+	virtual inline void updateBuffer(const vector<info::VertexLayout>& layouts) { m_buffer->updateBuffer(layouts); };
+	
 	inline void setName(string name) { m_name = name; };
-	virtual void setPosition(glm::mat4 t);
-	virtual void setRotation(glm::mat4 t);
-	virtual void setScale(glm::mat4 t);
+	virtual inline void setPosition(glm::mat4 t) { m_transform_pos = t; };
+	virtual inline void setRotation(glm::mat4 t) { m_transform_rot = t; };
+	virtual inline void setScale(glm::mat4 t) { m_transform_scale = t; };
 	virtual inline void setDirectory(string directory) { m_directory = directory; };
 	virtual inline void setRayHitMin(float t) { t_min = t; }
 
@@ -84,30 +67,37 @@ public:
 	inline BoundingBox& getBox() { return *m_bbox; };
 	inline string getName() { return m_name; };
 	inline glm::vec3 getCenter() { return m_center; };
-	
 	virtual inline VertexBuffer& getBuffer() { return *m_buffer.get(); };
 	virtual inline vector<shared_ptr<Texture>>& getTexture() { return m_textures; };
-	virtual inline glm::mat4 getTransform()
-	{
-		return (m_transform_pos * m_transform_rot * m_transform_scale);
-	};
+	virtual inline glm::mat4 getTransform() { return (m_transform_pos * m_transform_rot * m_transform_scale);};
 	virtual inline glm::mat4* getPosition() { return &m_transform_pos; };
 	virtual inline glm::mat4* getRotation() { return &m_transform_rot; };
 	virtual inline glm::mat4* getScale() { return &m_transform_scale; };
 	virtual inline glm::vec3 getSize() { return abs(m_bbox->getMax() - m_bbox->getMin()); };
 	virtual inline float getRayHitMin() { return t_min; };
+
+protected:
+	string m_directory;
+
+private:
+	string m_name;
+	shared_ptr<BoundingBox> m_bbox;
+
+	vector<shared_ptr<Texture>> m_textures;
+	shared_ptr<VertexBuffer> m_buffer;
+	shared_ptr<Material> m_material;
+	
+	glm::mat4 m_transform_pos;
+	glm::mat4 m_transform_rot;
+	glm::mat4 m_transform_scale;
+	glm::vec3 m_center;
+	
+	float t_min;
+	float t_max;
 };
 
 class FBXMesh : public Mesh
 {
-private:	
-	const aiScene* m_aiScene;
-	Assimp::Importer m_importer;
-	
-	vector<shared_ptr<Mesh>> m_meshes;
-	vector<shared_ptr<Texture>> m_textures_loaded;
-	string m_path;
-
 public:
 	FBXMesh();
 	FBXMesh(const string& path);
@@ -122,22 +112,19 @@ public:
 
 	virtual void draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool terrain = false);
 	virtual void draw();
-
-	inline virtual void updateBuffer(const vector<info::VertexLayout>& layouts) { m_meshes[0]->updateBuffer(layouts); };
-
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
-
+	
+	virtual inline void updateBuffer(const vector<info::VertexLayout>& layouts) { m_meshes[0]->updateBuffer(layouts); };
 	virtual void setPosition(glm::mat4 t);
 	virtual void setRotation(glm::mat4 t);
 	virtual void setScale(glm::mat4 t);
-	virtual inline void setRayHitMin(float t) 
+	virtual void setRayHitMin(float t) 
 	{ 
 		for (int i = 0; i < m_meshes.size(); ++i)
 		{
 			m_meshes[i]->setRayHitMin(t);
 		}
 	}
-
 
 	virtual inline VertexBuffer& getBuffer() { return m_meshes[0]->getBuffer(); };
 	virtual inline string getPath() { return m_path; };
@@ -168,6 +155,7 @@ public:
 		//cout << "Final: "  << endl;
 		return glm::abs(max-min);
 	}
+
 	virtual inline vector<shared_ptr<Texture>>& getTexture() { return m_meshes.at(0)->getTexture(); };
 	virtual inline glm::mat4* getPosition() { return m_meshes.at(0)->getPosition(); };
 	virtual inline glm::mat4* getRotation() { return m_meshes.at(0)->getRotation(); };
@@ -182,7 +170,15 @@ public:
 		
 		return f_min; 
 	};
-	//virtual inline float getRayHitMax() { return t_min; };
+
+private:
+	const aiScene* m_aiScene;
+	Assimp::Importer m_importer;
+
+	vector<shared_ptr<Mesh>> m_meshes;
+	vector<shared_ptr<Texture>> m_textures_loaded;
+	string m_path;
+
 };
 
 class ParticleMesh

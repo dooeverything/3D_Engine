@@ -1,8 +1,8 @@
 #include "Object.h"
 
 Object::Object() :
-	m_mesh(nullptr), m_shader(nullptr), 
-	m_click(false), m_name(""), m_property({}), m_path(""), m_id(0)
+	m_mesh(nullptr), m_shader(nullptr), m_soft(nullptr),
+	m_click(false), m_delete(false), m_name(""), m_property({}), m_path(""), m_id(0)
 {
 	m_property.push_back(glm::vec3(0.0f)); // Position
 	m_property.push_back(glm::vec3(0.0f)); // Rotation
@@ -10,7 +10,8 @@ Object::Object() :
 }
 
 Object::Object(const string& mesh_path) :
-	m_click(false), m_name(""), m_property({}), m_path(mesh_path), m_id(0)
+	m_soft(nullptr),
+	m_click(false), m_delete(false), m_name(""), m_property({}), m_path(mesh_path), m_id(0)
 {
 	int last = int(mesh_path.find_last_of('/'));
 	if (last == -1)
@@ -39,6 +40,7 @@ Object::Object(const string& mesh_path) :
 		cerr << "Invalid file " << mesh_path << endl;
 		assert(0);
 	}
+	m_mesh->processMesh();
 
 	m_property.push_back(glm::vec3(0.0f)); // Position
 	m_property.push_back(glm::vec3(0.0f)); // Rotation
@@ -46,10 +48,12 @@ Object::Object(const string& mesh_path) :
 
 	vector<string> shader_path = { "assets/shaders/BRDF.vert", "assets/shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
+	m_shader->processShader();
 }
 
 Object::Object(const string& mesh_path, const vector<string>& shader) :
-	m_click(false), m_name(""), m_property({}), m_path(mesh_path), m_id(0)
+	m_soft(nullptr), 
+	m_click(false), m_delete(false), m_name(""), m_property({}), m_path(mesh_path), m_id(0)
 {
 	int last = int(mesh_path.find_last_of('/'));
 	if (last == -1)
@@ -73,12 +77,19 @@ Object::Object(const string& mesh_path, const vector<string>& shader) :
 			m_mesh = make_shared<FBXMesh>(mesh_path);
 		}
 	}
+	else
+	{
+		cerr << "Invalid file " << mesh_path << endl;
+		assert(0);
+	}
+	m_mesh->processMesh();
 
 	m_property.push_back(glm::vec3(0.0f)); // Position
 	m_property.push_back(glm::vec3(0.0f)); // Rotation
 	m_property.push_back(glm::vec3(1.0f)); // Scale
 
 	m_shader = make_shared<Shader>(shader);
+	m_shader->processShader();
 }
 
 Object::~Object()
@@ -159,7 +170,14 @@ Gizmo::Gizmo(int axis) : m_axis(axis)
 {
 	cout << "Gizmo constructor " << axis << endl;
 
-	m_mesh = make_shared<FBXMesh>("assets/models/Arrow.fbx");
+	if (axis == 3)
+	{
+		m_mesh = make_shared<Mesh>("Gizmo_Center", "assets/models/Cube.txt");
+	}
+	else
+	{
+		m_mesh = make_shared<FBXMesh>("assets/models/Arrow.fbx");
+	}
 	m_mesh->processMesh();
 
 	vector<string> shader_paths = {"assets/shaders/Arrow.vert", "assets/shaders/Arrow.frag"};
@@ -172,10 +190,16 @@ Gizmo::~Gizmo()
 
 void Gizmo::draw(GameObject& go, const glm::mat4& P, const glm::mat4& V, glm::vec3 cam_pos)
 {
+	//cout << "Draw: " << m_axis << endl;
+
 	glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	glm::mat4 M = glm::mat4(1.0f);
 	glm::vec3 scale = glm::vec3(glm::length(m_property[0] - cam_pos) * 0.05f);
+	
+	if (m_axis == 3)
+		scale *= 0.2f;
+
 	M = glm::scale(M, scale);
 	M = *(go.getMesh()->getPosition()) * M;
 	
@@ -183,11 +207,18 @@ void Gizmo::draw(GameObject& go, const glm::mat4& P, const glm::mat4& V, glm::ve
 		M = glm::rotate(M, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	else if (m_axis == 2)
 		M = glm::rotate(M, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-	if (m_click)
-		color[m_axis] = 0.5f;
+	
+	if (m_axis != 3)
+	{
+		if (m_click)
+			color[m_axis] = 0.3f;
+		else
+			color[m_axis] = 0.7f;	
+	}
 	else
-		color[m_axis] = 1.0f;
+	{
+		color = glm::vec3(1.0f);
+	}
 	
 	m_mesh->setPosition(M);
 
@@ -198,6 +229,8 @@ void Gizmo::draw(GameObject& go, const glm::mat4& P, const glm::mat4& V, glm::ve
 
 bool Gizmo::isClick(glm::vec3& ray_dir, glm::vec3& ray_pos)
 {
+	if (m_axis == 3) return false;
+
 	return m_mesh->intersect(ray_dir, ray_pos);
 }
 
@@ -205,10 +238,10 @@ Grid::Grid()
 {
 	m_name = "Grid";
 	m_mesh = make_shared<Mesh>(m_name, "assets/models/Grid.txt");
+	m_mesh->processMesh();
+	
 	vector<string> shader_path = { "assets/shaders/Grid.vert", "assets/shaders/Grid.frag" };
 	m_shader = make_shared<Shader>(shader_path);
-
-	m_mesh->processMesh();
 	m_shader->processShader();
 
 	cout << "Grid finish loading..." << endl;
@@ -224,78 +257,125 @@ void Grid::draw(const glm::mat4& P, const glm::mat4& V, glm::vec3 cam_pos)
 	m_mesh->draw();
 }
 
-GameObject::GameObject() : Object(), 
-	m_color(glm::vec3(1.0f, 0.5f, 0.31f)),
-	m_move_axis(-1), m_irradiance(0), m_prefilter(0), m_lut(0)
+GameObject::GameObject() : 
+	Object(), m_is_popup(false),
+	m_color(glm::vec3(1.0f, 0.5f, 0.31f)), 
+	m_move_axis(-1)
 {}
 
-GameObject::GameObject(const string& mesh_path) : Object(mesh_path),
+GameObject::GameObject(const string& mesh_path) : 
+	Object(mesh_path), m_is_popup(false),
 	m_color(glm::vec3(1.0f, 0.5f, 0.31f)),
 	m_move_axis(-1)
-{
-	loadMesh();
-	loadShader();
+{}
 
-	cout << m_name << " successfully loaded..." << endl;
-	cout << endl;
-}
-
-GameObject::GameObject(const string& mesh_path, const vector<string>& shader_path) : Object(mesh_path, shader_path),
+GameObject::GameObject(const string& mesh_path, const vector<string>& shader_path) : 
+	Object(mesh_path, shader_path), m_is_popup(false),
 	m_color(glm::vec3(1.0f, 0.5f, 0.31f)), m_move_axis(-1)
-{
-	loadMesh();
-	loadShader();
-
-	cout << m_name << " successfully loaded..." << endl;
-	cout << endl;
-}
+{}
 
 GameObject::~GameObject()
 {}
 
+void GameObject::move(Camera& camera)
+{
+	int final_x = 0;
+	int final_y = 0;
+	float moveCellSize = 0.1f;
+	SDL_GetRelativeMouseState(&final_x, &final_y);
+
+	glm::vec3 pos = glm::vec3(0.0, 0.0, 0.0);
+	if (m_move_axis == 0)
+	{
+		if (camera.getForward().z <= 0)
+		{
+			if (final_x < -1.0)
+				pos[m_move_axis] = -moveCellSize;
+			else if (final_x > 1.0)
+				pos[m_move_axis] = moveCellSize;
+		}
+		else
+		{
+			if (final_x > 1.0)
+				pos[m_move_axis] = -moveCellSize;
+			else if (final_x < -1.0)
+				pos[m_move_axis] = moveCellSize;
+		}
+	}
+	else if (m_move_axis == 1)
+	{
+		if (final_y < -1.0)
+			pos[m_move_axis] = moveCellSize;
+		else if (final_y > 1.0)
+			pos[m_move_axis] = -moveCellSize;
+	}
+	else
+	{
+		if (camera.getForward().x >= 0.85f)
+		{
+			if (final_x < -1.0)
+				pos[m_move_axis] = -moveCellSize;
+			else if (final_x > 1.0)
+				pos[m_move_axis] = moveCellSize;
+		}
+		else if (camera.getForward().x <= -0.9f)
+		{
+			if (final_x > 1.0)
+				pos[m_move_axis] = -moveCellSize;
+			else if (final_x < -1.0)
+				pos[m_move_axis] = moveCellSize;
+		}
+		else if (camera.getForward().z < 0)
+		{
+			if (final_y < -1.0)
+				pos[m_move_axis] = -moveCellSize;
+			else if (final_y > 1.0)
+				pos[m_move_axis] = moveCellSize;
+		}
+		else
+		{
+			if (final_y > 1.0)
+				pos[m_move_axis] = -moveCellSize;
+			else if (final_y < -1.0)
+				pos[m_move_axis] = moveCellSize;
+		}
+	}
+	m_property.at(0) += pos;
+	setPosition(m_property.at(0));
+}
+
 void GameObject::drawPreview(Material& mat)
 {
-	//cout << "Draw preview : " << m_irradiance << " " << m_prefilter << " " << m_lut << endl;
-	
 	glm::mat4 P = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
-	glm::mat4 V = glm::lookAt(glm::vec3(1.0f, 0.5f, 2.5f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 V = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 M = glm::mat4(1.0f);
 
-	glm::vec3 dir = { -0.2f, -1.0f, -0.3f };
-	glm::vec3 amb = { 10.0f, 10.0f, 10.0f };
+	glm::vec3 dir = { -1.0f, -1.0f, -1.0f };
+	glm::vec3 amb = { 1.0f, 1.0f, 1.0f };
 	glm::vec3 diff = { 0.8f, 0.8f, 0.8f };
 	glm::vec3 spec = { 0.5f, 0.5f, 0.5f };
 	unique_ptr<Light> light = make_unique<Light>(dir, amb, diff, spec);
-	glm::vec3 view_pos = glm::vec3(0.0, 0.0, 4.0);
+	glm::vec3 view_pos = glm::vec3(0.0f, 0.0f, 3.0f);
 
 	m_shader->load();
 	m_shader->setVec3("view_pos", view_pos);
 	m_shader->setLight(*light);
-	m_shader->setInt("preview", 1);
 	m_shader->setMaterial(mat);
+	m_shader->setPVM(P, V, M);
+	m_shader->setInt("type", 3);
 
 	m_shader->setInt("shadow_map", 0);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, 0);
 	m_shader->setInt("irradiance_map", 1);
 	glActiveTexture(GL_TEXTURE0 + 1);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, m_irradiance);
 	m_shader->setInt("prefilter_map", 2);
 	glActiveTexture(GL_TEXTURE0 + 2);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, m_prefilter);
 	m_shader->setInt("lut_map", 3);
 	glActiveTexture(GL_TEXTURE0 + 3);
-	glBindTexture(GL_TEXTURE_2D, m_lut);
-
-	m_shader->setPVM(P, V, M);
-
-	m_shader->setInt("has_texture", 0);
 
 	if (mat.getTexture() != nullptr)
 	{
-		//cout << "Add texture to the object" << endl;
-		//cout << m_buffer->getLayouts().at(0).texCoord << endl;
-		m_shader->setInt("has_texture", 1);
+		m_shader->setInt("type", 1);
 		m_shader->setInt("texture_map", 4);
 		glActiveTexture(GL_TEXTURE0 + 4);
 		mat.getTexture()->setActive();
@@ -308,52 +388,44 @@ void GameObject::drawPreview(Material& mat)
 void GameObject::drawPreview(vector<shared_ptr<Texture>>& tex)
 {
 	glm::mat4 P = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
-	glm::mat4 V = glm::lookAt(glm::vec3(1.0f, 0.5f, 2.5f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 V = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 M = glm::mat4(1.0f);
 
-	glm::vec3 dir = { -0.2f, -1.0f, -0.3f };
-	glm::vec3 amb = { 10.0f, 10.0f, 10.0f };
+	glm::vec3 dir = { -1.0f, -1.0f, -1.0f };
+	glm::vec3 amb = { 1.0f, 1.0f, 1.0f };
 	glm::vec3 diff = { 0.8f, 0.8f, 0.8f };
 	glm::vec3 spec = { 0.5f, 0.5f, 0.5f };
 	unique_ptr<Light> light = make_unique<Light>(dir, amb, diff, spec);
-	glm::vec3 view_pos = glm::vec3(0.0, 0.0, 4.0);
+	glm::vec3 view_pos = glm::vec3(0.0f, 0.0f, 3.0f);
 
 	m_shader->load();
 	m_shader->setVec3("view_pos", view_pos);
 	m_shader->setLight(*light);
-	m_shader->setInt("preview", 1);
-	//m_shader->setMaterial(mat);
+	m_shader->setPVM(P, V, M);
 
 	m_shader->setInt("shadow_map", 0);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, 0);
 	m_shader->setInt("irradiance_map", 1);
 	glActiveTexture(GL_TEXTURE0 + 1);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, m_irradiance);
 	m_shader->setInt("prefilter_map", 2);
 	glActiveTexture(GL_TEXTURE0 + 2);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, m_prefilter);
 	m_shader->setInt("lut_map", 3);
 	glActiveTexture(GL_TEXTURE0 + 3);
-	glBindTexture(GL_TEXTURE_2D, m_lut);
 
-	m_shader->setPVM(P, V, M);
-
-	m_shader->setInt("has_texture", 1);
+	m_shader->setInt("type", 1);
 	m_shader->setInt("texture_map", 4);
 	glActiveTexture(GL_TEXTURE0 + 4);
 	tex[0]->setActive();
+
 	m_mesh->draw();
+
+	glActiveTexture(GL_TEXTURE0);
 }
 
 void GameObject::draw(const glm::mat4& P, const glm::mat4& V,
 	Light& light, glm::vec3& view_pos, ShadowMap& shadow, 
 	IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut)
 {
-	m_prefilter = prefilter.getCubemapBuffer()->getCubemapTexture();
-	m_irradiance = irradiance.getCubemapBuffer()->getCubemapTexture();
-	m_lut = lut.getFrameBuffer()->getTextureID();
-	
 	m_shader->load();
 	glm::mat4 shadow_proj = (*shadow.getProj()) * (*shadow.getView());
 	m_shader->setMat4("light_matrix", shadow_proj);
@@ -362,7 +434,6 @@ void GameObject::draw(const glm::mat4& P, const glm::mat4& V,
 	m_shader->setLight(light);
 	m_shader->setInt("preview", 0);
 
-	// Load shadow map as texture
 	m_shader->setInt("shadow_map", 0);
 	glActiveTexture(GL_TEXTURE0);
 	shadow.getBuffer().bindFrameTexture();
@@ -377,23 +448,17 @@ void GameObject::draw(const glm::mat4& P, const glm::mat4& V,
 	lut.getFrameBuffer()->bindFrameTexture();
 
 	if (m_mesh->getBuffer().getIndices().size() > 1)
-	{
 		m_mesh->draw(P, V, *m_shader);
-	}
 	else
-	{
 		m_mesh->draw(P, V, *m_shader, true);
-	}
+
+	if (m_soft != nullptr)
+		m_soft->m_tet_mesh->draw(P, V, *m_shader, true);
 }
 
 void GameObject::drawInstance(glm::mat4& P, glm::mat4& V)
 {
 	m_mesh->drawInstance(P, V);
-}
-
-void GameObject::loadMesh()
-{
-	m_mesh->processMesh();
 }
 
 Geometry::Geometry() : GameObject()
@@ -422,22 +487,29 @@ void Point::drawPoint(const glm::mat4& P, const glm::mat4& V)
 	m_mesh->drawInstance(P, V);
 }
 
-Sphere::~Sphere() {}
-
-Sphere::Sphere(bool is_create_gizmo, vector<glm::mat4> matrices) :
+Sphere::Sphere(bool is_create_gizmo) :
 	Geometry(), m_division(32.0f), m_radius(1.0f)
 {
-	//cout << "Sphere Constructor" << endl;
+	cout << "********************Create Sphere Constructor********************" << endl;
 
 	m_name = "Sphere";
 
 	vector<info::VertexLayout> layouts = calculateVertex();
 	vector<unsigned int> indices = calculateIndex();
-	m_mesh = make_shared<Mesh>(m_name, layouts, indices, matrices);
+	m_mesh = make_shared<Mesh>(m_name);
+	m_mesh->getBuffer().createBuffers(layouts, indices);
+	m_mesh->computeBoundingBox();
 
 	vector<string> shader_path = { "assets/shaders/BRDF.vert", "assets/shaders/BRDF.frag" };
 	m_shader = make_shared<Shader>(shader_path);
-	loadShader();
+	m_shader->processShader();
+
+	cout << "********************Finish create sphere********************\n" << endl;
+}
+
+Sphere::~Sphere() 
+{
+	cout << "Delete Sphere" << endl;
 }
 
 vector<info::VertexLayout> Sphere::calculateVertex()
@@ -599,7 +671,7 @@ void Outline::setupBuffers(GameObject& go, const glm::mat4& V, float width, floa
 		m_outline_shader->setInt("outline_map", 0);
 		m_outline_shader->setFloat("width", 1400);
 		m_outline_shader->setFloat("height", 800);
-		m_outline_shader->setInt("pass", 1);
+		m_outline_shader->setInt("pass", 0);
 		m_outline_shader->setFloat("jump", 2.0f);
 		m_debug->getMesh()->draw();
 	m_outline_buffers.at(3)->unbind();
@@ -608,17 +680,13 @@ void Outline::setupBuffers(GameObject& go, const glm::mat4& V, float width, floa
 void Outline::draw(GameObject& go)
 {
 	m_outline_shader->load();
-
 	glActiveTexture(GL_TEXTURE0);
 	m_outline_buffers.back()->bindFrameTexture();
 	m_outline_shader->setInt("outline_map", 0);
-
 	glActiveTexture(GL_TEXTURE0+1);
 	m_outline_buffers.at(0)->bindFrameTexture();
 	m_outline_shader->setInt("mask_map", 1);
-
 	m_outline_shader->setInt("pass", 2);
-
 	m_debug->getMesh()->draw();
 }
 

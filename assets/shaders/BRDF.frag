@@ -46,8 +46,7 @@ uniform TextureFBX tex_fbx;
 uniform vec3 view_pos;
 uniform vec3 light_pos;
 uniform Light light;
-uniform int has_texture;
-uniform int preview;
+uniform int type;
 
 #define M_PI 3.1415926535897932384626433832795
 
@@ -109,6 +108,27 @@ float ShadowCalculation(vec4 light_space, float cos_theta)
 	return shadow;
 }
 
+vec3 CalcDirLight(Light light, vec3 normal, vec3 view_dir)
+{
+	vec3 light_dir = normalize(-light.direction);
+
+	// Ambient
+	float amb = 0.5f;
+	vec3 ambient = light.ambient * amb * mat.color;
+	
+	// Diffuse
+	float diff = max(dot(normal, light_dir), 0.0);
+	vec3 diffuse = light.diffuse * diff * mat.color;
+
+	// Specular
+	vec3 reflect_dir = 2 * dot(normal, light_dir) * normal - light_dir;
+	vec3 h = normalize(light_dir + view_dir);
+	float spec = pow(max(dot(view_dir, h), 0.0), 32.0);	
+	vec3 specular = light.specular * spec * mat.color;
+
+	return (ambient + diffuse + specular);
+}
+
 void main()
 {
     vec3 l = normalize(-light.direction);
@@ -119,7 +139,7 @@ void main()
 	vec3 color = vec3(0.0);
 	float shadow = ShadowCalculation(fs_in.frag_pos_light, max(dot(l, n), 0.0));
 
-	if(has_texture == 0)
+	if(type == 0)
 	{
 		vec3 F = fernel(max(dot(n,v),0.0)); // Reflection
 		float G = geometry(max(dot(n,l),0.0)) * geometry(max(dot(n,v),0.0));
@@ -130,10 +150,6 @@ void main()
 		kD *= 1.0-mat.metallic;
 		vec3 diffuse2 = kD*mat.color/M_PI;
 		vec3 second_sum = (diffuse2 + specular2) * light.ambient * max(dot(l, n), 0.0);
-		if(preview == 0)
-		{
-			second_sum *= (1-shadow);
-		}
 
 		F = fernelRoughness(max(dot(n,v),0.0));
 		kS = F;
@@ -149,7 +165,7 @@ void main()
 		color = color / (color + vec3(1.0)); // HDR
 		color = pow(color, vec3(1.0/2.2)); // Gamma correction
 	} 
-	else if(has_texture == 1)
+	else if(type == 1)
 	{
 		vec3 texture_color = vec3(texture(texture_map, fs_in.frag_texCoord));
 		vec3 ambient = vec3(1.0) * texture_color;
@@ -157,7 +173,7 @@ void main()
 		vec3 specular = light.specular * pow(max(dot(v, h), 0.0), 32.0) * vec3(0.5);
 		color = ambient + (1.0-shadow)*(diffuse+specular);
 	}
-	else if(has_texture == 2)
+	else if(type == 2)
 	{
 		vec3 texture_color = vec3(texture(tex_fbx.color1, fs_in.frag_texCoord));
 		vec3 ambient = vec3(1.0) * texture_color;
@@ -165,5 +181,10 @@ void main()
 		vec3 specular = light.specular * pow(max(dot(v, h), 0.0), 32.0) * vec3(0.5);
 		color = ambient + (1.0-shadow)*(diffuse+specular);
 	}
+	else if(type == 3)
+	{
+		color = CalcDirLight(light, n, v);
+	}
+
     frag_color = vec4(color, 1.0);
 }  

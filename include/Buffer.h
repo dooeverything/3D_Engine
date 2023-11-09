@@ -36,8 +36,8 @@ public:
 	void createBuffers(const vector<info::VertexLayout>& layouts);
 	void createBuffers(const vector<info::VertexLayout>& layouts, const vector<unsigned int>& indices);
 	void updateBuffer(const vector<info::VertexLayout>& pos);
-	virtual void bind() const;
-	virtual void unbind() const;
+	void bind() const;
+	void unbind() const;
 	
 	inline vector<info::VertexLayout>& getLayouts() { return m_layouts; };
 	inline vector<unsigned int> getIndices() { return m_indices; };
@@ -68,8 +68,8 @@ public:
 	virtual void createBuffers(int width, int height);
 	virtual void bind();
 	virtual void unbind();
-	void rescaleFrame(int width, int height);
 	virtual void bindFrameTexture();
+	void rescaleFrame(int width, int height);
 
 	virtual GLuint getTextureID() { return m_framebuffer_texture; };
 	virtual int getWidth() { return m_width; };

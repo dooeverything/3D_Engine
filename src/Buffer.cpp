@@ -63,6 +63,7 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts, cons
 	m_indices = indices;
 	n_layouts = static_cast<unsigned int>(layouts.size());
 	n_indices = static_cast<unsigned int>(indices.size());
+	cout << "CreateBuffers: " << m_layouts.size() << " " << m_indices.size() << endl;
 
 	// Generate buffers: VAO, VBO, EBO
 	glGenVertexArrays(1, &m_VAO);
