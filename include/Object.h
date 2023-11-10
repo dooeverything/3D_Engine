@@ -18,9 +18,9 @@ public:
 	Object(const string& mesh_path, const vector<string>& shader);
 	~Object();
 
-	virtual void addSoftBodySolver() { m_soft = make_shared<SoftBodySolver>(m_mesh.get()); };
 	virtual bool isClick(glm::vec3& ray_dir, glm::vec3& ray_pos);
 	virtual inline void resetRayHit() { m_mesh->setRayHitMin(FLT_MAX); };
+	virtual inline void addSoftBodySolver() { m_soft = make_shared<SoftBodySolver>(m_mesh.get()); };
 
 	virtual SoftBodySolver* getSoftBodySolver() { return m_soft.get(); }
 	virtual inline shared_ptr<Shader> getShader() { return m_shader; };

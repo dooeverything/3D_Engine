@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef IMGUIPANEL_H
+#define IMGUIPANEL_H
+
 #include "imgui-docking/imgui.h"
 #include "imgui-docking/imgui_impl_sdl2.h"
 #include "imgui-docking/imgui_impl_opengl3.h"
@@ -20,11 +23,10 @@ public:
 
 	virtual void calculatePanelSize();
 	virtual bool mouseInPanel(int x, int y);
-	
-	ImVec2 m_scene_min;
-	ImVec2 m_scene_max;
 
 private:
+	ImVec2 m_scene_min;
+	ImVec2 m_scene_max;
 	string m_name;
 };
 
@@ -90,3 +92,5 @@ public:
 	void render(vector<shared_ptr<GameObject>>& scene_objects,
 		shared_ptr<GameObject>& clicked_object);
 };
+
+#endif // !IMGUIPANEL_H

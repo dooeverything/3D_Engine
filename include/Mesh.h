@@ -20,10 +20,6 @@ using namespace std;
 // Inspired and modified from https://en.wikibooks.org/wiki/OpenGL_Programming/Bounding_box
 class BoundingBox
 {
-private:
-	glm::vec3 m_min;
-	glm::vec3 m_max;
-
 public:
 	BoundingBox(glm::vec3 min, glm::vec3 max);
 	~BoundingBox();
@@ -32,6 +28,10 @@ public:
 	void draw();
 	inline glm::vec3 getMin() { return m_min; };
 	inline glm::vec3 getMax() { return m_max; };
+
+private:
+	glm::vec3 m_min;
+	glm::vec3 m_max;
 };
 
 class Mesh

@@ -1,4 +1,7 @@
 #pragma once
+#ifndef SPHSYSTEMCUDA_H
+#define SPHSYSTEMCUDA_H
+
 #include <unordered_map>
 
 #include "Object.h"
@@ -40,7 +43,7 @@ private:
 
 	unique_ptr<Point> m_point;
 	unique_ptr<GameObject> m_screen;
-	unique_ptr<ShadowBuffer> m_fb;
+	unique_ptr<FrameBuffer> m_fb;
 	unique_ptr<ShadowBuffer> m_fb_curvature;
 	unique_ptr<ShadowBuffer> m_fb_curvature2;
 	unique_ptr<FrameBuffer> m_fb_normal;
@@ -66,5 +69,6 @@ private:
 	int render_type;
 	float t;
 	bool m_simulation;
-
 };
+
+#endif // !SPHSYSTEMCUDA_H

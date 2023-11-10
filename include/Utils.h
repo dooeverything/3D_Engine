@@ -3,10 +3,13 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+#ifndef UTILS_H
+#define UTILS_H
+
 #ifndef HAVE_M_PI
-#ifndef M_PI
-#define M_PI    3.14159265f   /**< pi */
-#endif
+    #ifndef M_PI
+    #define M_PI    3.14159265f   /**< pi */
+    #endif
 #endif
 
 using namespace std;
@@ -340,3 +343,5 @@ namespace table
                                     {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
                                     {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1} };
 }
+
+#endif // !UTILS_H

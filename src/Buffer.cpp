@@ -146,7 +146,7 @@ void FrameBuffer::createBuffers(int width, int height)
 {
 	m_width = width;
 	m_height = height;
-
+	cout << "Create framebuffer" << endl;
 	// Create a framebuffer
 	glGenFramebuffers(1, &m_FBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
@@ -241,10 +241,17 @@ void DepthBuffer::createBuffers(int width, int height)
 		assert(0);
 	}
 
+	// Check any errors
+	if (glGetError() != GL_NO_ERROR)
+	{
+		cerr << "Error while creating shadow buffer: " << glGetError() << endl;
+		assert(0);
+	}
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-ShadowBuffer::ShadowBuffer() : m_shadow_map(0)
+ShadowBuffer::ShadowBuffer()
 {}
 
 ShadowBuffer::~ShadowBuffer()
@@ -252,27 +259,49 @@ ShadowBuffer::~ShadowBuffer()
 
 void ShadowBuffer::createBuffers(int width, int height)
 {
+	m_width = width;
+	m_height = height;
 	cout << "Create a shadow buffer" << endl;
 	
-	// Create a texture to store shadow values 
-	glGenTextures(1, &m_shadow_map);
-	glBindTexture(GL_TEXTURE_2D, m_shadow_map);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	float border_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
-
-	// Framebuffer to store depth values(shadow map)
+	// Create a framebuffer
 	glGenFramebuffers(1, &m_FBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_shadow_map, 0);
+
+	// Create a color attachment texture
+	glGenTextures(1, &m_framebuffer_texture);
+	glBindTexture(GL_TEXTURE_2D, m_framebuffer_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_framebuffer_texture, 0);
+
+	// Create a renderbuffer object for depth and stencil attachment
+	glGenRenderbuffers(1, &m_RBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, m_RBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_RBO);
+
+	//// Create a texture to store shadow values 
+	//glGenTextures(1, &m_shadow_map);
+	//glBindTexture(GL_TEXTURE_2D, m_shadow_map);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	//float border_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	//glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
+
+	//// Framebuffer to store depth values(shadow map)
+	//glGenFramebuffers(1, &m_FBO);
+	//glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_shadow_map, 0);
 	
 	// Disable writes to color buffer, as shadow map will not output the color
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
+	//glDrawBuffer(GL_NONE);
+	//glReadBuffer(GL_NONE);
 
 	auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE)
@@ -281,12 +310,12 @@ void ShadowBuffer::createBuffers(int width, int height)
 		assert(0);
 	}
 
-	//// Check any errors
-	//if (glGetError() != GL_NO_ERROR)
-	//{
-	//	cerr << "Error: " << glGetError() << endl;
-	//	assert(0);
-	//}
+	// Check any errors
+	if (glGetError() != GL_NO_ERROR)
+	{
+		cerr << "Error while creating shadow buffer: " << glGetError() << endl;
+		assert(0);
+	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -303,7 +332,7 @@ void ShadowBuffer::unbind()
 
 void ShadowBuffer::bindFrameTexture()
 {
-	glBindTexture(GL_TEXTURE_2D, m_shadow_map);
+	glBindTexture(GL_TEXTURE_2D, m_framebuffer_texture);
 }
 
 CubemapBuffer::CubemapBuffer() : m_cubemap(0), m_width(0), m_height(0)

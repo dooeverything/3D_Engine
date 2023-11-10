@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef QUATERNION_H
+#define QUATERNION_H
+
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
@@ -17,3 +20,5 @@ private:
 	//float m_angle;
 	glm::vec4 m_v;
 };
+
+#endif // !QUATERNION_H

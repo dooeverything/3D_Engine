@@ -1,7 +1,9 @@
 #pragma once
 
-#include <iostream>
+#ifndef SDL_GL_WINDOW_H
+#define SDL_GL_WINDOW_H
 
+#include <iostream>
 #include <SDL.h>
 #include <GL/glew.h>
 
@@ -13,20 +15,6 @@ using namespace std;
 
 class SDL_GL_Window
 {
-private:
-	SDL_Window* m_window;
-	SDL_GLContext m_context;
-
-	int m_width;
-	int m_height;
-
-	ImVec2 m_scene_min;
-	ImVec2 m_scene_max;
-
-public:
-	int m_x;
-	int m_y;
-
 public:
 	SDL_GL_Window();
 	
@@ -47,4 +35,17 @@ public:
 		m_scene_min = min;
 		m_scene_max = max;
 	}
+
+private:
+	SDL_Window* m_window;
+	SDL_GLContext m_context;
+	ImVec2 m_scene_min;
+	ImVec2 m_scene_max;
+
+	int m_x;
+	int m_y;
+	int m_width;
+	int m_height;
 };
+
+#endif // !SDL_GL_WINDOW_H

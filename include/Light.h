@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef LIGHT_H
+#define LIGHT_H
+
 #include <string>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -58,3 +61,5 @@ private:
 	float m_linear;
 	float m_quadratic;
 };
+
+#endif // !LIGHT_H

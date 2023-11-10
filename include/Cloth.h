@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef CLOTH_H
+#define CLOTH_H
+
 #include <iostream>
 #include <unordered_map>
 
@@ -53,3 +56,5 @@ private:
 
 	bool m_simulate;
 };
+
+#endif

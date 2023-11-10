@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef SHADER_H
+#define SHADER_H
+
 #include <GL/glew.h>
 #include <string>
 #include <iostream>
@@ -45,3 +48,5 @@ private:
 	GLuint m_shader_ID;
 	vector<string> m_paths;
 };
+
+#endif // !SHADER_H

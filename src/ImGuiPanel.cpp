@@ -2,6 +2,7 @@
 #include "Utils.h"
 #include "MarchingCube.h"
 #include "Cloth.h"
+#include "SPHSystemCuda.h"
 
 ImGuiPanel::ImGuiPanel(string name) :
 	m_scene_min(ImVec2(0.0, 0.0)), m_scene_max(ImVec2(0.0, 0.0)), m_name(name)
@@ -98,6 +99,13 @@ void ImGuiMenuBar::render(
 		shared_ptr<GameObject> cloth = make_shared<Cloth>();
 		scene_objects.push_back(cloth);
 		addObject(scene_objects, *cloth);
+	}
+
+	if (ImGui::MenuItem("Fluid"))
+	{
+		shared_ptr<SPHSystemCuda> fluid = make_shared<SPHSystemCuda>(64.0f, 32.0f, 64.0f);
+		scene_objects.push_back(fluid);
+		addObject(scene_objects, *fluid);
 	}
 
 	ImGui::Separator();
@@ -512,12 +520,19 @@ void PopupPanel::render(vector<shared_ptr<GameObject>>& scene_objects,
 
 	ImGui::SeparatorText("Physics");
 
-	if (clicked_object->getSoftBodySolver() == nullptr)
+	if (clicked_object)
 	{
-		if (ImGui::MenuItem("Add SoftbodySolver"))
+		if (clicked_object->getSoftBodySolver() == nullptr)
 		{
-			cout << "Add softbodysolver" << endl;
-			clicked_object->addSoftBodySolver();
-		}	
+			if (ImGui::MenuItem("Add SoftbodySolver"))
+			{
+				cout << "Add softbodysolver" << endl;
+				clicked_object->addSoftBodySolver();
+			}	
+		}
+		else
+		{
+			ImGui::Text("Already Added SoftBodySolver");
+		}
 	}
 }

@@ -195,10 +195,7 @@ void SPHSystemCuda::initParticle()
 			20,21,22, 20,22,23
 		};
 		
-		 
-		cout << "Make mesh" << endl;
 		m_mesh = make_shared<Mesh>("Fluid Boundary");
-		cout << "goo" << endl;
 		m_mesh->getBuffer().createBuffers(layouts, indices);
 		m_mesh->computeBoundingBox();	
 	}
@@ -265,7 +262,10 @@ void SPHSystemCuda::initParticle()
 
 void SPHSystemCuda::initFramebuffer()
 {
-	m_fb = make_unique<ShadowBuffer>();
+	m_fb_normal = make_unique<FrameBuffer>();
+	m_fb_normal->createBuffers(m_fb_width, m_fb_height);
+
+	m_fb = make_unique<FrameBuffer>();
 	m_fb->createBuffers(m_fb_width, m_fb_height);
 
 	m_fb_curvature = make_unique<ShadowBuffer>();
@@ -274,8 +274,6 @@ void SPHSystemCuda::initFramebuffer()
 	m_fb_curvature2 = make_unique < ShadowBuffer>();
 	m_fb_curvature2->createBuffers(m_fb_width, m_fb_height);
 
-	m_fb_normal = make_unique<FrameBuffer>();
-	m_fb_normal->createBuffers(m_fb_width, m_fb_height);
 }
 
 void SPHSystemCuda::initShader()

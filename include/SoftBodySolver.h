@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef SOFTBODYSOLVER_H
+#define SOFTBODYSOLVER_H
+
 #include <unordered_map>
 #include "Mesh.h"
 #include "Particle.h"
@@ -17,35 +20,34 @@ public:
 	~SoftBodySolver();
 
 	void simulate();
-	bool getSimulate() { return m_simulate; };
-	
 	void renderProperty();
 
-	Mesh* m_mesh;
-	unique_ptr<Mesh> m_tet_mesh;
+	bool getSimulate() { return m_simulate; };
 
 private:
-	void getTet(TetMesh& tet_mesh);
-	void getTetVertices(const TetMesh& tet_mesh);
-	void getEdgeVertices(const TetMesh& tet_mesh);
-
-	void getTetIds();
-	void getEdgeIds();
-
 	glm::ivec3 getGridPos(glm::vec3 pos);
 	uint getHashIndex(glm::ivec3& pos);
 
+	void getTet(TetMesh& tet_mesh);
+	void getTetVertices(const TetMesh& tet_mesh);
+	void getEdgeVertices(const TetMesh& tet_mesh);
+	void getTetIds();
+	void getEdgeIds();
 	void buildHash();
-	
 	void computePredictEdges();
 	void computePredictTets();
-
 	void solveDistance(vector<glm::vec3>& predict);
 	void solveVolume(vector<glm::vec3>& predict);
 	
+	void reset();
+
+	Mesh* m_mesh;
+	unique_ptr<Mesh> m_tet_mesh;
 	vector<uint> m_hash_start;
 	vector<uint> m_hash_ids;
+	
 	vector<info::VertexLayout> m_layouts;
+	const vector<info::VertexLayout>& m_og_layouts;
 
 	vector<shared_ptr<SoftParticle>> m_tets;
 	vector<shared_ptr<SoftParticle>> m_edges;
@@ -70,3 +72,5 @@ private:
 	
 	bool m_simulate;
 };
+
+#endif // !SOFTBODYSOLVER_H

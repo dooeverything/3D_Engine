@@ -5,7 +5,7 @@
 #include "SoftBodySolver.h"
 
 SoftBodySolver::SoftBodySolver(Mesh* mesh) :
-	m_simulate(false)
+	m_simulate(false), m_og_layouts(mesh->getBuffer().getLayouts())
 {
 	cout << endl;
 	
@@ -13,7 +13,7 @@ SoftBodySolver::SoftBodySolver(Mesh* mesh) :
 
 	m_dx = 0.1;
 	m_mesh = mesh;
-	m_layouts = m_mesh->getBuffer().getLayouts();
+	m_layouts = mesh->getBuffer().getLayouts();
 
 	m_hash_size = m_layouts.size() * 2;
 	m_hash_start.resize(m_hash_size + 1);
@@ -24,14 +24,14 @@ SoftBodySolver::SoftBodySolver(Mesh* mesh) :
 	TetMesh tet_mesh;
 	getTet(tet_mesh);
 	getTetVertices(tet_mesh);
-	getEdgeVertices(tet_mesh);
+	//getEdgeVertices(tet_mesh);
 	
 	getTetIds();
-	getEdgeIds();
+	//getEdgeIds();
 
 	m_simulate = false;
-	t = 0.02f;
-	n_sub_steps = 3;
+	t = 0.06f;
+	n_sub_steps = 2;
 	t_sub = t / n_sub_steps;
 
 	cout << "********************end********************\n" << endl;
@@ -93,6 +93,7 @@ void SoftBodySolver::getTetVertices(const TetMesh& tet_mesh)
 	}
 	cout << "tet vertices size : " << m_tets.size() << endl;
 
+	// Get rest volume for each tetradehral
 	vector<Vec4i> tet_indices = tet_mesh.tets();
 	for (int i = 0; i < tet_mesh.tSize(); ++i)
 	{
@@ -118,6 +119,44 @@ void SoftBodySolver::getTetVertices(const TetMesh& tet_mesh)
 		float v = glm::dot(glm::cross(e0, e1), e2) / 6.0f;
 		m_rest_v.push_back(v);
 	}
+
+	// Get rest distance for each edge of each tetrahedral
+	// 6 edges for each tetrahedral	
+	for (int i = 0; i < tet_mesh.tSize(); ++i)
+	{
+		int idx0 = tet_indices[i][0];
+		int idx1 = tet_indices[i][1];
+		int idx2 = tet_indices[i][2];
+		int idx3 = tet_indices[i][3];
+
+		glm::vec3 p0 = m_tets[idx0]->m_position;
+		glm::vec3 p1 = m_tets[idx1]->m_position;
+		glm::vec3 p2 = m_tets[idx2]->m_position;
+		glm::vec3 p3 = m_tets[idx3]->m_position;
+
+		glm::vec3 e01 = p1 - p0;
+		glm::vec3 e02 = p2 - p0;
+		glm::vec3 e03 = p3 - p0;
+		glm::vec3 e12 = p2 - p1;
+		glm::vec3 e13 = p3 - p1;
+		glm::vec3 e23 = p3 - p2;
+
+		float d0 = glm::length(e01);
+		float d1 = glm::length(e02);
+		float d2 = glm::length(e03);
+		float d3 = glm::length(e12);
+		float d4 = glm::length(e13);
+		float d5 = glm::length(e23);
+
+		m_rest_d.push_back(d0);
+		m_rest_d.push_back(d1);
+		m_rest_d.push_back(d2);
+		m_rest_d.push_back(d3);
+		m_rest_d.push_back(d4);
+		m_rest_d.push_back(d5);
+	}
+
+	cout << "Size of m_rest_v: " << m_rest_v.size() << " size of m_rest_d: " << m_rest_d.size() << endl;
 }
 
 void SoftBodySolver::getEdgeVertices(const TetMesh& tet_mesh)
@@ -164,20 +203,18 @@ void SoftBodySolver::getTetIds()
 {
 	cout << "Get ids for tets" << endl;
 	vector<int> test;
-	for (int i = 0; i < m_edges.size(); ++i)
+	for (int i = 0; i < m_tets.size(); ++i)
 	{
 		SoftParticle* pi = m_tets[i].get();
-		//glm::ivec3 grid_pos = getGridPos(pi->m_position);
-		//cout << "p1: " << pi->m_position;
-		//cout << "pos: " << pi->m_position << endl;
-		for (float x = -m_dx*2.0f; x <= m_dx * 2.0f; x += m_dx)
+		glm::ivec3 grid_pos = getGridPos(pi->m_position);
+		for (int x = -2; x <= 2; x += 1)
 		{
-			for (float y = -m_dx * 2.0f; y <= m_dx * 2.0f; y += m_dx)
+			for (int y = -2; y <= 2; y += 1)
 			{
-				for (float z = -m_dx * 2.0f; z <= m_dx * 2.0f; z += m_dx)
+				for (int z = -2; z <= 2; z += 1)
 				{
-					glm::vec3 p1 = pi->m_position + glm::vec3(x, y, z);
-					uint h = getHashIndex(getGridPos(p1));
+					glm::ivec3 p1 = grid_pos + glm::ivec3(x, y, z);
+					uint h = getHashIndex(p1);
 
 					int start = m_hash_start[h];
 					int end = m_hash_start[h + 1];
@@ -186,9 +223,62 @@ void SoftBodySolver::getTetIds()
 						glm::vec3 p2 = m_layouts[m_hash_ids[j]].position;
 
 						float dist = glm::length(p2 - pi->m_position);
-						if (dist < m_dx)
+						if (dist < 0.12)
 						{
 							//cout << " vs p2: " << p2 << " with " << m_hash_ids[j] << endl;
+							pi->m_indices.push_back(m_hash_ids[j]);
+							test.push_back(m_hash_ids[j]);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	std::sort(test.begin(), test.end());
+	vector<info::VertexLayout> new_layouts;
+
+	cout << "Test" << endl;
+	for (int i = 0; i < test.size(); ++i)
+	{
+		//cout << test[i] << " ";
+
+		info::VertexLayout layout;
+		layout.position = m_layouts[test[i]].position;
+		new_layouts.push_back(layout);
+	}
+	cout << endl;
+
+	m_tet_mesh = make_unique<Mesh>("tet");
+	m_tet_mesh->getBuffer().createBuffers(new_layouts);
+}
+
+void SoftBodySolver::getEdgeIds()
+{
+	vector<int> test;
+	cout << "Get ids for edges" << endl;
+	for (int i = 0; i < m_edges.size(); ++i)
+	{
+		SoftParticle* pi = m_edges[i].get();
+		glm::ivec3 grid_pos = getGridPos(pi->m_position);
+		for (int x = -2; x <= 2; x += 1)
+		{
+			for (int y = -2; y <= 2; y += 1)
+			{
+				for (int z = -2; z <= 2; z += 1)
+				{
+					glm::ivec3 p1 = grid_pos + glm::ivec3(x, y, z);
+					uint h = getHashIndex(p1);
+
+					int start = m_hash_start[h];
+					int end = m_hash_start[h + 1];
+					for (int j = start; j < end; ++j)
+					{
+						glm::vec3 p2 = m_layouts[m_hash_ids[j]].position;
+
+						float dist = glm::length(p2 - pi->m_position);
+						if (dist < 0.12)
+						{
 							pi->m_indices.push_back(m_hash_ids[j]);
 							test.push_back(m_hash_ids[j]);
 						}
@@ -216,40 +306,6 @@ void SoftBodySolver::getTetIds()
 	m_tet_mesh->getBuffer().createBuffers(new_layouts);
 }
 
-void SoftBodySolver::getEdgeIds()
-{
-	cout << "Get ids for edges" << endl;
-	for (int i = 0; i < m_edges.size(); ++i)
-	{
-		SoftParticle* pi = m_edges[i].get();
-		glm::ivec3 grid_pos = getGridPos(pi->m_position);
-		for (int x = -1; x <= 1; x += 1)
-		{
-			for (int y = -1; y <= 1; y += 1)
-			{
-				for (int z = -1; z <= 1; z += 1)
-				{
-					glm::ivec3 p1 = grid_pos + glm::ivec3(x, y, z);
-					uint h = getHashIndex(p1);
-
-					int start = m_hash_start[h];
-					int end = m_hash_start[h + 1];
-					for (int j = start; j < end; ++j)
-					{
-						glm::vec3 p2 = m_layouts[m_hash_ids[j]].position;
-
-						float dist = glm::length(p2 - pi->m_position);
-						if (dist < m_dx)
-						{
-							pi->m_indices.push_back(m_hash_ids[j]);
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
 glm::ivec3 SoftBodySolver::getGridPos(glm::vec3 pos)
 {
 	int x = int(pos.x / m_dx);
@@ -269,14 +325,11 @@ void SoftBodySolver::simulate()
 {
 	if (m_simulate == false) return;
 
-	//cout << "Update softbodysolver" << endl;
-
-	vector<glm::vec3> predict1(m_edges.size());
 	vector<glm::vec3> predict2(m_tets.size());
-
 
 	for (int sub = 0; sub < n_sub_steps; ++sub)
 	{
+
 		for (int i = 0; i < predict2.size(); ++i)
 		{
 			SoftParticle* p = m_tets[i].get();
@@ -284,8 +337,9 @@ void SoftBodySolver::simulate()
 			predict2[i] = p->m_position + v * t_sub;
 		}
 
-		for (int iter = 0; iter < 3; ++iter)
+		for (int iter = 0; iter < 4; ++iter)
 		{
+			solveDistance(predict2);
 			solveVolume(predict2);
 		}
 
@@ -293,41 +347,40 @@ void SoftBodySolver::simulate()
 		{
 			// Update positions
 			SoftParticle* p = m_tets[i].get();
-			//if (i == 0) cout << "*Update Tet: " << p->m_position << endl;
-			//glm::vec3 predict_pos = p->m_position + predict2[i];
 			if (p->m_pinned)
 			{
 				p->m_velocity = glm::vec3(0.0f);
 			}
 			else
 			{
-				p->m_velocity = (predict2[i] - p->m_position) / t_sub * (1.0f - 0.25f * t_sub);
+				p->m_velocity = (predict2[i] - p->m_position) / t_sub;
 				p->m_position = predict2[i];
 			}
 
-			if (p->m_position.y < -2.0f)
+			if (p->m_position.y < -5.0f)
 			{
 				p->m_velocity *= -0.5f;
-				p->m_position.y = -2.0f;
+				p->m_position.y = -5.0f;
 			}
 		}
 	}
 	
+	for (int i = 0; i < m_tets.size(); ++i)
+	{
+		m_tets[i]->m_velocity *= 0.80f;
+	}
 
 	// update layouts
-	// cout << "Update layouts: " << m_layouts.size() << endl;
 	for (int i = 0; i < m_tets.size(); ++i)
 	{
 		SoftParticle* p = m_tets[i].get();
 		for (int j = 0; j < p->m_indices.size(); ++j)
 		{
 			int idx = p->m_indices[j];
-			//cout << "At " << idx << endl;
-			//cout << " -Before : " << m_layouts[idx].position << endl;
 			m_layouts[idx].position = p->m_position;
-			//cout << " -After  : " << m_layouts[idx].position << endl;
 		}
 	}
+
 	m_mesh->getBuffer().updateBuffer(m_layouts);
 
 	buildHash();
@@ -391,60 +444,97 @@ void SoftBodySolver::computePredictTets()
 
 void SoftBodySolver::solveDistance(vector<glm::vec3>& predict)
 {
-	for (int i = 0; i < m_edges_indices.size()-2; i += 3)
-	{		
-		if(i == 0) cout << "**solving distance" << endl;
+	int edge_idx = 0;
+	for (int i = 0; i < m_tet_indices.size() - 3; i += 4)
+	{
 
-		int idx0 = m_edges_indices[i];
-		int idx1 = m_edges_indices[i + 1];
-		int idx2 = m_edges_indices[i + 2];
+		int idx0 = m_tet_indices[i];
+		int idx1 = m_tet_indices[i + 1];
+		int idx2 = m_tet_indices[i + 2];
+		int idx3 = m_tet_indices[i + 3];
+		//cout << "solving distance at " << edge_idx << endl;
 
-		glm::vec3 p0 = m_edges[idx0]->m_position;
-		glm::vec3 p1 = m_edges[idx1]->m_position;
-		glm::vec3 p2 = m_edges[idx2]->m_position;
+		glm::vec3 p0 = predict[idx0];
+		glm::vec3 p1 = predict[idx1];
+		glm::vec3 p2 = predict[idx2];
+		glm::vec3 p3 = predict[idx3];
 
-		float w0 = 1.0f / m_edges[idx0]->m_mass;
-		float w1 = 1.0f / m_edges[idx1]->m_mass;
-		float w2 = 1.0f / m_edges[idx2]->m_mass;
-
-		glm::vec3 diff0 = p0 - p1;
-		float dist0 = glm::length(p0 - p1);
-		if (dist0 > m_rest_d[i])
+		if (glm::any(glm::isnan(p0)))
 		{
-			float lambda = (dist0 - m_rest_d[i]) / (w0 + w1);
-			glm::vec3 n = diff0 / dist0;
-			predict[idx0] -= lambda * n;
-			predict[idx1] += lambda * n;
+			cout << "Nan detected p0 " << edge_idx << endl;
+			assert(0);
 		}
 
-		glm::vec3 diff1 = p1 - p2;
-		float dist1 = glm::length(p1 - p2);
-		if (dist1 > m_rest_d[i+1])
+		if (glm::any(glm::isnan(p1)))
 		{
-			float lambda = (dist1 - m_rest_d[i + 1]) / (w1 + w2);
-			glm::vec3 n = diff1 / dist1;
-			predict[idx1] -= lambda * n;
-			predict[idx2] += lambda * n;
+			cout << "Nan detected p0" << endl;
+			assert(0);
 		}
 
-		glm::vec3 diff2 = p2 - p0;
-		float dist2 = glm::length(p2 - p0);
-		if (dist2 > m_rest_d[i + 2])
+		if (glm::any(glm::isnan(p2)))
 		{
-			float lambda = (dist2 - m_rest_d[i + 2]) / (w2 + w0);
-			glm::vec3 n = diff2 / dist2;
-			predict[idx2] -= lambda * n;
-			predict[idx0] += lambda * n;
-
-			if (i == 0)
-			{
-				cout << "  dist2: " << dist2 << " vs " << m_rest_d[i + 2] << endl;
-
-				cout << "  change: " << lambda * n << endl;
-				cout << "  predict idx0: " << predict[idx0]  << endl;
-				cout << "  predict idx2: " << predict[idx2]  << endl;
-			}
+			cout << "Nan detected p0" << endl;
+			assert(0);
 		}
+		
+		if (glm::any(glm::isnan(p3)))
+		{
+			cout << "Nan detected p0" << endl;
+			assert(0);
+		}
+
+		float w0 = 1.0f / m_tets[idx0]->m_mass;
+		float w1 = 1.0f / m_tets[idx1]->m_mass;
+		float w2 = 1.0f / m_tets[idx2]->m_mass;
+		float w3 = 1.0f / m_tets[idx3]->m_mass;
+
+		glm::vec3 e01 = p1 - p0;
+		glm::vec3 e02 = p2 - p0;
+		glm::vec3 e03 = p3 - p0;
+		glm::vec3 e12 = p2 - p1;
+		glm::vec3 e13 = p3 - p1;
+		glm::vec3 e23 = p3 - p2;
+
+		float d0 = glm::length(e01);
+		float d1 = glm::length(e02);
+		float d2 = glm::length(e03);
+		float d3 = glm::length(e12);
+		float d4 = glm::length(e13);
+		float d5 = glm::length(e23);
+
+		float a = 0.0f / (t_sub * t_sub);
+
+		float lambda = (d0 - m_rest_d[edge_idx]) / (w0 + w1 + a);
+		glm::vec3 n = e01 / d0;
+		predict[idx0] += w0 * lambda * n;
+		predict[idx1] -= w1 * lambda * n;
+
+		lambda = (d1 - m_rest_d[edge_idx + 1]) / (w2 + w0 + a);
+		n = e02 / d1;
+		predict[idx0] += w0 * lambda * n;
+		predict[idx2] -= w2 * lambda * n;
+
+		lambda = (d2 - m_rest_d[edge_idx + 2]) / (w3 + w0 + a);
+		n = e03 / d2;
+		predict[idx0] += w0 * lambda * n;
+		predict[idx3] -= w3 * lambda * n;
+
+		lambda = (d3 - m_rest_d[edge_idx + 3]) / (w1 + w2 + a);
+		n = e12 / d3;
+		predict[idx1] += w1 * lambda * n;
+		predict[idx2] -= w2 * lambda * n;
+
+		lambda = (d4 - m_rest_d[edge_idx + 4]) / (w1 + w3 + a);
+		n = e13 / d4;
+		predict[idx1] += w1 * lambda * n;
+		predict[idx3] -= w3 * lambda * n;
+
+		lambda = (d5 - m_rest_d[edge_idx + 5]) / (w2 + w3 + a);
+		n = e23 / d5;
+		predict[idx2] += w2 * lambda * n;
+		predict[idx3] -= w3 * lambda * n;
+
+		edge_idx += 6;
 	}
 }
 
@@ -473,9 +563,8 @@ void SoftBodySolver::solveVolume(vector<glm::vec3>& predict)
 		glm::vec3 u3 = glm::cross(p3 - p0, p1 - p0);
 		glm::vec3 u4 = glm::cross(p2 - p0, p1 - p0);
 
-		float lambda = 10.0f / (t_sub * t_sub) + glm::dot(u1, u1) 
-			+ glm::dot(u2, u2) + glm::dot(u3, u3) + glm::dot(u4, u4);
-
+		float a = 10.0f / (t_sub * t_sub);
+		float lambda = a + glm::dot(u1, u1) + glm::dot(u2, u2) + glm::dot(u3, u3) + glm::dot(u4, u4);
 		if (lambda != 0.0f)
 		{
 			lambda = (v - m_rest_v[i/4]) / lambda;
@@ -487,6 +576,15 @@ void SoftBodySolver::solveVolume(vector<glm::vec3>& predict)
 	}
 }
 
+void SoftBodySolver::reset()
+{
+	//cout << "Reset" << endl;
+	//for (int i = 0; i < m_layouts.size(); ++i)
+	//{
+	//	m_layouts[i].position = m_og_layouts[i].position;
+	//}
+	//m_mesh->getBuffer().updateBuffer(m_layouts);
+}
 
 void SoftBodySolver::renderProperty()
 {
@@ -517,12 +615,19 @@ void SoftBodySolver::renderProperty()
 				if (ImGui::Button("Start") && m_simulate == false)
 				{
 					m_simulate = true;
-					//cout << sph->getSimulate() << endl;
 				}
+
 				ImGui::SameLine();
 				if (ImGui::Button("Stop") && m_simulate == true)
 				{
 					m_simulate = false;
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Reset") && m_simulate == true)
+				{
+					m_simulate = false;
+					reset();
 				}
 			}		
 			ImGui::EndTable();

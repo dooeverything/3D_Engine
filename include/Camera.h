@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef CAMERA_H
+#define CAMERA_H
+
 #include <iostream>
 #include <SDL.h>
 #include <SDL_GL_Window.h>
@@ -12,32 +15,6 @@
 
 class Camera
 {
-private:
-	unique_ptr<Picker> m_picker;
-
-	glm::mat4 m_projectMatrix;
-	glm::mat4 m_scene_projectMatrix;
-	glm::mat4 m_viewMatrix;
-
-	glm::vec3 m_pos;
-	glm::vec3 m_forward;
-	glm::vec3 m_up;
-
-	float m_yaw;
-	float m_pitch;
-
-	float m_delta_time;
-	float m_last_frame;
-
-	bool m_first_click;
-	int m_mouse_x;
-	int m_mouse_y;
-
-	float m_width;
-	float m_height;
-	float m_scene_width;
-	float m_scene_height;
-
 public:
 	Camera(glm::vec3 pos, float yaw, float pitch);
 	~Camera();
@@ -77,4 +54,32 @@ public:
 	inline void setSceneHeight(float height) { m_scene_height = height; };
 	inline void setDeltaTime(float delta_time) { m_delta_time = delta_time; };
 	inline void setLastFrame(float last_frame) { m_last_frame = last_frame; };
+
+private:
+	unique_ptr<Picker> m_picker;
+
+	glm::mat4 m_projectMatrix;
+	glm::mat4 m_scene_projectMatrix;
+	glm::mat4 m_viewMatrix;
+
+	glm::vec3 m_pos;
+	glm::vec3 m_forward;
+	glm::vec3 m_up;
+
+	float m_yaw;
+	float m_pitch;
+
+	float m_delta_time;
+	float m_last_frame;
+
+	bool m_first_click;
+	int m_mouse_x;
+	int m_mouse_y;
+
+	float m_width;
+	float m_height;
+	float m_scene_width;
+	float m_scene_height;
 };
+
+#endif

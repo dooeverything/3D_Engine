@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef MARCHINGCUBE_H
+#define MARCHINGCUBE_H
+
 #include <math.h>
 #include <limits.h>
 #include <random>
@@ -112,6 +115,4 @@ private:
     bool m_is_edit;
 };
 
-
-
-
+#endif // !MARCHINGCUBE_H

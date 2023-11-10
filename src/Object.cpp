@@ -452,8 +452,8 @@ void GameObject::draw(const glm::mat4& P, const glm::mat4& V,
 	else
 		m_mesh->draw(P, V, *m_shader, true);
 
-	if (m_soft != nullptr)
-		m_soft->m_tet_mesh->draw(P, V, *m_shader, true);
+	//if (m_soft != nullptr)
+	//	m_soft->m_tet_mesh->draw(P, V, *m_shader, true);
 }
 
 void GameObject::drawInstance(glm::mat4& P, glm::mat4& V)

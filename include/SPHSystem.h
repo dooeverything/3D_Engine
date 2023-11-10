@@ -1,4 +1,7 @@
 #pragma once
+#ifndef SPHSYSTEM_H
+#define SPHSYSTEM_H
+
 #include <unordered_map>
 
 #include "Particle.h"
@@ -63,6 +66,14 @@ public:
     int render_type;
 
 private:
+    void updateDensPress();
+    void updateForces();
+
+    void getDepth(const glm::mat4& P, const glm::mat4& V, Camera& camera);
+    void getCurvature(const glm::mat4& P, const glm::mat4& V);
+    void getNormal(const glm::mat4& P, const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap);
+    void blurDepth();
+
     vector<shared_ptr<FluidParticle>> m_particles;
     unordered_map<uint, FluidParticle*> m_hash_table;
     
@@ -92,12 +103,6 @@ private:
 
     int m_fb_width;
     int m_fb_height;
-
-    void updateDensPress();
-    void updateForces();
-
-    void getDepth(const glm::mat4& P, const glm::mat4& V, Camera& camera);
-    void getCurvature(const glm::mat4& P, const glm::mat4& V);
-    void getNormal(const glm::mat4& P, const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap);
-    void blurDepth();
 };
+
+#endif // !SPHSYSTEM_H

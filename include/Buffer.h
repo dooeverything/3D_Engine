@@ -20,17 +20,6 @@ private:
 		BONE_WEIGHT_ATTRIB = 5,
 	};
 
-	GLuint m_VAO;
-	GLuint m_VBO;
-	GLuint m_EBO;
-	GLuint m_IBO;
-
-	vector<info::VertexLayout> m_layouts;
-	vector<unsigned int> m_indices;
-	vector<glm::mat4> m_matrices;
-	unsigned int n_layouts;
-	unsigned int n_indices;
-
 public:
 	VertexBuffer();
 	void createBuffers(const vector<info::VertexLayout>& layouts);
@@ -50,20 +39,23 @@ public:
 		n_layouts = layouts.size();
 	}
 	inline void setMatrices(vector<glm::mat4> ms) { m_matrices = ms; };
+
+private:
+	GLuint m_VAO;
+	GLuint m_VBO;
+	GLuint m_EBO;
+	GLuint m_IBO;
+
+	vector<info::VertexLayout> m_layouts;
+	vector<unsigned int> m_indices;
+	vector<glm::mat4> m_matrices;
+	unsigned int n_layouts;
+	unsigned int n_indices;
 };
 
 class FrameBuffer
 {
-protected:
-	GLuint m_FBO;
-	GLuint m_RBO;
-	GLuint m_framebuffer_texture;
-
-	int m_width;
-	int m_height;
-
 public:
-
 	FrameBuffer();
 	virtual void createBuffers(int width, int height);
 	virtual void bind();
@@ -74,24 +66,30 @@ public:
 	virtual GLuint getTextureID() { return m_framebuffer_texture; };
 	virtual int getWidth() { return m_width; };
 	virtual int getHeight() { return m_height; };
+
+protected:
+	GLuint m_FBO;
+	GLuint m_RBO;
+	GLuint m_framebuffer_texture;
+
+	int m_width;
+	int m_height;
 };
 
 class DepthBuffer : public FrameBuffer
 {
-private:
-	GLuint m_depth_map;
-
 public:
 	DepthBuffer();
 	virtual void createBuffers(int width, int height);
 	virtual GLuint getTextureID() { return m_depth_map; };
+
+private:
+	GLuint m_depth_map;
+
 };
 
 class ShadowBuffer : protected FrameBuffer
 {
-private:
-	GLuint m_shadow_map;
-
 public:
 	ShadowBuffer();
 	~ShadowBuffer();
@@ -100,7 +98,10 @@ public:
 	virtual void bind();
 	virtual void unbind();
 	virtual void bindFrameTexture();
-	virtual GLuint getTextureID() { return m_shadow_map; };
+	//virtual GLuint getTextureID() { return m_shadow_map; };
+
+//private:
+//	GLuint m_shadow_map;
 };
 
 class CubemapBuffer : protected FrameBuffer
@@ -117,6 +118,7 @@ public:
 	void bindCubemapTexture();
 	void bindRenderBuffer(int width, int height);
 	virtual inline unsigned int getCubemapTexture() { return m_cubemap; };
+
 private:
 	unsigned int m_cubemap;
 	unsigned int m_width;
