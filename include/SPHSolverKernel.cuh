@@ -1,12 +1,12 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
-#include "Utils.h"
-#include "Particle.h"
-
 #include <unordered_map>
 #include <iostream>
 #include <vector>
+
+#include "Utils.h"
+//#include "Particle.h"
 
 using namespace std;
 
@@ -22,7 +22,7 @@ __device__ float* d_density;
 __device__ float* d_pressure;
 
 __device__ glm::ivec3 getHashPos_kernel(const glm::vec3&);
-__device__ uint getHashKey_kernel(const glm::ivec3&);
+__device__ info::uint getHashKey_kernel(const glm::ivec3&);
 
 void computeBlocks(int n);
 cudaError_t setParams(info::SPHParams* params);

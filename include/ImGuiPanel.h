@@ -1,16 +1,25 @@
 #pragma once
-
 #ifndef IMGUIPANEL_H
 #define IMGUIPANEL_H
+
+#include <iostream>
+#include <vector>
 
 #include "imgui-docking/imgui.h"
 #include "imgui-docking/imgui_impl_sdl2.h"
 #include "imgui-docking/imgui_impl_opengl3.h"
 
-#include "Object.h"
-#include "Shader.h"
-#include "Buffer.h"
 #include "FileDialog.h"
+
+class GameObject;
+class Material;
+class FrameBuffer;
+class Texture;
+//class Cloth;
+//class MarchingCube;
+//class SPHSystemCuda;
+
+using namespace std;
 
 class ImGuiPanel
 {
@@ -40,7 +49,7 @@ public:
 		shared_ptr<GameObject>& clicked_object);
 
 	virtual void addObject(
-		vector<shared_ptr<GameObject>>& scene_objects, 
+		const vector<shared_ptr<GameObject>>& scene_objects, 
 		GameObject& add_object);
 
 private:
@@ -68,11 +77,11 @@ public:
 
 private:
 	unique_ptr<FrameBuffer> m_preview_fb;
-	unique_ptr<Sphere> m_preview_object;
+	unique_ptr<GameObject> m_preview_object;
 	unique_ptr<FileDialog> m_fd;
 
-	void renderPreview(Material& mat);
-	void renderPreview(vector<shared_ptr<Texture>>& tex);
+	void renderPreview(const Material& mat);
+	void renderPreview(const vector<shared_ptr<Texture>>& tex);
 
 	void translatePanel(GameObject& clicked_object);
 	void rotatePanel(GameObject& clicked_object);
@@ -85,11 +94,13 @@ public:
 	PopupPanel(string name);
 	~PopupPanel();
 
-	void popup(vector<shared_ptr<GameObject>>& scene_objects,
+	void popup(
+		vector<shared_ptr<GameObject>>& scene_objects,
 		shared_ptr<GameObject>& clicked_object,
 		bool& is_popup, bool& is_clicked_gizmo);
 
-	void render(vector<shared_ptr<GameObject>>& scene_objects,
+	void render(
+		vector<shared_ptr<GameObject>>& scene_objects,
 		shared_ptr<GameObject>& clicked_object);
 };
 

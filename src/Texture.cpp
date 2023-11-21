@@ -43,14 +43,14 @@ void Texture::loadTexture()
 	glGenerateMipmap(GL_TEXTURE_2D);
 	stbi_image_free(texture);
 
-	//GLenum errorCode;
-	//if ((errorCode = glGetError()) != GL_NO_ERROR)
-	//{
-	//	cout << endl;
-	//	cerr << "***** TEXTURE ERROR FROM " << m_path << " " << m_type << "*****" << endl;
-	//	cerr << "Error Type : " << errorCode << endl;
-	//	assert(0);
-	//}
+	GLenum errorCode;
+	if ((errorCode = glGetError()) != GL_NO_ERROR)
+	{
+		cout << endl;
+		cerr << "***** TEXTURE ERROR FROM " << m_path << " " << m_type << "*****" << endl;
+		cerr << "Error Type : " << errorCode << endl;
+		assert(0);
+	}
 
 	// Set texture wrapping parameters
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

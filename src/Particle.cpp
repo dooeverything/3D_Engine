@@ -2,7 +2,6 @@
 #include "Utils.h"
 #include <math.h>
 
-
 Particle::Particle(glm::vec3 p) :
 	m_position(p), m_velocity(0.0f), m_time(0.0f), m_life(20),
 	m_force(glm::vec3(0.0f)), m_gravity(glm::vec3(0.0f, -9.80f, 0.0f))

@@ -33,9 +33,6 @@
     <ClCompile Include="src\FileDialog.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Force.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\ImguiPanel.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -147,6 +144,18 @@
     <ClCompile Include="C:\vclib\quartet\src\trimesh.cpp">
       <Filter>quartet</Filter>
     </ClCompile>
+    <ClCompile Include="src\Point.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GameObject.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Geometry.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Outline.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Buffer.h">
@@ -162,9 +171,6 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\FileDialog.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Force.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\ImguiPanel.h">
@@ -289,6 +295,18 @@
     </ClInclude>
     <ClInclude Include="C:\vclib\quartet\src\vec.h">
       <Filter>quartet</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Point.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Geometry.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GameObject.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Outline.h">
+      <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

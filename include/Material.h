@@ -3,16 +3,15 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
-#include <cassert>
-#include <string>
-#include <vector>
 #include <GL/glew.h>
-#include <iostream>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Buffer.h"
+#include <iostream>
+#include <cassert>
+#include <vector>
+#include <string>
+
 #include "Texture.h"
 
 using namespace std;
@@ -25,11 +24,11 @@ public:
 
 	void addTexture(const string& path);
 
-	inline glm::vec3& getBaseColor() { return m_base_color; };
-	inline float getMetallic() { return m_metallic; };
-	inline float getRoughness() { return m_roughness; };
-	inline float getAO() { return m_ao; };
-	inline shared_ptr<Texture> getTexture() { return m_texture; };
+	inline shared_ptr<Texture> getTexture() const { return m_texture; };
+	inline glm::vec3 getBaseColor() const { return m_base_color; };
+	inline float getMetallic() const { return m_metallic; };
+	inline float getRoughness() const { return m_roughness; };
+	inline float getAO() const { return m_ao; };
 
 	inline void setBaseColor(glm::vec3 color) { m_base_color = color; };
 	inline void setMetallic(float metallic) { m_metallic = metallic; };

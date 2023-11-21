@@ -4,8 +4,10 @@
 
 #include "SoftBodySolver.h"
 
+#include "Particle.h"
+
 SoftBodySolver::SoftBodySolver(Mesh* mesh) :
-	m_simulate(false), m_og_layouts(mesh->getBuffer().getLayouts())
+	m_simulate(false)
 {
 	cout << endl;
 	
@@ -14,6 +16,7 @@ SoftBodySolver::SoftBodySolver(Mesh* mesh) :
 	m_dx = 0.1;
 	m_mesh = mesh;
 	m_layouts = mesh->getBuffer().getLayouts();
+	cout << "size of layout: " << m_layouts.size() << endl;
 
 	m_hash_size = m_layouts.size() * 2;
 	m_hash_start.resize(m_hash_size + 1);
@@ -54,7 +57,7 @@ void SoftBodySolver::getTet(TetMesh& tet_mesh)
 		surf_x.push_back(p);
 	}
 
-	vector<uint> indices = m_mesh->getBuffer().getIndices();
+	vector<info::uint> indices = m_mesh->getBuffer().getIndices();
 	for (int i = 0; i < indices.size() - 2; i += 3)
 	{
 		Vec3i index(indices[i], indices[i + 1], indices[i + 2]);
@@ -74,7 +77,7 @@ void SoftBodySolver::getTet(TetMesh& tet_mesh)
 
 	// Make tet mesh without features
 	cout << "Making tet mesh" << endl;;
-	make_tet_mesh(tet_mesh, sdf, false, false, false);
+	make_tet_mesh(tet_mesh, sdf, false);
 	cout << "Done tet mesh" << endl;
 }
 
@@ -181,9 +184,9 @@ void SoftBodySolver::getEdgeVertices(const TetMesh& tet_mesh)
 
 	for (int i = 0; i < boundary_indices.size(); ++i)
 	{
-		uint idx0 = boundary_indices[i][0];
-		uint idx1 = boundary_indices[i][1];
-		uint idx2 = boundary_indices[i][2];
+		info::uint idx0 = boundary_indices[i][0];
+		info::uint idx1 = boundary_indices[i][1];
+		info::uint idx2 = boundary_indices[i][2];
 
 		m_edges_indices.push_back(idx0);
 		m_edges_indices.push_back(idx1);
@@ -214,7 +217,7 @@ void SoftBodySolver::getTetIds()
 				for (int z = -2; z <= 2; z += 1)
 				{
 					glm::ivec3 p1 = grid_pos + glm::ivec3(x, y, z);
-					uint h = getHashIndex(p1);
+					info::uint h = getHashIndex(p1);
 
 					int start = m_hash_start[h];
 					int end = m_hash_start[h + 1];
@@ -268,7 +271,7 @@ void SoftBodySolver::getEdgeIds()
 				for (int z = -2; z <= 2; z += 1)
 				{
 					glm::ivec3 p1 = grid_pos + glm::ivec3(x, y, z);
-					uint h = getHashIndex(p1);
+					info::uint h = getHashIndex(p1);
 
 					int start = m_hash_start[h];
 					int end = m_hash_start[h + 1];
@@ -314,11 +317,11 @@ glm::ivec3 SoftBodySolver::getGridPos(glm::vec3 pos)
 	return glm::ivec3(x, y, z);
 }
 
-uint SoftBodySolver::getHashIndex(glm::ivec3& pos)
+info::uint SoftBodySolver::getHashIndex(glm::ivec3& pos)
 {
-	return ((uint)(pos.x * 92837111) ^
-			(uint)(pos.y * 689287499) ^
-			(uint)(pos.z * 283923481)) % m_hash_size;
+	return ((info::uint)(pos.x * 92837111) ^
+			(info::uint)(pos.y * 689287499) ^
+			(info::uint)(pos.z * 283923481)) % m_hash_size;
 }
 
 void SoftBodySolver::simulate()
@@ -359,7 +362,7 @@ void SoftBodySolver::simulate()
 
 			if (p->m_position.y < -5.0f)
 			{
-				p->m_velocity *= -0.5f;
+				p->m_velocity  *= -0.8f;
 				p->m_position.y = -5.0f;
 			}
 		}
@@ -401,11 +404,11 @@ void SoftBodySolver::buildHash()
 	for (int i = 0; i < m_layouts.size(); ++i)
 	{
 		glm::ivec3 grid_pos = getGridPos(m_layouts[i].position);
-		uint hash_index = getHashIndex(grid_pos);
+		info::uint hash_index = getHashIndex(grid_pos);
 		m_hash_start[hash_index]++;
 	}
 
-	uint sum = 0;
+	info::uint sum = 0;
 	for (int i = 0; i < m_hash_start.size()-1; ++i)
 	{
 		sum += m_hash_start[i];
@@ -416,7 +419,7 @@ void SoftBodySolver::buildHash()
 	for (int i = 0; i < m_layouts.size(); ++i)
 	{
 		glm::ivec3 grid_pos = getGridPos(m_layouts[i].position);
-		uint hash_index = getHashIndex(grid_pos);
+		info::uint hash_index = getHashIndex(grid_pos);
 		m_hash_start[hash_index]--;
 		m_hash_ids[m_hash_start[hash_index]] = i;
 	}

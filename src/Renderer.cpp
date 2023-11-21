@@ -1,6 +1,10 @@
 #include "Renderer.h"
 #include "imgui_internal.h"
 
+#include "GameObject.h"
+#include "Outline.h"
+#include "SoftBodySolver.h"
+
 Renderer::Renderer() :
 	m_shadow_map(nullptr), m_click_object(nullptr),
 	m_frame_events({}), m_scene_objects({}), m_lights({}), m_panels({}), m_gizmos({}),
@@ -23,7 +27,7 @@ void Renderer::init()
 	m_sdl_window->init(width, height, "Renderer");
 
 	m_framebuffer = make_unique<FrameBuffer>();
-	m_framebuffer->createBuffers(1024, 1024);
+	m_framebuffer->createBuffers(2048, 2048);
 
 	m_grid = make_unique<Grid>();
 	m_outline = make_unique<Outline>(1024, 1024);
@@ -31,17 +35,21 @@ void Renderer::init()
 	m_camera = make_unique<Camera>(glm::vec3(0.0f, 7.5f, 27.0f), -90.0f, -11.0f);
 	
 	glm::vec3 light_pos = { 10.0f, 10.0f, 10.0f };
-	m_depth_map = make_unique<ShadowMap>(1024, 1024);
-	m_shadow_map = make_unique<ShadowMap>(1024, 1024, light_pos, false);
-	m_cubemap = make_unique<CubeMap>(1024, 1024);
+	m_depth_map = make_unique<ShadowMap>(256, 256);
+	m_shadow_map = make_unique<ShadowMap>(256, 256, light_pos, false);
+	m_cubemap = make_unique<CubeMap>(256, 256);
 	m_irradiancemap = make_unique<IrradianceMap>(32, 32);
 	m_prefilter = make_unique<PrefilterMap>(256, 256);
-	m_lut = make_unique<LUTMap>(512, 512);
+	m_lut = make_unique<LUTMap>(256, 256);
 
 	m_popup = make_unique<PopupPanel>("Popup");
 	m_panels.push_back(make_shared<ObjectPanel>("SceneObjects"));
 	m_panels.push_back(make_shared<PropertyPanel>("Properties"));
 	
+	//shared_ptr<SPHSystemCuda> fluid = make_shared<SPHSystemCuda>(64.0f, 32.0f, 64.0f);
+	//m_scene_objects.push_back(fluid);
+	//m_sph = fluid;
+
 	cout << "********************Loading Gizmos********************" << endl;
 	for (int axis = 0; axis < 4; ++axis)
 	{
@@ -49,10 +57,6 @@ void Renderer::init()
 		m_gizmos.push_back(gizmo);
 	}
 	cout << "********************Finish loading gizmo********************\n" << endl;
-
-	//shared_ptr<SPHSystemCuda> sph = make_shared<SPHSystemCuda>(64.0f, 32.0f, 64.0f);
-	//m_sph = sph;
-	//m_scene_objects.push_back(sph);
 
 	// Setup lights
 	glm::vec3 dir = -light_pos;
@@ -65,18 +69,16 @@ void Renderer::init()
 void Renderer::run()
 {
 	cout << "Render" << endl;
-
-	// Setup a cubemap
-	m_cubemap->drawMap();
 	
-	// Setup an irradiance map
+	// PBR setup
+	m_cubemap->drawMap();
 	m_irradiancemap->drawMap(*m_cubemap->getCubemapBuffer());
-
-	// Setup an prefilter map
 	m_prefilter->drawMap(*m_cubemap->getCubemapBuffer());
-
-	// Setup a lut map
 	m_lut->drawMap();
+
+	//shared_ptr<SPHSystemCuda> fluid = make_shared<SPHSystemCuda>(64.0f, 32.0f, 64.0f);
+	//m_scene_objects.push_back(fluid);
+	//m_sph = fluid;
 
 	while (m_is_running)
 	{
@@ -100,8 +102,8 @@ void Renderer::render()
 
 	handleInput();
 
-	// Get shadows
 	m_shadow_map->draw(m_scene_objects);
+
 	renderImGui();
 	m_sdl_window->swapWindow();
 }
@@ -160,17 +162,20 @@ void Renderer::handleInput()
 				}
 			}
 
+
 			// if mouse is out of scene, then do nothing
-			if (pos.x < scene_min.x || pos.y < scene_min.y)
+			if ( (pos.x < scene_min.x || pos.y < scene_min.y) && !m_is_drag)
 			{
 				m_frame_events.clear();
 				return;
 			}
-			if (pos.x > scene_max.x || pos.y > scene_max.y)
+			
+			if ( (pos.x > scene_max.x || pos.y > scene_max.y) && !m_is_drag)
 			{
 				m_frame_events.clear();
 				return;
-			}
+			}			
+	
 
 			switch (event.type)
 			{
@@ -310,10 +315,8 @@ void Renderer::renderImGui()
 			m_depth_map->setView(V);
 			m_depth_map->draw(m_scene_objects);
 
-			if (m_sph != nullptr)
-			{
-				m_sph->setupFramebuffer(V, *m_depth_map, *m_cubemap, *m_camera);
-			}
+			for (auto& it : m_scene_objects)
+				it->setupFramebuffer(V, *m_depth_map, *m_cubemap, *m_camera);
 
 			if (m_click_object != nullptr)
 				m_outline->setupBuffers(*m_click_object, V, wsize.x, wsize.y);

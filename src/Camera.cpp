@@ -4,10 +4,9 @@ Camera::Camera(glm::vec3 pos, float yaw, float pitch) :
 	m_picker(make_unique<Picker>()), 
 	m_projectMatrix(0.0f), m_scene_projectMatrix(0.0f), m_viewMatrix(0.0f),
 	m_pos(pos), m_forward(0.0f, 0.0f, -1.0f), m_up(0.0f, 1.0f, 0.0f),
-	m_yaw(yaw), m_pitch(pitch),
-	m_first_click(true), m_mouse_x(0), m_mouse_y(0),
-	m_last_frame(0.0f), m_delta_time(0.0f),
-	m_width(0.0f), m_height(0.0f), m_scene_width(0.0f), m_scene_height(0.0f)
+	m_yaw(yaw), m_pitch(pitch), m_last_frame(0.0f), m_delta_time(0.0f),
+	m_width(0.0f), m_height(0.0f), m_scene_width(0.0f), m_scene_height(0.0f), 
+	m_mouse_x(0), m_mouse_y(0), m_first_click(true)
 {}
 
 Camera::~Camera() {}

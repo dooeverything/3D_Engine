@@ -1,5 +1,4 @@
 #include "MarchingCube.h"
-#include "Utils.h"
 
 // Marching Cube 
 // Reference : 
@@ -47,8 +46,9 @@ bool Tri::intersectWithRay(glm::vec3 ray_dir, glm::vec3 ray_pos, float& t)
 	if (ap.y > 0)
 		n.y = -n.y;
 
-	// Intersect from behind
 	float vdotn = glm::dot(n, ray_dir);
+	
+	// Intersect from behind
 	if (-vdotn < 0.00001f)
 	{
 		return false;

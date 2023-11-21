@@ -1,22 +1,25 @@
 #pragma once
+#ifndef UTILS_H
+#define UTILS_H
+
 #include <iostream>
 #include <vector>
 #include <glm/glm.hpp>
 
-#ifndef UTILS_H
-#define UTILS_H
-
-#ifndef HAVE_M_PI
-    #ifndef M_PI
-    #define M_PI    3.14159265f   /**< pi */
-    #endif
-#endif
+//#ifndef HAVE_M_PI
+//    #ifndef M_PI
+//    #define M_PI    3.14159265f   /**< pi */
+//    #endif
+//#endif
 
 using namespace std;
 
 namespace info
 {
+    using uint = unsigned int;
     const int HASH_SIZE = 100000;
+    const float PI = 3.14159265f;
+
 
 	struct VertexLayout
 	{

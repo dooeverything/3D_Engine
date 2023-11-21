@@ -159,7 +159,7 @@ void main()
 		vec3 prefilter_color = textureLod(prefilter_map, r, mat.roughness*4.0).rgb;
 		vec2 lut_color = texture(lut_map, vec2(max(dot(n,v),0.0), mat.roughness)).rg;
 		vec3 specular1 = prefilter_color * (F*lut_color.x + lut_color.y);
-		vec3 first_sum = (kD * diffuse1 + specular1) * mat.ao;
+		vec3 first_sum = (kD * (1.0-shadow) * diffuse1 + specular1) * mat.ao;
 		
 		color = (first_sum + second_sum);
 		color = color / (color + vec3(1.0)); // HDR

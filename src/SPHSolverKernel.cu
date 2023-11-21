@@ -8,11 +8,11 @@ __device__ glm::ivec3 getHashPos_kernel(const glm::vec3& pos)
 	return { pos.x / d_params.grid_cell, pos.y / d_params.grid_cell, pos.z / d_params.grid_cell };
 }
 
-__device__ uint getHashKey_kernel(const glm::ivec3& pos)
+__device__ info::uint getHashKey_kernel(const glm::ivec3& pos)
 {
-	return ((uint)(pos.x * 73856093) ^
-			(uint)(pos.y * 19349663) ^
-			(uint)(pos.z * 83492791)) % info::HASH_SIZE;
+	return ((info::uint)(pos.x * 73856093) ^
+			(info::uint)(pos.y * 19349663) ^
+			(info::uint)(pos.z * 83492791)) % info::HASH_SIZE;
 }
 
 void computeBlocks(int n)
@@ -277,7 +277,7 @@ __global__ void updateDensPress_kernel(
 			for (int z = -1; z <= 1; z++)
 			{
 				glm::ivec3 near_pos = p1_grid + glm::ivec3(x, y, z);
-				uint hash_key = getHashKey_kernel(near_pos);
+				info::uint hash_key = getHashKey_kernel(near_pos);
 				
 				for (int i = hash[hash_key]; i < n * d_params.max_num_neighbors; i += n)
 				{
@@ -326,7 +326,7 @@ __global__ void updateForce_kernel(
 			for (int z = -1; z <= 1; z++)
 			{
 				glm::ivec3 near_pos = p1_grid + glm::ivec3(x, y, z);
-				uint hash_key = getHashKey_kernel(near_pos);
+				info::uint hash_key = getHashKey_kernel(near_pos);
 
 				for (int i = hash[hash_key]; i < n * d_params.max_num_neighbors; i += n)
 				{
@@ -416,7 +416,7 @@ __global__ void fillHash_kernel(
 	
 	glm::vec3 p1 = pos[id];
 	glm::ivec3 p1_grid = getHashPos_kernel(p1);
-	uint hash_key = getHashKey_kernel(p1_grid);
+	info::uint hash_key = getHashKey_kernel(p1_grid);
 
 	if (hash[hash_key] == -1)
 	{

@@ -3,17 +3,23 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include <list>
 
-#include "SDL_GL_Window.h"
-#include "Object.h"
-#include "MarchingCube.h"
 #include "Camera.h"
-#include "Light.h"
 #include "ImGuiPanel.h"
-#include "SPHSystem.h"
-#include "SPHSystemCuda.h"
-#include "Cloth.h"
+#include "Light.h"
+#include "Map.h"
+#include "SDL_GL_Window.h"
+
+class Cloth;
+class Gizmo;
+class Grid;
+class Outline;
+class MarchingCube;
+class SPHSystemCuda;
+
+//#include "MarchingCube.h"
+
+//#include "SPHSystemCuda.h"
 
 using namespace std;
 

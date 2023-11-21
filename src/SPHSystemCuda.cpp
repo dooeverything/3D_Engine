@@ -1,6 +1,8 @@
 #include "SPHSystemCuda.h"
 #include "SPHSolverKernel.cuh"
 
+#include "Particle.h"
+
 SPHSystemCuda::SPHSystemCuda(float width, float height, float depth)
 {
 	m_name = "Fluid";
@@ -10,8 +12,8 @@ SPHSystemCuda::SPHSystemCuda(float width, float height, float depth)
 	m_params.grid_cell = 0.10f;
 	m_params.H = 0.15f;
 	m_params.H2 = m_params.H * m_params.H;
-	m_params.POLY6 = 315.0f / float(64.0f * PI * pow(m_params.H, 9));
-	m_params.SPICKY = -45.0f / (PI * pow(m_params.H, 6));
+	m_params.POLY6 = 315.0f / float(64.0f * info::PI * pow(m_params.H, 9));
+	m_params.SPICKY = -45.0f / (info::PI * pow(m_params.H, 6));
 	m_params.SPICKY2 = -m_params.SPICKY;
 	m_params.MASS = 0.02f;
 	m_params.K = 1.0f;
@@ -186,7 +188,7 @@ void SPHSystemCuda::initParticle()
 			layouts.push_back(layout);
 		}
 
-		vector<uint> indices = {
+		vector<info::uint> indices = {
 			0,1,2, 0,2,3, // Front
 			4,5,6, 4,6,7, // Left
 			8,9,10, 8,10,11, // Right
@@ -262,18 +264,17 @@ void SPHSystemCuda::initParticle()
 
 void SPHSystemCuda::initFramebuffer()
 {
-	m_fb_normal = make_unique<FrameBuffer>();
-	m_fb_normal->createBuffers(m_fb_width, m_fb_height);
-
-	m_fb = make_unique<FrameBuffer>();
+	m_fb = make_unique<ShadowBuffer>();
 	m_fb->createBuffers(m_fb_width, m_fb_height);
-
+		
 	m_fb_curvature = make_unique<ShadowBuffer>();
 	m_fb_curvature->createBuffers(m_fb_width, m_fb_height);
 
 	m_fb_curvature2 = make_unique < ShadowBuffer>();
 	m_fb_curvature2->createBuffers(m_fb_width, m_fb_height);
 
+	m_fb_normal = make_unique<FrameBuffer>();
+	m_fb_normal->createBuffers(m_fb_width, m_fb_height);
 }
 
 void SPHSystemCuda::initShader()

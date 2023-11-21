@@ -3,15 +3,13 @@
 #ifndef MARCHINGCUBE_H
 #define MARCHINGCUBE_H
 
-#include <math.h>
 #include <limits.h>
+#include <math.h>
 #include <random>
 #include <unordered_map>
 
 #include "FastNoiseLite.h"
-#include "Object.h"
-#include "Particle.h"
-#include "Camera.h"
+#include "GameObject.h"
 
 class Tri
 {

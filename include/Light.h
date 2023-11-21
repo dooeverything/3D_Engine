@@ -3,11 +3,12 @@
 #ifndef LIGHT_H
 #define LIGHT_H
 
-#include <string>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/norm.hpp>
+
+#include <string>
 
 using namespace std;
 
@@ -18,10 +19,10 @@ public:
 	Light(glm::vec3 direction, glm::vec3 ambient, 
 		  glm::vec3 diffuse, glm::vec3 specular);
 
-	inline glm::vec3 getDir() { return m_direction; };
-	inline glm::vec3 getAmb() { return m_ambient; };
-	inline glm::vec3 getDiff() { return m_diffuse; };
-	inline glm::vec3 getSpec() { return m_specular; };
+	inline glm::vec3 getDir() const { return m_direction; };
+	inline glm::vec3 getAmb() const { return m_ambient; };
+	inline glm::vec3 getDiff() const { return m_diffuse; };
+	inline glm::vec3 getSpec() const { return m_specular; };
 
 	inline void SetDir(glm::vec3 direction) { m_direction = direction; };
 

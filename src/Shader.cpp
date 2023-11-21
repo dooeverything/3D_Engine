@@ -1,7 +1,11 @@
 #include "Shader.h"
-#include "Mesh.h"
+
 #include <fstream>
 #include <sstream>
+
+#include "Light.h"
+#include "Material.h"
+#include "Mesh.h"
 
 Shader::Shader() : m_shader_ID(0), m_paths({})
 {}
@@ -127,12 +131,12 @@ void Shader::setFloat(const string& name, float value) const
 	glUniform1f(glGetUniformLocation(m_shader_ID, name.c_str()), value);
 }
 
-void Shader::setVec2(const string& name, glm::vec2& vector) const
+void Shader::setVec2(const string& name, const glm::vec2& vector) const
 {
 	glUniform2f(glGetUniformLocation(m_shader_ID, name.c_str()), vector.x, vector.y);
 }
 
-void Shader::setVec3(const string& name, glm::vec3& vector) const
+void Shader::setVec3(const string& name, const glm::vec3& vector) const
 {
 	glUniform3fv(glGetUniformLocation(m_shader_ID, name.c_str()), 1, &vector[0]);
 }
@@ -154,7 +158,7 @@ void Shader::setPVM(const glm::mat4& P, const glm::mat4& V, glm::mat4& m) const
 	setMat4("model", m);
 }
 
-void Shader::setLight(Light& light)
+void Shader::setLight(const Light& light)
 {
 	glm::vec3 dir = light.getDir();
 	glm::vec3 amb = light.getAmb();
@@ -166,7 +170,7 @@ void Shader::setLight(Light& light)
 	setVec3("light.specular", spec);
 }
 
-void Shader::setMaterial(Material& material)
+void Shader::setMaterial(const Material& material)
 {
 	setVec3("mat.color", material.getBaseColor());
 	setFloat("mat.metallic", material.getMetallic());

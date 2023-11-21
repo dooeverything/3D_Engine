@@ -41,11 +41,11 @@ SPHSystem::SPHSystem(float width, float height, float depth)
 	cout << endl;
 }
 
-uint SPHSystem::getHashIndex(glm::ivec3& pos)
+info::uint SPHSystem::getHashIndex(glm::ivec3& pos)
 {
-	return ((uint)(pos.x * 73856093) ^
-			(uint)(pos.y * 19349663) ^
-			(uint)(pos.z * 83492791)) % TABLE_SIZE;
+	return ((info::uint)(pos.x * 73856093) ^
+			(info::uint)(pos.y * 19349663) ^
+			(info::uint)(pos.z * 83492791)) % TABLE_SIZE;
 }
 
 glm::ivec3 SPHSystem::snapToGrid(glm::vec3 pos)
@@ -262,7 +262,7 @@ void SPHSystem::updateDensPress()
 				for (int z = -1; z <= 1; z++)
 				{
 					glm::ivec3 near_pos = grid_pos + glm::ivec3(x, y, z);
-					uint index = getHashIndex(near_pos);
+					info::uint index = getHashIndex(near_pos);
 					FluidParticle* p2 = m_hash_table[index];
 
 					while (p2)
@@ -297,7 +297,7 @@ void SPHSystem::updateForces()
 				for (int z = -1; z <= 1; z++)
 				{
 					glm::ivec3 near_pos = grid_pos + glm::ivec3(x, y, z);
-					uint index = getHashIndex(near_pos);
+					info::uint index = getHashIndex(near_pos);
 					FluidParticle* p2 = m_hash_table[index];
 					
 					while (p2)
@@ -341,7 +341,7 @@ void SPHSystem::buildHash()
 	{
 		FluidParticle* p = m_particles[i].get();
 		glm::ivec3 grid_pos = snapToGrid(p->m_position);
-		uint index = getHashIndex(grid_pos);
+		info::uint index = getHashIndex(grid_pos);
 
 		if (m_hash_table[index] == nullptr)
 		{

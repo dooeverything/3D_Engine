@@ -1,13 +1,12 @@
 #pragma once
-
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
-#include <cassert>
-#include <string>
-#include <vector>
 #include <GL/glew.h>
 #include <iostream>
+#include <cassert>
+#include <vector>
+#include <string>
 
 using namespace std;
 

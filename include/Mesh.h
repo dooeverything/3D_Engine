@@ -2,20 +2,20 @@
 
 #ifndef MESH_H
 #define MESH_H
-
-#include "Buffer.h"
-#include "Texture.h"
-#include "Shader.h"
-#include "Material.h"
-
 #include <assimp/Importer.hpp>
 #include <assimp/Exporter.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include "Buffer.h"
+#include "Shader.h"
+
 const int max_bone_per_vertex = 4;
 
 using namespace std;
+
+class Texture;
+class Material;
 
 // Inspired and modified from https://en.wikibooks.org/wiki/OpenGL_Programming/Bounding_box
 class BoundingBox

@@ -2,6 +2,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "Texture.h"
+#include "Material.h"
 
 BoundingBox::BoundingBox(glm::vec3 min, glm::vec3 max) : m_min(min), m_max(max)
 {}

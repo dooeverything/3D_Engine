@@ -4,12 +4,14 @@
 #define CAMERA_H
 
 #include <iostream>
-#include <SDL.h>
-#include <SDL_GL_Window.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/norm.hpp>
+
+#include <SDL.h>
+#include <SDL_GL_Window.h>
 
 #include "Picker.h"
 
@@ -68,18 +70,18 @@ private:
 
 	float m_yaw;
 	float m_pitch;
-
-	float m_delta_time;
 	float m_last_frame;
-
-	bool m_first_click;
-	int m_mouse_x;
-	int m_mouse_y;
-
+	float m_delta_time;
 	float m_width;
 	float m_height;
 	float m_scene_width;
 	float m_scene_height;
+
+	int m_mouse_x;
+	int m_mouse_y;
+
+	bool m_first_click;
+
 };
 
 #endif

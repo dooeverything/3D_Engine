@@ -6,8 +6,7 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "Mesh.h"
-#include "Object.h"
+#include "GameObject.h"
 #include "Particle.h"
 
 using namespace std;
@@ -37,11 +36,11 @@ private:
 	void updateCollision(vector<shared_ptr<ClothParticle>>& predict);
 
 	glm::ivec3 getGridPos(glm::vec3 pos);
-	uint getIndex(glm::ivec3& pos);
-	uint getHashIndex(glm::ivec3& pos);
+	info::uint getIndex(glm::ivec3& pos);
+	info::uint getHashIndex(glm::ivec3& pos);
 
 	vector<shared_ptr<ClothParticle>> m_particles;
-	unordered_map<uint, ClothParticle*> m_hash;
+	unordered_map<info::uint, ClothParticle*> m_hash;
 
 	float m_scale;
 	float m_width;

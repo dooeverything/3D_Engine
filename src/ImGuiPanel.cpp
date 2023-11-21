@@ -1,8 +1,12 @@
 #include "ImguiPanel.h"
-#include "Utils.h"
-#include "MarchingCube.h"
+
+#include "Buffer.h"
 #include "Cloth.h"
+#include "Geometry.h"
+#include "MarchingCube.h"
+#include "Object.h"
 #include "SPHSystemCuda.h"
+#include "SoftBodySolver.h"
 
 ImGuiPanel::ImGuiPanel(string name) :
 	m_scene_min(ImVec2(0.0, 0.0)), m_scene_max(ImVec2(0.0, 0.0)), m_name(name)
@@ -52,7 +56,8 @@ void ImGuiMenuBar::render(
 	ImGui::SeparatorText("Primitives");
 	if (ImGui::MenuItem("Cube"))
 	{
-		shared_ptr<GameObject> object = make_shared<GameObject>("assets/models/Cube.txt");
+		shared_ptr<GameObject> object(new GameObject("assets/models/Cube.txt"));
+		//shared_ptr<GameObject> object = make_shared<GameObject>("assets/models/Cube.txt");
 		scene_objects.push_back(object);
 		addObject(scene_objects, *object);
 	}
@@ -124,7 +129,7 @@ void ImGuiMenuBar::render(
 }
 
 void ImGuiMenuBar::addObject(
-	vector<shared_ptr<GameObject>>& scene_objects, 
+	const vector<shared_ptr<GameObject>>& scene_objects, 
 	GameObject& add_object)
 {
 	string name;
@@ -353,7 +358,7 @@ void PropertyPanel::render(
 	ImGui::End();
 }
 
-void PropertyPanel::renderPreview(Material& mat)
+void PropertyPanel::renderPreview(const Material& mat)
 {
 	m_preview_fb->bind();
 		glViewport(0, 0, 256, 256);
@@ -363,7 +368,7 @@ void PropertyPanel::renderPreview(Material& mat)
 	m_preview_fb->unbind();
 }
 
-void PropertyPanel::renderPreview(vector<shared_ptr<Texture>>& tex)
+void PropertyPanel::renderPreview(const vector<shared_ptr<Texture>>& tex)
 {
 	m_preview_fb->bind();
 		glViewport(0, 0, 256, 256);
@@ -375,94 +380,133 @@ void PropertyPanel::renderPreview(vector<shared_ptr<Texture>>& tex)
 
 void PropertyPanel::translatePanel(GameObject& clicked_object)
 {
+	glm::vec3 t = clicked_object.getProperty(0);
+	
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
 	ImGui::AlignTextToFramePadding();
 	ImGui::Text("Position");
+
 	ImGui::TableNextColumn();
 	ImGui::Text("X");
 	ImGui::SameLine();
-	string id_x = "##x1";
-	if (ImGui::DragFloat(id_x.c_str(), &(clicked_object.getProperty(0)->x), 0.005f))
-	{
-		clicked_object.setProperty(0, *clicked_object.getProperty(0));
-	}
+	bool change_x = ImGui::DragFloat("##x1", &(t.x), 0.005f);
+	//if (ImGui::DragFloat("##x1", &(t.x), 0.005f))
+	//{
+	//	//clicked_object.setProperty(0, *clicked_object.getProperty(0));
+	//}
+
 	ImGui::TableNextColumn();
 	ImGui::Text("Y");
 	ImGui::SameLine();
-	if (ImGui::DragFloat("##y1", &(clicked_object.getProperty(0)->y), 0.005f))
-	{
-		clicked_object.setProperty(0, *clicked_object.getProperty(0));
-	}
+	bool change_y = ImGui::DragFloat("##y1", &(t.y), 0.005f);
+	//if (ImGui::DragFloat("##y1", &(t.y), 0.005f))
+	//{
+	//	//clicked_object.setProperty(0, *clicked_object.getProperty(0));
+	//}
+
 	ImGui::TableNextColumn();
 	ImGui::Text("Z");
 	ImGui::SameLine();
-	if (ImGui::DragFloat("##z1", &(clicked_object.getProperty(0)->z), 0.005f))
+	bool change_z = ImGui::DragFloat("##z1", &(t.z), 0.005f);
+	//if (ImGui::DragFloat("##z1", &(t.z), 0.005f))
+	//{
+	//	//clicked_object.setProperty(0, *clicked_object.getProperty(0));
+	//}
+
+	if (change_x || change_y || change_z)
 	{
-		clicked_object.setProperty(0, *clicked_object.getProperty(0));
+		clicked_object.setProperty(0, t);
 	}
+
 	ImGui::TableNextColumn();
 }
 
 void PropertyPanel::rotatePanel(GameObject& clicked_object)
 {
+	glm::vec3 r = clicked_object.getProperty(1);
+	
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
 	ImGui::AlignTextToFramePadding();
 	ImGui::Text("Rotation");
+
 	ImGui::TableNextColumn();
 	ImGui::Text("X");
 	ImGui::SameLine();
-	string id_x = "##x2";
-	if (ImGui::DragFloat(id_x.c_str(), &(clicked_object.getProperty(1)->x), 0.1f))
-	{
-		clicked_object.setProperty(1, *clicked_object.getProperty(1));
-	}
+	bool change_x = ImGui::DragFloat("##x2", &(r.x), 0.005f);
+	//if (ImGui::DragFloat("##x2", &(clicked_object.getProperty(1)->x), 0.1f))
+	//{
+	//	clicked_object.setProperty(1, *clicked_object.getProperty(1));
+	//}
+
 	ImGui::TableNextColumn();
 	ImGui::Text("Y");
 	ImGui::SameLine();
-	if (ImGui::DragFloat("##y2", &(clicked_object.getProperty(1)->y), 0.1f))
-	{
-		clicked_object.setProperty(1, *clicked_object.getProperty(1));
-	}
+	bool change_y = ImGui::DragFloat("##y2", &(r.y), 0.005f);
+	//if (ImGui::DragFloat("##y2", &(clicked_object.getProperty(1)->y), 0.1f))
+	//{
+	//	clicked_object.setProperty(1, *clicked_object.getProperty(1));
+	//}
+
 	ImGui::TableNextColumn();
 	ImGui::Text("Z");
 	ImGui::SameLine();
-	if (ImGui::DragFloat("##z2", &(clicked_object.getProperty(1)->z), 0.1f))
+	bool change_z = ImGui::DragFloat("##z2", &(r.z), 0.005f);
+	//if (ImGui::DragFloat("##z2", &(clicked_object.getProperty(1)->z), 0.1f))
+	//{
+	//	clicked_object.setProperty(1, *clicked_object.getProperty(1));
+	//}
+
+	if (change_x || change_y || change_z)
 	{
-		clicked_object.setProperty(1, *clicked_object.getProperty(1));
+		clicked_object.setProperty(1, r);
 	}
+	
 	ImGui::TableNextColumn();
 }
 
 void PropertyPanel::scalePanel(GameObject& clicked_object)
 {
+	glm::vec3 s = clicked_object.getProperty(2);
+
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
 	ImGui::AlignTextToFramePadding();
 	ImGui::Text("Scale");
 	ImGui::TableNextColumn();
+	
 	ImGui::Text("X");
 	ImGui::SameLine();
-	string id_x = "##x3";
-	if (ImGui::DragFloat(id_x.c_str(), &(clicked_object.getProperty(2)->x), 0.005f))
-	{
-		clicked_object.setProperty(2, *clicked_object.getProperty(2));
-	}
+	bool change_x = ImGui::DragFloat("##x3", &(s.x), 0.005f);
+	//if (ImGui::DragFloat("##x3", &(s.x), 0.005f))
+	//{
+	//	clicked_object.setProperty(2, *clicked_object.getProperty(2));
+	//}
+
 	ImGui::TableNextColumn();
 	ImGui::Text("Y");
 	ImGui::SameLine();
-	if (ImGui::DragFloat("##y3", &(clicked_object.getProperty(2)->y), 0.005f))
-	{
-		clicked_object.setProperty(2, *clicked_object.getProperty(2));
-	}
+	bool change_y = ImGui::DragFloat("##y3", &(s.y), 0.005f);
+	//if (ImGui::DragFloat("##y3", &(clicked_object.getProperty(2)->y), 0.005f))
+	//{
+	//	clicked_object.setProperty(2, *clicked_object.getProperty(2));
+	//}
+	
 	ImGui::TableNextColumn();
 	ImGui::Text("Z");
 	ImGui::SameLine();
-	if (ImGui::DragFloat("##z3", &(clicked_object.getProperty(2)->z), 0.005f))
+	bool change_z = ImGui::DragFloat("##z3", &(s.z), 0.005f);
+	//if (ImGui::DragFloat("##z3", &(clicked_object.getProperty(2)->z), 0.005f))
+	//{
+	//	clicked_object.setProperty(2, *clicked_object.getProperty(2));
+	//}
+
+	if (change_x || change_y || change_z)
 	{
-		clicked_object.setProperty(2, *clicked_object.getProperty(2));
+		clicked_object.setProperty(2, s);
 	}
+
 	ImGui::TableNextColumn();
 }
 
@@ -506,7 +550,6 @@ void PopupPanel::popup(
 void PopupPanel::render(vector<shared_ptr<GameObject>>& scene_objects,
 						shared_ptr<GameObject>& clicked_object)
 {
-
 	if (ImGui::BeginMenu("Edit"))
 	{
 		if (ImGui::MenuItem("Delete"))

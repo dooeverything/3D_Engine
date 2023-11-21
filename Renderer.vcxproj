@@ -106,7 +106,8 @@
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Cloth.cpp" />
     <ClCompile Include="src\FileDialog.cpp" />
-    <ClCompile Include="src\Force.cpp" />
+    <ClCompile Include="src\GameObject.cpp" />
+    <ClCompile Include="src\Geometry.cpp" />
     <ClCompile Include="src\ImguiPanel.cpp" />
     <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -115,8 +116,10 @@
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\Object.cpp" />
+    <ClCompile Include="src\Outline.cpp" />
     <ClCompile Include="src\Particle.cpp" />
     <ClCompile Include="src\Picker.cpp" />
+    <ClCompile Include="src\Point.cpp" />
     <ClCompile Include="src\Quaternion.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\SDL_GL_Window.cpp" />
@@ -155,7 +158,8 @@
     <ClInclude Include="include\Cloth.h" />
     <ClInclude Include="include\FastNoiseLite.h" />
     <ClInclude Include="include\FileDialog.h" />
-    <ClInclude Include="include\Force.h" />
+    <ClInclude Include="include\GameObject.h" />
+    <ClInclude Include="include\Geometry.h" />
     <ClInclude Include="include\ImguiPanel.h" />
     <ClInclude Include="include\Light.h" />
     <ClInclude Include="include\Map.h" />
@@ -163,8 +167,10 @@
     <ClInclude Include="include\Material.h" />
     <ClInclude Include="include\Mesh.h" />
     <ClInclude Include="include\Object.h" />
+    <ClInclude Include="include\Outline.h" />
     <ClInclude Include="include\Particle.h" />
     <ClInclude Include="include\Picker.h" />
+    <ClInclude Include="include\Point.h" />
     <ClInclude Include="include\Quaternion.h" />
     <ClInclude Include="include\Renderer.h" />
     <ClInclude Include="include\SDL_GL_Window.h" />

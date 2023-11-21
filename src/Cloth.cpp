@@ -1,4 +1,5 @@
 #include "Cloth.h"
+
 #include <cmath>
 
 Cloth::Cloth()
@@ -66,7 +67,7 @@ void Cloth::initParticles()
 	for (int i = 0; i < temp.size(); ++i)
 	{
 		glm::ivec3 grid_pos = getGridPos(temp[i].position);
-		uint grid_index = getIndex(grid_pos);		
+		info::uint grid_index = getIndex(grid_pos);
 		if (m_particles[grid_index] == nullptr)
 		{
 			shared_ptr<ClothParticle> p = make_shared<ClothParticle>(temp[i].position);
@@ -94,7 +95,7 @@ void Cloth::buildHash(vector<shared_ptr<ClothParticle>>& predict)
 	{
 		ClothParticle* p = predict[i].get();
 		glm::ivec3 grid_pos = getGridPos(p->m_position);
-		uint hash_index = getHashIndex(grid_pos);
+		info::uint hash_index = getHashIndex(grid_pos);
 		
 		if (m_hash[hash_index] == nullptr)
 		{
@@ -109,9 +110,9 @@ void Cloth::buildHash(vector<shared_ptr<ClothParticle>>& predict)
 	}
 }
 
-uint Cloth::getIndex(glm::ivec3& pos)
+info::uint Cloth::getIndex(glm::ivec3& pos)
 {
-	return uint(pos.x + (m_height + 1) * (pos.y + (m_depth + 1) * pos.z));
+	return info::uint(pos.x + (m_height + 1) * (pos.y + (m_depth + 1) * pos.z));
 }
 
 glm::ivec3 Cloth::getGridPos(glm::vec3 pos)
@@ -119,11 +120,11 @@ glm::ivec3 Cloth::getGridPos(glm::vec3 pos)
 	return glm::ivec3(pos * (1.0f / m_rest));
 }
 
-uint Cloth::getHashIndex(glm::ivec3& pos)
+info::uint Cloth::getHashIndex(glm::ivec3& pos)
 {
-	return ((uint)(pos.x * 73856093) ^
-			(uint)(pos.y * 19349663) ^
-			(uint)(pos.z * 83492791)) % info::HASH_SIZE;
+	return ((info::uint)(pos.x * 73856093) ^
+			(info::uint)(pos.y * 19349663) ^
+			(info::uint)(pos.z * 83492791)) % info::HASH_SIZE;
 }
 
 void Cloth::simulate()
@@ -254,7 +255,7 @@ void Cloth::updateStretch(int index, vector<shared_ptr<ClothParticle>>& predict)
 	if ( (index+1) % offset != 0 && (index+1) < predict.size())
 	{
 		// Right
-		uint index2 = index + 1;
+		info::uint index2 = index + 1;
 		glm::vec3 p2 = predict[index2]->m_position;
 		float w2 = predict[index2]->m_mass;
 
@@ -273,7 +274,7 @@ void Cloth::updateStretch(int index, vector<shared_ptr<ClothParticle>>& predict)
 	if (index + offset < predict.size())
 	{
 		// Bottom
-		uint index2 = index + int(offset);
+		info::uint index2 = index + int(offset);
 		glm::vec3 p2 = predict[index2]->m_position;
 		float w2 = predict[index2]->m_mass;
 
@@ -292,7 +293,7 @@ void Cloth::updateStretch(int index, vector<shared_ptr<ClothParticle>>& predict)
 	if ((index + 1) % offset != 0 && (index + offset) < predict.size())
 	{
 		// Bottom Right
-		uint index2 = index + int(offset) + 1;
+		info::uint index2 = index + int(offset) + 1;
 		glm::vec3 p2 = predict[index2]->m_position;
 		float w2 = predict[index2]->m_mass;
 
@@ -367,7 +368,7 @@ void Cloth::updateCollision(vector<shared_ptr<ClothParticle>>& predict)
 				for (int z = -1; z <= 1; z++)
 				{
 					glm::ivec3 near_pos = p1_grid + glm::ivec3(x, y, z);
-					uint index = getHashIndex(near_pos);
+					info::uint index = getHashIndex(near_pos);
 					ClothParticle* neighbor = m_hash[index];
 
 					while (neighbor)

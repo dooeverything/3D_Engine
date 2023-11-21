@@ -4,8 +4,8 @@
 #define SDL_GL_WINDOW_H
 
 #include <iostream>
-#include <SDL.h>
 #include <GL/glew.h>
+#include <SDL.h>
 
 #include "imgui-docking/imgui.h"
 #include "imgui-docking/imgui_impl_sdl2.h"

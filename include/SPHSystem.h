@@ -4,9 +4,11 @@
 
 #include <unordered_map>
 
-#include "Particle.h"
-#include "Object.h"
 #include "Camera.h"
+#include "GameObject.h"
+#include "Particle.h"
+#include "Point.h"
+//#include "Object.h"
 
 const int TABLE_SIZE = 100000;
 
@@ -15,7 +17,7 @@ class SPHSystem : public GameObject
 public:
     SPHSystem(float width, float height, float depth);
     
-    uint getHashIndex(glm::ivec3& pos);
+    info::uint getHashIndex(glm::ivec3& pos);
     glm::ivec3 snapToGrid(glm::vec3);
     
     void initParticles();
@@ -37,8 +39,8 @@ public:
     {
         H = h;
         H2 = h * h;
-        POLY6 = 315.0f / float(64.0f * PI * pow(H, 9));
-        SPICKY = -45.0f / (PI * pow(h, 6));
+        POLY6 = 315.0f / float(64.0f * info::PI * pow(H, 9));
+        SPICKY = -45.0f / (info::PI * pow(h, 6));
         SPICKY2 = -SPICKY;
     }
     
@@ -75,7 +77,7 @@ private:
     void blurDepth();
 
     vector<shared_ptr<FluidParticle>> m_particles;
-    unordered_map<uint, FluidParticle*> m_hash_table;
+    unordered_map<info::uint, FluidParticle*> m_hash_table;
     
     unique_ptr<Point> m_point;
 
@@ -94,15 +96,14 @@ private:
     unique_ptr<Shader> m_shader_normal;
     unique_ptr<Shader> m_shader_render;
 
-    bool m_simulation;
-
-    //float m_point_size;
     float m_grid_width;
     float m_grid_height;
     float m_grid_depth;
 
     int m_fb_width;
     int m_fb_height;
+
+    bool m_simulation;
 };
 
 #endif // !SPHSYSTEM_H

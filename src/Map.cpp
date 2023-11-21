@@ -1,5 +1,7 @@
 #include "Map.h"
-#include "Object.h"
+
+#include "GameObject.h"
+#include "Shader.h"
 
 Map::Map() : 
 	m_width(0), m_height(0), m_name(""),
@@ -137,7 +139,7 @@ void CubeMap::drawMap()
 	PVs.push_back(P * glm::lookAt(eye_position, eye_position + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))); // Back view
 
 	m_shader->load();
-	m_shader->setFloat("map", 0);
+	m_shader->setInt("map", 0);
 	glActiveTexture(GL_TEXTURE0);
 	m_hdr_texture->setActive();
 
@@ -151,6 +153,9 @@ void CubeMap::drawMap()
 		m_mesh->draw();
 	}
 	m_cubemap_buffer->unbind();
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	m_shader->unload();
 }
 
 void CubeMap::draw(const glm::mat4& P, const glm::mat4& V)
@@ -159,7 +164,7 @@ void CubeMap::draw(const glm::mat4& P, const glm::mat4& V)
 	glm::mat4 PV = P * glm::mat4(glm::mat3(V));
 	m_shader_background->load();
 	m_shader_background->setMat4("PV", PV);
-	m_shader_background->setFloat("map", 0);
+	m_shader_background->setInt("map", 0);
 	glActiveTexture(GL_TEXTURE0);
 	m_cubemap_buffer->bindCubemapTexture();
 	m_mesh->draw();
@@ -205,7 +210,7 @@ void IrradianceMap::drawMap(CubemapBuffer& cubemap)
 	PVs.push_back(P * glm::lookAt(eye_position, eye_position + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))); // Back view
 
 	m_shader->load();
-	m_shader->setFloat("map", 0);
+	m_shader->setInt("map", 0);
 	glActiveTexture(GL_TEXTURE0);
 	cubemap.bindCubemapTexture();
 
@@ -219,6 +224,8 @@ void IrradianceMap::drawMap(CubemapBuffer& cubemap)
 		m_mesh->draw();
 	}
 	m_irradiance_buffer->unbind();
+	glBindTexture(GL_TEXTURE_2D, 0);
+	m_shader->unload();
 }
 
 void IrradianceMap::draw(glm::mat4& P, glm::mat4& V)
@@ -227,7 +234,7 @@ void IrradianceMap::draw(glm::mat4& P, glm::mat4& V)
 	glm::mat4 PV = P * glm::mat4(glm::mat3(V));
 	m_shader_background->load();
 	m_shader_background->setMat4("PV", PV);
-	m_shader_background->setFloat("map", 0);
+	m_shader_background->setInt("map", 0);
 	glActiveTexture(GL_TEXTURE0);
 	m_irradiance_buffer->bindCubemapTexture();
 	m_mesh->draw();
@@ -274,7 +281,7 @@ void PrefilterMap::drawMap(CubemapBuffer& cubemap)
 	PVs.push_back(P * glm::lookAt(eye_position, eye_position + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))); // Back view
 
 	m_shader->load();
-	m_shader->setFloat("map", 0);
+	m_shader->setInt("map", 0);
 	glActiveTexture(GL_TEXTURE0);
 	cubemap.bindCubemapTexture();
 
@@ -298,6 +305,8 @@ void PrefilterMap::drawMap(CubemapBuffer& cubemap)
 		}
 	}
 	m_prefilter_buffer->unbind();
+	glBindTexture(GL_TEXTURE_2D, 0);
+	m_shader->unload();
 }
 
 LUTMap::LUTMap()
@@ -332,6 +341,7 @@ void LUTMap::drawMap()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	m_mesh->draw();
 	m_fb->unbind();
+	m_shader->unload();
 }
 
 EnvironmentMap::EnvironmentMap(glm::vec3 position)
@@ -379,7 +389,7 @@ void EnvironmentMap::draw(vector<shared_ptr<GameObject>>& scene, Light& light)
 	m_shader->setLight(light);
 	for (auto& it : scene)
 	{
-		if (glm::length(m_eye_position - *it->getProperty(0)) < 0.1f)
+		if (glm::length(m_eye_position - it->getProperty(0)) < 0.1f)
 		{
 			//cout << "Skip : " << it->getName() << endl;
 			continue;

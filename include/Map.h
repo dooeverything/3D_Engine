@@ -3,15 +3,21 @@
 #ifndef MAP_H
 #define MAP_H
 
+#include <iostream>
 #include <vector>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "Mesh.h"
-
-using namespace std;
+#include "Buffer.h"
+#include "Texture.h"
 
 class GameObject;
+class Light;
+class Mesh;
+class Shader;
+
+using namespace std;
 
 class Map
 {

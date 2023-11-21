@@ -5,11 +5,10 @@
 
 #include <random>
 #include <vector>
-#include "Force.h"
-using namespace std;
 
-#define PI 3.14159265f
-typedef unsigned int uint;
+#include <glm/glm.hpp>
+
+using namespace std;
 
 class Particle
 {

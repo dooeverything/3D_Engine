@@ -3,8 +3,9 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include <SDL.h>
 #include <GL/glew.h>
+#include <SDL.h>
+
 #include "Utils.h"
 
 class VertexBuffer
@@ -58,14 +59,15 @@ class FrameBuffer
 public:
 	FrameBuffer();
 	virtual void createBuffers(int width, int height);
-	virtual void bind();
-	virtual void unbind();
-	virtual void bindFrameTexture();
+	
+	void bind();
+	void unbind();
+	void bindFrameTexture();
 	void rescaleFrame(int width, int height);
 
-	virtual GLuint getTextureID() { return m_framebuffer_texture; };
-	virtual int getWidth() { return m_width; };
-	virtual int getHeight() { return m_height; };
+	GLuint getTextureID() { return m_framebuffer_texture; };
+	int getWidth() { return m_width; };
+	int getHeight() { return m_height; };
 
 protected:
 	GLuint m_FBO;
@@ -76,43 +78,22 @@ protected:
 	int m_height;
 };
 
-class DepthBuffer : public FrameBuffer
-{
-public:
-	DepthBuffer();
-	virtual void createBuffers(int width, int height);
-	virtual GLuint getTextureID() { return m_depth_map; };
-
-private:
-	GLuint m_depth_map;
-
-};
-
-class ShadowBuffer : protected FrameBuffer
+class ShadowBuffer : public FrameBuffer
 {
 public:
 	ShadowBuffer();
 	~ShadowBuffer();
 
 	virtual void createBuffers(int width, int height);
-	virtual void bind();
-	virtual void unbind();
-	virtual void bindFrameTexture();
-	//virtual GLuint getTextureID() { return m_shadow_map; };
-
-//private:
-//	GLuint m_shadow_map;
 };
 
-class CubemapBuffer : protected FrameBuffer
+class CubemapBuffer : public FrameBuffer
 {
 public:
 	CubemapBuffer();
 	~CubemapBuffer();
 
 	virtual void createBuffers(int width, int height, bool mipmap);
-	virtual void bind();
-	virtual void unbind();
 	virtual void bindFrameTexture(int i);
 	virtual void bindMipMapTexture(int i, int mip);
 	void bindCubemapTexture();
@@ -121,8 +102,6 @@ public:
 
 private:
 	unsigned int m_cubemap;
-	unsigned int m_width;
-	unsigned int m_height;
 };
 
 #endif

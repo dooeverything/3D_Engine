@@ -4,14 +4,16 @@
 #define SOFTBODYSOLVER_H
 
 #include <unordered_map>
-#include "Mesh.h"
-#include "Particle.h"
+
+#include "imgui-docking/imgui.h"
 #include "make_tet_mesh.h"
 #include "make_signed_distance.h"
 #include "trimesh.h"
-#include "imgui-docking/imgui.h"
 
-//#include "Trimesh.h"
+#include "Mesh.h"
+//#include "Particle.h"
+
+class SoftParticle;
 
 class SoftBodySolver
 {
@@ -26,7 +28,7 @@ public:
 
 private:
 	glm::ivec3 getGridPos(glm::vec3 pos);
-	uint getHashIndex(glm::ivec3& pos);
+	info::uint getHashIndex(glm::ivec3& pos);
 
 	void getTet(TetMesh& tet_mesh);
 	void getTetVertices(const TetMesh& tet_mesh);
@@ -43,17 +45,17 @@ private:
 
 	Mesh* m_mesh;
 	unique_ptr<Mesh> m_tet_mesh;
-	vector<uint> m_hash_start;
-	vector<uint> m_hash_ids;
+	vector<info::uint> m_hash_start;
+	vector<info::uint> m_hash_ids;
 	
 	vector<info::VertexLayout> m_layouts;
-	const vector<info::VertexLayout>& m_og_layouts;
+	//const vector<info::VertexLayout>& m_og_layouts;
 
 	vector<shared_ptr<SoftParticle>> m_tets;
 	vector<shared_ptr<SoftParticle>> m_edges;
 
-	vector<uint> m_tet_indices;
-	vector<uint> m_edges_indices;
+	vector<info::uint> m_tet_indices;
+	vector<info::uint> m_edges_indices;
 
 	vector<float> m_rest_d;
 	vector<float> m_rest_v;
