@@ -2,18 +2,17 @@
 
 ### Features include
  1. 3D model loading (.fbx)
- 2. 3D game engine like gui (by using ImGui)
- 3. Phong Shading Model
- 4. 3D Gizmos (only translation)
- 5. Outline for picking objects (by using [jump flood algorithm](https://www.comp.nus.edu.sg/~tants/jfa.html))
- 6. Shadow (Directional light)
- 7. Load and apply texture to a game object
- 8. Physically Based Rendering (PBR)
- 9. 3D grid
- 10. Marching Cube (Terrain, Metaball)
- 11. Terrain Editor (Sculpting and removing)
- 12. SPH Simulation with Screen Space Rendering on GPU ([Curvature Flow](https://dl.acm.org/doi/10.1145/1507149.1507164))
- 13. Cloth Simulation ([Small Steps in Physics Simulation](https://dl.acm.org/doi/10.1145/3309486.3340247), [A Survey on Position Based Dynamics, 2017](https://dl.acm.org/doi/10.2312/egt.20171034))
+ 2. 3D game engine like GUI
+ 3. 3D Gizmos (only translation)
+ 4. Outline for picking objects (by using [jump flood algorithm](https://www.comp.nus.edu.sg/~tants/jfa.html))
+ 5. Shadow (Directional light)
+ 6. Load and apply texture to a game object
+ 7. Physically Based Rendering (PBR)
+ 8. 3D grid
+ 9. Marching Cube (Metaball)
+ 10. Terrain Editor (Sculpting and removing)
+ 11. SPH Simulation with Screen Space Rendering on GPU ([Curvature Flow](https://dl.acm.org/doi/10.1145/1507149.1507164))
+ 12. Cloth Simulation ([Small Steps in Physics Simulation](https://dl.acm.org/doi/10.1145/3309486.3340247), [A Survey on Position Based Dynamics, 2017](https://dl.acm.org/doi/10.2312/egt.20171034))
 
 ### Libraries
  1. C++17
