@@ -28,12 +28,12 @@ void SDL_GL_Window::init(const int width, const int height, string title)
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-
-	// Set double buffering
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
-	// Hardware Acceleration
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
 	SDL_WindowFlags window_flags = static_cast<SDL_WindowFlags>(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 	m_window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, m_width, m_height, window_flags);
@@ -48,10 +48,73 @@ void SDL_GL_Window::init(const int width, const int height, string title)
 	SDL_GL_MakeCurrent(m_window, m_context);
 	SDL_GL_SetSwapInterval(1); // Enable vsync
 
+	setupImGui();
+
+	const char* glsl_version = "#version 450";
+
+	// Setup Platform/Renderer backends
+	ImGui_ImplSDL2_InitForOpenGL(m_window, m_context);
+	ImGui_ImplOpenGL3_Init(glsl_version);
+
+	// Initialize GLEW
+	glewExperimental = GL_TRUE;
+	if (glewInit() != GLEW_OK)
+	{
+		printf("Failed to initialize GLEW. \n");
+		assert(0);
+	}
+
+	glGetError();
+
+	glEnable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_MULTISAMPLE);
+	glEnable(GL_STENCIL_TEST);
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+	// If both depth and stencil test pass, then use the result of the stencil test
+	// Replace with the masked fragment value
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	printf("%s \n", glGetString(GL_VERSION));
+}
+
+void SDL_GL_Window::resizeWindow(int width, int height)
+{
+	SDL_SetWindowSize(m_window, width, height);
+	glViewport(0, 0, width, height);
+}
+
+void SDL_GL_Window::clearWindow()
+{
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+}
+
+void SDL_GL_Window::swapWindow()
+{
+	SDL_GL_SwapWindow(m_window);
+}
+
+void SDL_GL_Window::unload()
+{
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
+
+	// Terminate and clear all allocated SDL resources
+	SDL_GL_DeleteContext(m_context);
+	SDL_DestroyWindow(m_window);
+	SDL_Quit();
+}
+
+void SDL_GL_Window::setupImGui()
+{
 	// Setup Dear ImGui context
 	cout << "Create imgui context" << endl;
 	IMGUI_CHECKVERSION();
-	ImGui::CreateContext(); 
+	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -113,66 +176,4 @@ void SDL_GL_Window::init(const int width, const int height, string title)
 	style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
 	style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
 	style.GrabRounding = style.FrameRounding = 2.3f;
-
-	const char* glsl_version = "#version 450";
-
-	// Setup Platform/Renderer backends
-	ImGui_ImplSDL2_InitForOpenGL(m_window, m_context);
-	ImGui_ImplOpenGL3_Init(glsl_version);
-
-	// Initialize GLEW
-	glewExperimental = GL_TRUE;
-	if (glewInit() != GLEW_OK)
-	{
-		printf("Failed to initialize GLEW. \n");
-		assert(0);
-	}
-
-	glGetError();
-
-	// Enable depth buffer
-	glEnable(GL_DEPTH_TEST);
-
-	// Enable stencil buffer
-	glEnable(GL_STENCIL_TEST);
-	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
-	// If both depth and stencil test pass, then use the result of the stencil test
-	// Replace with the masked fragment value
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-	// Enable blend buffer
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	printf("%s \n", glGetString(GL_VERSION));
-}
-
-void SDL_GL_Window::resizeWindow(int width, int height)
-{
-	SDL_SetWindowSize(m_window, width, height);
-	glViewport(0, 0, width, height);
-}
-
-void SDL_GL_Window::clearWindow()
-{
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-}
-
-void SDL_GL_Window::swapWindow()
-{
-	SDL_GL_SwapWindow(m_window);
-}
-
-void SDL_GL_Window::unload()
-{
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplSDL2_Shutdown();
-	ImGui::DestroyContext();
-
-	// Terminate and clear all allocated SDL resources
-	SDL_GL_DeleteContext(m_context);
-	SDL_DestroyWindow(m_window);
-	SDL_Quit();
 }

@@ -17,10 +17,6 @@ class Outline;
 class MarchingCube;
 class SPHSystemCuda;
 
-//#include "MarchingCube.h"
-
-//#include "SPHSystemCuda.h"
-
 using namespace std;
 
 class Renderer
@@ -45,8 +41,10 @@ private:
 	unique_ptr<SDL_GL_Window> m_sdl_window;
 	unique_ptr<Camera> m_camera;
 	unique_ptr<Grid> m_grid;
-	unique_ptr<FrameBuffer> m_framebuffer;
 	unique_ptr<PopupPanel> m_popup;
+
+	unique_ptr<FrameBuffer> m_framebuffer_multi;
+	unique_ptr<FrameBuffer> m_scene;
 
 	unique_ptr<ShadowMap> m_depth_map;
 	unique_ptr<ShadowMap> m_shadow_map;

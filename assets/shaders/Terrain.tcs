@@ -1,0 +1,28 @@
+#version 450 core
+
+layout(vertices=4) out;
+
+in vec4 tcs_pos_light[];
+in vec3 tcs_pos_model[];
+in vec2 tcs_texCoords[];
+
+out vec4 tes_pos_light[];
+out vec3 tes_pos_model[];
+out vec2 tes_texCoords[];
+
+void main()
+{
+    gl_TessLevelOuter[0] = 16;
+    gl_TessLevelOuter[1] = 16;
+    gl_TessLevelOuter[2] = 16;
+    gl_TessLevelOuter[3] = 16;
+
+    gl_TessLevelInner[0] = 16;
+    gl_TessLevelInner[1] = 16;
+
+    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+
+    tes_pos_light[gl_InvocationID] = tcs_pos_light[gl_InvocationID];
+    tes_pos_model[gl_InvocationID] = tcs_pos_model[gl_InvocationID];
+    tes_texCoords[gl_InvocationID] = tcs_texCoords[gl_InvocationID];
+}

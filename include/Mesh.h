@@ -1,7 +1,7 @@
 #pragma once
-
 #ifndef MESH_H
 #define MESH_H
+
 #include <assimp/Importer.hpp>
 #include <assimp/Exporter.hpp>
 #include <assimp/scene.h>
@@ -45,13 +45,14 @@ public:
 		 shared_ptr<Material> material);
 
 	virtual void processMesh();
-	void drawArrays();
-	void drawInstance(glm::mat4& P, glm::mat4& V);
-	void draw();
 
-	//virtual shared_ptr<BoundingBox> computeBoundingBox();
-	virtual void computeBoundingBox();
+	void draw();
 	virtual void draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool terrain=false);
+	void drawInstance(glm::mat4& P, glm::mat4& V);
+	void drawArrays();
+	void drawTerrain(const glm::mat4& P, const glm::mat4& V, Shader& shader, float res);
+
+	virtual void computeBoundingBox();
 	virtual void drawLowQuality(Shader& shader);
 	virtual bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
 	virtual inline void updateBuffer(const vector<info::VertexLayout>& layouts) { m_buffer->updateBuffer(layouts); };

@@ -211,6 +211,35 @@ void Mesh::draw()
 	m_buffer->unbind();
 }
 
+void Mesh::drawTerrain(const glm::mat4& P, const glm::mat4& V, Shader& shader, float res)
+{
+	glm::mat4 M = m_transform_pos * m_transform_rot * m_transform_scale;
+	shader.load();
+	shader.setMaterial(*m_material);
+	shader.setPVM(P, V, M);
+	
+	if (m_material->getTexture() != nullptr)
+	{
+		shader.setInt("has_texture", 1);
+		shader.setInt("texture_map", 1);
+		glActiveTexture(GL_TEXTURE0);
+		m_material->getTexture()->setActive();
+	}
+	else
+	{
+		shader.setInt("has_texture", 0);
+	}
+
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	m_buffer->bind();
+	glDrawArrays(GL_PATCHES, 0, 4 * res * res);
+	m_buffer->unbind();
+
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+}
+
 void Mesh::draw(const glm::mat4& P, const glm::mat4& V, Shader& shader, bool terrain)
 {
 	unsigned int color_index = 1;

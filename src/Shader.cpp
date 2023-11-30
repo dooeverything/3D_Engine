@@ -21,26 +21,35 @@ bool Shader::processShader()
 {
 	//cout << "Load shader file: " << endl;
 
-	GLuint vert_shader = 0;
-	GLuint frag_shader = 0;
-	GLuint geom_shader = 0;
+	vector<GLuint> shaders(m_paths.size(), 0);
 
-	if (!compileShader(m_paths.at(0), GL_VERTEX_SHADER, vert_shader) || 
-		!compileShader(m_paths.at(1), GL_FRAGMENT_SHADER, frag_shader))
-		assert(0);
-
-	if (m_paths.size() > 2)
+	for (int i = 0; i < m_paths.size(); ++i)
 	{
-		compileShader(m_paths.at(2), GL_GEOMETRY_SHADER, geom_shader);
+		if (!compileShader(m_paths.at(i), types[i], shaders[i]))
+			assert(0);
 	}
+
+	//if (!compileShader(m_paths.at(0), GL_VERTEX_SHADER, vert_shader) || 
+	//	!compileShader(m_paths.at(1), GL_FRAGMENT_SHADER, frag_shader))
+	//	assert(0);
+
+	//if (m_paths.size() > 2)
+	//{
+	//	compileShader(m_paths.at(2), GL_GEOMETRY_SHADER, geom_shader);
+	//}
 
 	m_shader_ID = glCreateProgram();
 
-	glAttachShader(m_shader_ID, vert_shader);
-	glAttachShader(m_shader_ID, frag_shader);
+	for (int i = 0; i < m_paths.size(); ++i)
+	{
+		glAttachShader(m_shader_ID, shaders[i]);
+	}
 
-	if (m_paths.size() > 2)
-		glAttachShader(m_shader_ID, geom_shader);
+	//glAttachShader(m_shader_ID, vert_shader);
+	//glAttachShader(m_shader_ID, frag_shader);
+
+	//if (m_paths.size() > 2)
+	//	glAttachShader(m_shader_ID, geom_shader);
 
 	glLinkProgram(m_shader_ID);
 
@@ -55,11 +64,17 @@ bool Shader::processShader()
 		return false;
 	}
 
-	glDeleteShader(vert_shader);
-	glDeleteShader(frag_shader);
 
-	if (m_paths.size() > 2)
-		glDeleteShader(geom_shader);
+	for (int i = 0; i < m_paths.size(); ++i)
+	{
+		glDeleteShader(shaders[i]);
+	}
+
+	//glDeleteShader(vert_shader);
+	//glDeleteShader(frag_shader);
+
+	//if (m_paths.size() > 2)
+	//	glDeleteShader(geom_shader);
 
 	return true;
 }

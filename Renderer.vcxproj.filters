@@ -156,6 +156,12 @@
     <ClCompile Include="src\Outline.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Terrain.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Tri.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Buffer.h">
@@ -306,6 +312,12 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\Outline.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Terrain.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Tri.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

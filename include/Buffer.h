@@ -25,7 +25,9 @@ public:
 	VertexBuffer();
 	void createBuffers(const vector<info::VertexLayout>& layouts);
 	void createBuffers(const vector<info::VertexLayout>& layouts, const vector<unsigned int>& indices);
-	void updateBuffer(const vector<info::VertexLayout>& pos);
+	void createBuffers(const vector<info::VertexLayout>& layouts, const vector<glm::vec3>& colors);
+	void updateBuffer(const vector<info::VertexLayout>& layouts);
+	void updateBuffer(const vector<info::VertexLayout>& layouts, const vector<glm::vec3>& colors);
 	void bind() const;
 	void unbind() const;
 	
@@ -46,21 +48,24 @@ private:
 	GLuint m_VBO;
 	GLuint m_EBO;
 	GLuint m_IBO;
+	GLuint m_CBO;
 
 	vector<info::VertexLayout> m_layouts;
 	vector<unsigned int> m_indices;
 	vector<glm::mat4> m_matrices;
-	unsigned int n_layouts;
-	unsigned int n_indices;
+	int n_layouts;
+	int n_indices;
 };
 
 class FrameBuffer
 {
 public:
 	FrameBuffer();
-	virtual void createBuffers(int width, int height);
+	virtual void createBuffers(int width, int height, bool multisample = false);
 	
 	void bind();
+	void bindDraw();
+	void bindRead();
 	void unbind();
 	void bindFrameTexture();
 	void rescaleFrame(int width, int height);
@@ -84,7 +89,7 @@ public:
 	ShadowBuffer();
 	~ShadowBuffer();
 
-	virtual void createBuffers(int width, int height);
+	virtual void createBuffers(int width, int height, bool multisample = false);
 };
 
 class CubemapBuffer : public FrameBuffer

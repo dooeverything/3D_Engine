@@ -127,7 +127,9 @@
     <ClCompile Include="src\SoftBodySolver.cpp" />
     <ClCompile Include="src\SPHSystem.cpp" />
     <ClCompile Include="src\SPHSystemCuda.cpp" />
+    <ClCompile Include="src\Terrain.cpp" />
     <ClCompile Include="src\Texture.cpp" />
+    <ClCompile Include="src\Tri.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="C:\vclib\imgui-docking\imconfig.h" />
@@ -178,7 +180,9 @@
     <ClInclude Include="include\SoftBodySolver.h" />
     <ClInclude Include="include\SPHSystem.h" />
     <ClInclude Include="include\SPHSystemCuda.h" />
+    <ClInclude Include="include\Terrain.h" />
     <ClInclude Include="include\Texture.h" />
+    <ClInclude Include="include\Tri.h" />
     <ClInclude Include="include\Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

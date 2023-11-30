@@ -7,6 +7,7 @@
 #include "Object.h"
 #include "SPHSystemCuda.h"
 #include "SoftBodySolver.h"
+#include "Terrain.h"
 
 ImGuiPanel::ImGuiPanel(string name) :
 	m_scene_min(ImVec2(0.0, 0.0)), m_scene_max(ImVec2(0.0, 0.0)), m_name(name)
@@ -90,10 +91,10 @@ void ImGuiMenuBar::render(
 		addObject(scene_objects, *metaball);
 	}
 
-	ImGui::SeparatorText("Terrain Generation");
+	ImGui::SeparatorText("Landscape");
 	if (ImGui::MenuItem("Terrain"))
 	{
-		shared_ptr<GameObject> terrain = make_shared<Terrain>(16.0f);
+		shared_ptr<GameObject> terrain = make_shared<Terrain>(20.0f);
 		scene_objects.push_back(terrain);
 		addObject(scene_objects, *terrain);
 	}

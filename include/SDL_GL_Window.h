@@ -37,6 +37,8 @@ public:
 	}
 
 private:
+	void setupImGui();
+
 	SDL_Window* m_window;
 	SDL_GLContext m_context;
 	ImVec2 m_scene_min;

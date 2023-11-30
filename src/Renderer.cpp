@@ -15,7 +15,10 @@ Renderer::Renderer() :
 	init();
 }
 
-Renderer::~Renderer() {}
+Renderer::~Renderer() 
+{
+
+}
 
 void Renderer::init()
 {
@@ -26,15 +29,18 @@ void Renderer::init()
 	int height = 800;
 	m_sdl_window->init(width, height, "Renderer");
 
-	m_framebuffer = make_unique<FrameBuffer>();
-	m_framebuffer->createBuffers(2048, 2048);
+	m_framebuffer_multi = make_unique<FrameBuffer>();
+	m_framebuffer_multi->createBuffers(1024, 1024, true);
+
+	m_scene = make_unique<FrameBuffer>();
+	m_scene->createBuffers(1024, 1024);
 
 	m_grid = make_unique<Grid>();
 	m_outline = make_unique<Outline>(1024, 1024);
 
 	m_camera = make_unique<Camera>(glm::vec3(0.0f, 7.5f, 27.0f), -90.0f, -11.0f);
 	
-	glm::vec3 light_pos = { 10.0f, 10.0f, 10.0f };
+	glm::vec3 light_pos = { 1.0f, 1.0f, 1.0f };
 	m_depth_map = make_unique<ShadowMap>(256, 256);
 	m_shadow_map = make_unique<ShadowMap>(256, 256, light_pos, false);
 	m_cubemap = make_unique<CubeMap>(256, 256);
@@ -46,10 +52,6 @@ void Renderer::init()
 	m_panels.push_back(make_shared<ObjectPanel>("SceneObjects"));
 	m_panels.push_back(make_shared<PropertyPanel>("Properties"));
 	
-	//shared_ptr<SPHSystemCuda> fluid = make_shared<SPHSystemCuda>(64.0f, 32.0f, 64.0f);
-	//m_scene_objects.push_back(fluid);
-	//m_sph = fluid;
-
 	cout << "********************Loading Gizmos********************" << endl;
 	for (int axis = 0; axis < 4; ++axis)
 	{
@@ -75,10 +77,6 @@ void Renderer::run()
 	m_irradiancemap->drawMap(*m_cubemap->getCubemapBuffer());
 	m_prefilter->drawMap(*m_cubemap->getCubemapBuffer());
 	m_lut->drawMap();
-
-	//shared_ptr<SPHSystemCuda> fluid = make_shared<SPHSystemCuda>(64.0f, 32.0f, 64.0f);
-	//m_scene_objects.push_back(fluid);
-	//m_sph = fluid;
 
 	while (m_is_running)
 	{
@@ -323,12 +321,18 @@ void Renderer::renderImGui()
 			else
 				m_outline->clearOutlineFrame();
 
-			m_framebuffer->bind();
+			m_framebuffer_multi->bind();
 			m_sdl_window->clearWindow();
 			renderScene();
-			m_framebuffer->unbind();
 
-			ImGui::Image((ImTextureID)m_framebuffer->getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
+			m_framebuffer_multi->bindRead();
+			m_scene->bindDraw();
+			glBlitFramebuffer(0, 0, m_framebuffer_multi->getWidth(), m_framebuffer_multi->getHeight(),
+				0, 0, m_scene->getWidth(), m_scene->getHeight(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			
+			m_framebuffer_multi->unbind();
+
+			ImGui::Image((ImTextureID)m_scene->getTextureID(), wsize, ImVec2(0, 1), ImVec2(1, 0));
 		}
 		ImGui::EndChild();
 	}
@@ -349,8 +353,8 @@ void Renderer::renderImGui()
 
 void Renderer::renderScene()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glViewport(0, 0, m_framebuffer->getWidth(), m_framebuffer->getHeight());
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glViewport(0, 0, m_framebuffer_multi->getWidth(), m_framebuffer_multi->getHeight());
 
 	glm::vec3 cam_pos = m_camera->getPos();
 
@@ -384,7 +388,8 @@ void Renderer::renderScene()
 					float d2 = rhs->getMesh()->getRayHitMin();
 					return d1 < d2;
 				});
-		
+			
+
 			if(m_scene_objects.at(0)->getIsClick())
 			{
 				m_click_object = m_scene_objects.at(0);
@@ -399,6 +404,11 @@ void Renderer::renderScene()
 			}
 		}
 
+	}
+	
+	if (m_click_object != nullptr)
+	{
+		m_click_object->updateVertex(ray_dir, ray_pos, m_is_mouse_down);
 	}
 
 	bool is_popup = false;
@@ -456,6 +466,8 @@ void Renderer::renderScene()
 
 	if (m_click_object != nullptr)
 	{
+		if (m_click_object->getName() == "Terrain") return;
+
 		// Draw Outline
 		glDisable(GL_DEPTH_TEST);
 		m_outline->draw(*m_click_object);

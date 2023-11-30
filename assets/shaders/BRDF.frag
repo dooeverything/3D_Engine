@@ -121,7 +121,7 @@ vec3 CalcDirLight(Light light, vec3 normal, vec3 view_dir)
 	vec3 diffuse = light.diffuse * diff * mat.color;
 
 	// Specular
-	vec3 reflect_dir = 2 * dot(normal, light_dir) * normal - light_dir;
+	//vec3 reflect_dir = 2 * dot(normal, light_dir) * normal - light_dir;
 	vec3 h = normalize(light_dir + view_dir);
 	float spec = pow(max(dot(view_dir, h), 0.0), 32.0);	
 	vec3 specular = light.specular * spec * mat.color;

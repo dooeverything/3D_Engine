@@ -33,6 +33,7 @@ public:
 	virtual inline void setColor(glm::vec3 color) { m_color = color; };
 
 	virtual void renderProperty() { return; };
+	virtual void updateVertex(glm::vec3 ray_dir, glm::vec3 ray_pos, bool mouse_down) { return; };
 
 private:
 	glm::vec3 m_color;

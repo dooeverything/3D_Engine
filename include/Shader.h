@@ -47,6 +47,20 @@ public:
 	void unload();
 
 private:
+	vector<GLenum> types = { 
+		GL_VERTEX_SHADER,
+		GL_FRAGMENT_SHADER,
+		GL_TESS_CONTROL_SHADER,
+		GL_TESS_EVALUATION_SHADER,
+		GL_GEOMETRY_SHADER
+	};
+
+	/*enum Types
+	{
+		GL_VERTEX_SHADER = 0,
+
+	};*/
+
 	bool compileShader(const string& fileName, GLenum shaderType, GLuint& outShader);
 	bool isCompiled(GLuint& shader);
 

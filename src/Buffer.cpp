@@ -1,7 +1,7 @@
 #include "Buffer.h"
 
 VertexBuffer::VertexBuffer() : 
-	m_VAO(0), m_VBO(0), m_EBO(0), m_IBO(0),
+	m_VAO(0), m_VBO(0), m_EBO(0), m_IBO(0), m_CBO(0),
 	m_layouts({}), m_matrices({}), n_layouts(0), n_indices(0)
 {
 }
@@ -10,8 +10,8 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts)
 {
 	m_layouts.clear();
 	m_layouts = layouts;
-
-	n_layouts = static_cast<unsigned int>(layouts.size());
+	n_layouts = int(layouts.size());
+	cout << "Create vertex buffers without indices: " << n_layouts << endl;
 
 	// Generate buffers: VAO, VBO, EBO
 	glGenVertexArrays(1, &m_VAO);
@@ -63,7 +63,7 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts, cons
 	m_indices = indices;
 	n_layouts = static_cast<unsigned int>(layouts.size());
 	n_indices = static_cast<unsigned int>(indices.size());
-	cout << "CreateBuffers: " << m_layouts.size() << " " << m_indices.size() << endl;
+	cout << "Create vertex buffers: " << m_layouts.size() << " " << m_indices.size() << endl;
 
 	// Generate buffers: VAO, VBO, EBO
 	glGenVertexArrays(1, &m_VAO);
@@ -115,6 +115,44 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts, cons
 	glBindVertexArray(0);
 }
 
+void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts, const vector<glm::vec3>& colors)
+{
+	m_layouts.clear();
+	m_layouts = layouts;
+	n_layouts = int(layouts.size());
+	cout << "Create vertex buffers without indices: " << n_layouts << endl;
+
+	// Generate buffers: VAO, VBO, CBO
+	glGenVertexArrays(1, &m_VAO);
+	glGenBuffers(1, &m_VBO);
+
+	glBindVertexArray(m_VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+	glBufferData(GL_ARRAY_BUFFER, n_layouts * sizeof(info::VertexLayout) , &layouts[0], GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(POS_ATTRIB);
+	glVertexAttribPointer(POS_ATTRIB, 3, GL_FLOAT, GL_FALSE, sizeof(info::VertexLayout), (void*)0);
+
+	glEnableVertexAttribArray(NORMAL_ATTRIB);
+	glVertexAttribPointer(NORMAL_ATTRIB, 3, GL_FLOAT, GL_FALSE, sizeof(info::VertexLayout), (void*)offsetof(info::VertexLayout, normal));
+
+	glEnableVertexAttribArray(TANGENT_ATTRIB);
+	glVertexAttribPointer(TANGENT_ATTRIB, 3, GL_FLOAT, GL_FALSE, sizeof(info::VertexLayout), (void*)offsetof(info::VertexLayout, tangent));
+
+	glEnableVertexAttribArray(TEXCOORD_ATTRIB);
+	glVertexAttribPointer(TEXCOORD_ATTRIB, 2, GL_FLOAT, GL_FALSE, sizeof(info::VertexLayout), (void*)offsetof(info::VertexLayout, texCoord));
+	
+
+	glGenBuffers(1, &m_CBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_CBO);
+	glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(TEXCOORD_ATTRIB + 1);
+	glVertexAttribPointer(TEXCOORD_ATTRIB + 1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+
+	glBindVertexArray(0);
+}
+
 void VertexBuffer::updateBuffer(const vector<info::VertexLayout>& layouts)
 {
 	m_layouts = layouts;
@@ -124,6 +162,23 @@ void VertexBuffer::updateBuffer(const vector<info::VertexLayout>& layouts)
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
 	void* ptr = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 	memcpy(ptr, &m_layouts[0], n_layouts * sizeof(info::VertexLayout));
+	glUnmapBuffer(GL_ARRAY_BUFFER);
+}
+
+void VertexBuffer::updateBuffer(const vector<info::VertexLayout>& layouts, const vector<glm::vec3>& colors)
+{
+	assert(layouts.size() == n_layouts);
+
+	m_layouts = layouts;
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+	void* ptr = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+	memcpy(ptr, &m_layouts[0], n_layouts * sizeof(info::VertexLayout));
+	glUnmapBuffer(GL_ARRAY_BUFFER);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_CBO);
+	void* ptr2 = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+	memcpy(ptr2, &colors[0], colors.size() * sizeof(glm::vec3));
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 
@@ -142,31 +197,58 @@ FrameBuffer::FrameBuffer()
 {
 }
 
-void FrameBuffer::createBuffers(int width, int height)
+void FrameBuffer::createBuffers(int width, int height, bool multisample)
 {
 	m_width = width;
 	m_height = height;
 	cout << "Create framebuffer: " << m_width << " " << m_height << endl;
 	
-	// Create a framebuffer
-	glGenFramebuffers(1, &m_FBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
 
-	// Create a color attachment texture
-	glGenTextures(1, &m_framebuffer_texture);
-	glBindTexture(GL_TEXTURE_2D, m_framebuffer_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_framebuffer_texture, 0);
 
-	// Create a renderbuffer object for depth and stencil attachment
-	glGenRenderbuffers(1, &m_RBO);
-	glBindRenderbuffer(GL_RENDERBUFFER, m_RBO);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_RBO);
+	if (multisample)
+	{
+		glGenFramebuffers(1, &m_FBO);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FBO);
+
+		cout << "Multisample Antialiasing" << endl;
+		glGenTextures(1, &m_framebuffer_texture);
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_framebuffer_texture);
+		glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, width, height, GL_TRUE);
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+		//glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		//glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		//glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		//glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		glGenRenderbuffers(1, &m_RBO);
+		glBindRenderbuffer(GL_RENDERBUFFER, m_RBO);
+		glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height);
+		glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_framebuffer_texture, 0);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_RBO);	
+		
+	}
+	else
+	{
+		// Create a framebuffer
+		glGenFramebuffers(1, &m_FBO);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+
+		glGenTextures(1, &m_framebuffer_texture);
+		glBindTexture(GL_TEXTURE_2D, m_framebuffer_texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_framebuffer_texture, 0);
+
+		glGenRenderbuffers(1, &m_RBO);
+		glBindRenderbuffer(GL_RENDERBUFFER, m_RBO);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_RBO);
+	}
 
 	// Check framebuffer is complete 
 	auto check = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -177,9 +259,10 @@ void FrameBuffer::createBuffers(int width, int height)
 	}
 
 	// Check any errors
-	if (glGetError() != GL_NO_ERROR)
+	auto gl_error = glGetError();
+	if (gl_error != GL_NO_ERROR)
 	{
-		cerr << "Error while creating Framebuffer buffer: " << glGetError() << endl;
+		cerr << "Error while creating Framebuffer buffer: " << gl_error << " vs " << GL_NO_ERROR << endl;
 		assert(0);
 	}
 
@@ -189,6 +272,16 @@ void FrameBuffer::createBuffers(int width, int height)
 void FrameBuffer::bind()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+}
+
+void FrameBuffer::bindDraw()
+{
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FBO);
+}
+
+void FrameBuffer::bindRead()
+{
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_FBO);
 }
 
 void FrameBuffer::unbind()
@@ -221,20 +314,12 @@ ShadowBuffer::ShadowBuffer() : FrameBuffer()
 ShadowBuffer::~ShadowBuffer()
 {}
 
-void ShadowBuffer::createBuffers(int width, int height)
+void ShadowBuffer::createBuffers(int width, int height, bool multisample)
 {
 	m_width = width;
 	m_height = height;
 	cout << "Create a shadowbuffer: " << width << " " << height << endl;
 	
-	// Check any errors
-	auto gl_error = glGetError();
-	if (gl_error != GL_NO_ERROR)
-	{
-		cerr << "1 Error while creating shadow buffer: " << gl_error << " vs " << GL_NO_ERROR << endl;
-		assert(0);
-	}
-
 	// Create a texture to store shadow values 
 	//glCreateTextures(GL_TEXTURE_2D, 1, &m_depth_texture);
 	glGenTextures(1, &m_framebuffer_texture);
@@ -265,7 +350,7 @@ void ShadowBuffer::createBuffers(int width, int height)
 	}
 
 	// Check any errors
-	gl_error = glGetError();
+	auto gl_error = glGetError();
 	if (gl_error != GL_NO_ERROR)
 	{
 		cerr << "2 Error while creating shadow buffer: " << gl_error << " vs " << GL_NO_ERROR << endl;
