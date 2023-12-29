@@ -11,7 +11,7 @@
 
 #include "FileDialog.h"
 
-class GameObject;
+class Object;
 class Material;
 class FrameBuffer;
 class Texture;
@@ -27,8 +27,8 @@ public:
 	ImGuiPanel(string name);
 	~ImGuiPanel();
 	virtual void render(
-		vector<shared_ptr<GameObject>>& scene_objects, 
-		shared_ptr<GameObject>& clicked_object) = 0;
+		vector<shared_ptr<Object>>& scene_objects, 
+		shared_ptr<Object>& clicked_object) = 0;
 
 	virtual void calculatePanelSize();
 	virtual bool mouseInPanel(int x, int y);
@@ -45,12 +45,11 @@ public:
 	ImGuiMenuBar(string name);
 	~ImGuiMenuBar();
 	virtual void render(
-		vector<shared_ptr<GameObject>>& scene_objects, 
-		shared_ptr<GameObject>& clicked_object);
+		vector<shared_ptr<Object>>& scene_objects, 
+		shared_ptr<Object>& clicked_object);
 
 	virtual void addObject(
-		const vector<shared_ptr<GameObject>>& scene_objects, 
-		GameObject& add_object);
+		const vector<shared_ptr<Object>>& scene_objects, Object& add_object);
 
 private:
 	unique_ptr<FileDialog> m_fd;
@@ -62,8 +61,8 @@ public:
 	ObjectPanel(string name);
 	~ObjectPanel();
 	virtual void render(
-		vector<shared_ptr<GameObject>>& scene_objects, 
-		shared_ptr<GameObject>& clicked_object);
+		vector<shared_ptr<Object>>& scene_objects, 
+		shared_ptr<Object>& clicked_object);
 };
 
 class PropertyPanel : public ImGuiPanel
@@ -72,20 +71,20 @@ public:
 	PropertyPanel(string name);
 	~PropertyPanel();
 	virtual void render(
-		vector<shared_ptr<GameObject>>& scene_objects, 
-		shared_ptr<GameObject>& clicked_object);
+		vector<shared_ptr<Object>>& scene_objects, 
+		shared_ptr<Object>& clicked_object);
 
 private:
 	unique_ptr<FrameBuffer> m_preview_fb;
-	unique_ptr<GameObject> m_preview_object;
+	unique_ptr<Object> m_preview_object;
 	unique_ptr<FileDialog> m_fd;
 
 	void renderPreview(const Material& mat);
 	void renderPreview(const vector<shared_ptr<Texture>>& tex);
 
-	void translatePanel(GameObject& clicked_object);
-	void rotatePanel(GameObject& clicked_object);
-	void scalePanel(GameObject& clicked_object);
+	void translatePanel(Object& clicked_object);
+	void rotatePanel(Object& clicked_object);
+	void scalePanel(Object& clicked_object);
 };
 
 class PopupPanel : public ImGuiPanel
@@ -95,13 +94,13 @@ public:
 	~PopupPanel();
 
 	void popup(
-		vector<shared_ptr<GameObject>>& scene_objects,
-		shared_ptr<GameObject>& clicked_object,
+		vector<shared_ptr<Object>>& scene_objects,
+		shared_ptr<Object>& clicked_object,
 		bool& is_popup, bool& is_clicked_gizmo);
 
 	void render(
-		vector<shared_ptr<GameObject>>& scene_objects,
-		shared_ptr<GameObject>& clicked_object);
+		vector<shared_ptr<Object>>& scene_objects,
+		shared_ptr<Object>& clicked_object);
 };
 
 #endif // !IMGUIPANEL_H

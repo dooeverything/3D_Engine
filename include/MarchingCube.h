@@ -9,13 +9,13 @@
 #include <unordered_map>
 
 #include "FastNoiseLite.h"
-#include "GameObject.h"
+#include "Object.h"
 
-class MarchingCube : public GameObject
+class MarchingCube : public Object
 {
 public:
-    MarchingCube();
-    MarchingCube(float size);
+    MarchingCube(const string& name);
+    MarchingCube(const string& name, float size);
     ~MarchingCube();
 
     virtual void createVertex() = 0;
@@ -24,7 +24,7 @@ public:
     virtual glm::vec3 interpolate(glm::vec3, glm::vec3, float, float, float);
     virtual void polygonize(vector<glm::vec3>, vector<float> gridValues);
 
-    inline virtual float getSize() { return m_size; };
+    inline virtual float getModelSize() { return m_size; };
     inline virtual float getGridSize() { return m_grid_size; };
     inline virtual float getThreshold() { return m_threshold; };
 

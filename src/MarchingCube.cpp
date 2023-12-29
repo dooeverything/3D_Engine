@@ -6,14 +6,14 @@
 // https://polycoding.net/marching-cubes/part-2/
 // http://paulbourke.net/geometry/polygonise/
 
-MarchingCube::MarchingCube() :
-	GameObject(), m_size(10), m_grid_size(0.1f), m_threshold(1.0f),
+MarchingCube::MarchingCube(const string& name) :
+	Object(name), m_size(10), m_grid_size(0.1f), m_threshold(1.0f),
 	m_vertices({}), m_normals({})
 {
 }
 
-MarchingCube::MarchingCube(float size) :
-	GameObject(),  m_size(size), m_grid_size(0.1f), m_threshold(1.0f), 
+MarchingCube::MarchingCube(const string& name, float size) :
+	Object(name),  m_size(size), m_grid_size(0.1f), m_threshold(1.0f), 
 	m_vertices({}), m_normals({})
 {
 }
@@ -119,22 +119,17 @@ void MarchingCube::polygonize(vector<glm::vec3> grids, vector<float> gridValues)
 	}
 }
 
-Metaball::Metaball(float size) : MarchingCube(size)
+Metaball::Metaball(float size) : MarchingCube("Metaball", size)
 {
-	m_name = "Metaball";
 	m_center = glm::vec3(0.f);
 
 	cout << endl;
 	cout << "*************************MetaBall Information**************************" << endl;
 	cout << "Create Metaball" << endl;
 	cout << "Radius : " << m_size << endl;
-	cout << "Center : " << m_center << endl;
+	//cout << "Center : " << m_center << endl;
 
 	createVertex();
-
-	vector<string> shader_path = { "assets/shaders/BRDF.vert", "assets/shaders/BRDF.frag" };
-	m_shader = make_shared<Shader>(shader_path);
-	m_shader->processShader();
 
 	cout << "********************************end************************************" << endl;
 	cout << endl;
@@ -203,9 +198,8 @@ void Metaball::createVertex()
 		layouts.push_back(layout);
 	}
 
-	m_mesh = make_shared<Mesh>(m_name);
-	m_mesh->getBuffer().createBuffers(layouts);
-	m_mesh->computeBoundingBox();
-
-	cout << "Number of Vertices : " << m_mesh->getBuffer().getLayouts().size() << endl;
+	shared_ptr<Mesh> mesh = make_shared<Mesh>("Metaball");
+	mesh->setupBuffer(layouts);
+	addMesh(mesh);
+	cout << "Number of Vertices : " << mesh->getSizeVertices() << endl;
 }

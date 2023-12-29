@@ -8,6 +8,8 @@
 #include "SPHSystemCuda.h"
 #include "SoftBodySolver.h"
 #include "Terrain.h"
+#include "MeshImporter.h"
+#include "Material.h"
 
 ImGuiPanel::ImGuiPanel(string name) :
 	m_scene_min(ImVec2(0.0, 0.0)), m_scene_max(ImVec2(0.0, 0.0)), m_name(name)
@@ -51,42 +53,50 @@ ImGuiMenuBar::~ImGuiMenuBar()
 {}
 
 void ImGuiMenuBar::render(
-	vector<shared_ptr<GameObject>>& scene_objects, 
-	shared_ptr<GameObject>& clicked_object)
+	vector<shared_ptr<Object>>& scene_objects, 
+	shared_ptr<Object>& clicked_object)
 {
 	ImGui::SeparatorText("Primitives");
 	if (ImGui::MenuItem("Cube"))
 	{
-		shared_ptr<GameObject> object(new GameObject("assets/models/Cube.txt"));
-		//shared_ptr<GameObject> object = make_shared<GameObject>("assets/models/Cube.txt");
+		shared_ptr<Mesh> mesh;
+		shared_ptr<MeshImporter> importer = MeshImporter::create("assets/models/Cube.txt");
+		importer->importMesh(mesh);
+		shared_ptr<Object> object = make_shared<Object>(mesh);
 		scene_objects.push_back(object);
 		addObject(scene_objects, *object);
 	}
 
 	if (ImGui::MenuItem("Plane"))
 	{
-		shared_ptr<GameObject> object = make_shared<GameObject>("assets/models/Plane.txt");
+		shared_ptr<Mesh> mesh;
+		shared_ptr<MeshImporter> importer = MeshImporter::create("assets/models/Plane.txt");
+		importer->importMesh(mesh);
+		shared_ptr<Object> object = make_shared<Object>(mesh);
 		scene_objects.push_back(object);
 		addObject(scene_objects, *object);
 	}
 	
 	if (ImGui::MenuItem("Floor"))
 	{
-		shared_ptr<GameObject> object = make_shared<GameObject>("assets/models/Floor.txt");
+		shared_ptr<Mesh> mesh;
+		shared_ptr<MeshImporter> importer = MeshImporter::create("assets/models/Floor.txt");
+		importer->importMesh(mesh);
+		shared_ptr<Object> object = make_shared<Object>(mesh);
 		scene_objects.push_back(object);
 		addObject(scene_objects, *object);
 	}
 
 	if (ImGui::MenuItem("Sphere"))
 	{
-		shared_ptr<GameObject> sphere = make_shared<Sphere>(true);
+		shared_ptr<Object> sphere = make_shared<Sphere>(true);
 		scene_objects.push_back(sphere);
 		addObject(scene_objects, *sphere);
 	}
 	
 	if (ImGui::MenuItem("Metaball"))
 	{
-		shared_ptr<GameObject> metaball = make_shared<Metaball>(1.0f);
+		shared_ptr<Object> metaball = make_shared<Metaball>(1.0f);
 		scene_objects.push_back(metaball);
 		addObject(scene_objects, *metaball);
 	}
@@ -94,7 +104,7 @@ void ImGuiMenuBar::render(
 	ImGui::SeparatorText("Landscape");
 	if (ImGui::MenuItem("Terrain"))
 	{
-		shared_ptr<GameObject> terrain = make_shared<Terrain>(20.0f);
+		shared_ptr<Object> terrain = make_shared<Terrain>(20.0f);
 		scene_objects.push_back(terrain);
 		addObject(scene_objects, *terrain);
 	}
@@ -102,7 +112,7 @@ void ImGuiMenuBar::render(
 	ImGui::SeparatorText("Physics Simulator");
 	if (ImGui::MenuItem("Cloth"))
 	{
-		shared_ptr<GameObject> cloth = make_shared<Cloth>();
+		shared_ptr<Object> cloth = make_shared<Cloth>();
 		scene_objects.push_back(cloth);
 		addObject(scene_objects, *cloth);
 	}
@@ -121,20 +131,24 @@ void ImGuiMenuBar::render(
 		string path = m_fd->OpenFile(".fbx");
 		if (path != "")
 		{
-			cout << "Open: " << path << endl;
-			shared_ptr<GameObject> fbx_object = make_shared<GameObject>(path);
-			scene_objects.push_back(fbx_object);
-			addObject(scene_objects, *fbx_object);
+			vector<shared_ptr<Mesh>> meshes;
+			shared_ptr<MeshImporter> importer = MeshImporter::create(path);
+			importer->importMesh(meshes);
+
+			for (const auto& it : meshes)
+			{
+				shared_ptr<Object> object = make_shared<Object>(it);
+				scene_objects.push_back(object);
+				addObject(scene_objects, *object);
+			}
 		}
 	}
 }
 
 void ImGuiMenuBar::addObject(
-	const vector<shared_ptr<GameObject>>& scene_objects, 
-	GameObject& add_object)
+	const vector<shared_ptr<Object>>& scene_objects, Object& add_object)
 {
-	string name;
-	if (add_object.getPath() != "")
+	/*if (add_object.getPath() != "")
 	{
 		auto last = add_object.getPath().find_last_of('/');
 		if (last == -1)
@@ -147,8 +161,9 @@ void ImGuiMenuBar::addObject(
 	else
 	{
 		name = add_object.getName();
-	}
+	}*/
 
+	string name = add_object.getName();
 	int count = 0;
 	for (auto& it : scene_objects)
 	{
@@ -159,7 +174,6 @@ void ImGuiMenuBar::addObject(
 	{
 		add_object.setId(count);
 	}
-	add_object.setName(name);
 }
 
 ObjectPanel::ObjectPanel(string name) : 
@@ -170,8 +184,8 @@ ObjectPanel::~ObjectPanel()
 {}
 
 void ObjectPanel::render(
-	vector<shared_ptr<GameObject>>& scene_objects, 
-	shared_ptr<GameObject>& clicked_object)
+	vector<shared_ptr<Object>>& scene_objects, 
+	shared_ptr<Object>& clicked_object)
 {
 	ImGui::Begin("Scene Objects");
 	{
@@ -233,8 +247,8 @@ PropertyPanel::~PropertyPanel()
 {}
 
 void PropertyPanel::render(
-	vector<shared_ptr<GameObject>>& scene_objects, 
-	shared_ptr<GameObject>& clicked_object)
+	vector<shared_ptr<Object>>& scene_objects, 
+	shared_ptr<Object>& clicked_object)
 {
 	ImGui::Begin("Property");
 	{
@@ -351,10 +365,10 @@ void PropertyPanel::render(
 		clicked_object->renderProperty();
 
 		
-		if (clicked_object->getSoftBodySolver())
-		{
-			clicked_object->getSoftBodySolver()->renderProperty();
-		}
+		//if (clicked_object->getSoftBodySolver())
+		//{
+		//	clicked_object->getSoftBodySolver()->renderProperty();
+		//}
 	}
 	ImGui::End();
 }
@@ -379,136 +393,136 @@ void PropertyPanel::renderPreview(const vector<shared_ptr<Texture>>& tex)
 	m_preview_fb->unbind();
 }
 
-void PropertyPanel::translatePanel(GameObject& clicked_object)
+void PropertyPanel::translatePanel(Object& clicked_object)
 {
-	glm::vec3 t = clicked_object.getProperty(0);
-	
-	ImGui::TableNextRow();
-	ImGui::TableNextColumn();
-	ImGui::AlignTextToFramePadding();
-	ImGui::Text("Position");
+	//glm::vec3 t = clicked_object.get(0);
+	//
+	//ImGui::TableNextRow();
+	//ImGui::TableNextColumn();
+	//ImGui::AlignTextToFramePadding();
+	//ImGui::Text("Position");
 
-	ImGui::TableNextColumn();
-	ImGui::Text("X");
-	ImGui::SameLine();
-	bool change_x = ImGui::DragFloat("##x1", &(t.x), 0.005f);
-	//if (ImGui::DragFloat("##x1", &(t.x), 0.005f))
+	//ImGui::TableNextColumn();
+	//ImGui::Text("X");
+	//ImGui::SameLine();
+	//bool change_x = ImGui::DragFloat("##x1", &(t.x), 0.005f);
+	////if (ImGui::DragFloat("##x1", &(t.x), 0.005f))
+	////{
+	////	//clicked_object.setProperty(0, *clicked_object.getProperty(0));
+	////}
+
+	//ImGui::TableNextColumn();
+	//ImGui::Text("Y");
+	//ImGui::SameLine();
+	//bool change_y = ImGui::DragFloat("##y1", &(t.y), 0.005f);
+	////if (ImGui::DragFloat("##y1", &(t.y), 0.005f))
+	////{
+	////	//clicked_object.setProperty(0, *clicked_object.getProperty(0));
+	////}
+
+	//ImGui::TableNextColumn();
+	//ImGui::Text("Z");
+	//ImGui::SameLine();
+	//bool change_z = ImGui::DragFloat("##z1", &(t.z), 0.005f);
+	////if (ImGui::DragFloat("##z1", &(t.z), 0.005f))
+	////{
+	////	//clicked_object.setProperty(0, *clicked_object.getProperty(0));
+	////}
+
+	//if (change_x || change_y || change_z)
 	//{
-	//	//clicked_object.setProperty(0, *clicked_object.getProperty(0));
+	//	clicked_object.setProperty(0, t);
 	//}
 
-	ImGui::TableNextColumn();
-	ImGui::Text("Y");
-	ImGui::SameLine();
-	bool change_y = ImGui::DragFloat("##y1", &(t.y), 0.005f);
-	//if (ImGui::DragFloat("##y1", &(t.y), 0.005f))
-	//{
-	//	//clicked_object.setProperty(0, *clicked_object.getProperty(0));
-	//}
-
-	ImGui::TableNextColumn();
-	ImGui::Text("Z");
-	ImGui::SameLine();
-	bool change_z = ImGui::DragFloat("##z1", &(t.z), 0.005f);
-	//if (ImGui::DragFloat("##z1", &(t.z), 0.005f))
-	//{
-	//	//clicked_object.setProperty(0, *clicked_object.getProperty(0));
-	//}
-
-	if (change_x || change_y || change_z)
-	{
-		clicked_object.setProperty(0, t);
-	}
-
-	ImGui::TableNextColumn();
+	//ImGui::TableNextColumn();
 }
 
-void PropertyPanel::rotatePanel(GameObject& clicked_object)
+void PropertyPanel::rotatePanel(Object& clicked_object)
 {
-	glm::vec3 r = clicked_object.getProperty(1);
-	
-	ImGui::TableNextRow();
-	ImGui::TableNextColumn();
-	ImGui::AlignTextToFramePadding();
-	ImGui::Text("Rotation");
+	//glm::vec3 r = clicked_object.getProperty(1);
+	//
+	//ImGui::TableNextRow();
+	//ImGui::TableNextColumn();
+	//ImGui::AlignTextToFramePadding();
+	//ImGui::Text("Rotation");
 
-	ImGui::TableNextColumn();
-	ImGui::Text("X");
-	ImGui::SameLine();
-	bool change_x = ImGui::DragFloat("##x2", &(r.x), 0.005f);
-	//if (ImGui::DragFloat("##x2", &(clicked_object.getProperty(1)->x), 0.1f))
+	//ImGui::TableNextColumn();
+	//ImGui::Text("X");
+	//ImGui::SameLine();
+	//bool change_x = ImGui::DragFloat("##x2", &(r.x), 0.005f);
+	////if (ImGui::DragFloat("##x2", &(clicked_object.getProperty(1)->x), 0.1f))
+	////{
+	////	clicked_object.setProperty(1, *clicked_object.getProperty(1));
+	////}
+
+	//ImGui::TableNextColumn();
+	//ImGui::Text("Y");
+	//ImGui::SameLine();
+	//bool change_y = ImGui::DragFloat("##y2", &(r.y), 0.005f);
+	////if (ImGui::DragFloat("##y2", &(clicked_object.getProperty(1)->y), 0.1f))
+	////{
+	////	clicked_object.setProperty(1, *clicked_object.getProperty(1));
+	////}
+
+	//ImGui::TableNextColumn();
+	//ImGui::Text("Z");
+	//ImGui::SameLine();
+	//bool change_z = ImGui::DragFloat("##z2", &(r.z), 0.005f);
+	////if (ImGui::DragFloat("##z2", &(clicked_object.getProperty(1)->z), 0.1f))
+	////{
+	////	clicked_object.setProperty(1, *clicked_object.getProperty(1));
+	////}
+
+	//if (change_x || change_y || change_z)
 	//{
-	//	clicked_object.setProperty(1, *clicked_object.getProperty(1));
+	//	clicked_object.setProperty(1, r);
 	//}
-
-	ImGui::TableNextColumn();
-	ImGui::Text("Y");
-	ImGui::SameLine();
-	bool change_y = ImGui::DragFloat("##y2", &(r.y), 0.005f);
-	//if (ImGui::DragFloat("##y2", &(clicked_object.getProperty(1)->y), 0.1f))
-	//{
-	//	clicked_object.setProperty(1, *clicked_object.getProperty(1));
-	//}
-
-	ImGui::TableNextColumn();
-	ImGui::Text("Z");
-	ImGui::SameLine();
-	bool change_z = ImGui::DragFloat("##z2", &(r.z), 0.005f);
-	//if (ImGui::DragFloat("##z2", &(clicked_object.getProperty(1)->z), 0.1f))
-	//{
-	//	clicked_object.setProperty(1, *clicked_object.getProperty(1));
-	//}
-
-	if (change_x || change_y || change_z)
-	{
-		clicked_object.setProperty(1, r);
-	}
-	
-	ImGui::TableNextColumn();
+	//
+	//ImGui::TableNextColumn();
 }
 
-void PropertyPanel::scalePanel(GameObject& clicked_object)
+void PropertyPanel::scalePanel(Object& clicked_object)
 {
-	glm::vec3 s = clicked_object.getProperty(2);
+	//glm::vec3 s = clicked_object.getProperty(2);
 
-	ImGui::TableNextRow();
-	ImGui::TableNextColumn();
-	ImGui::AlignTextToFramePadding();
-	ImGui::Text("Scale");
-	ImGui::TableNextColumn();
-	
-	ImGui::Text("X");
-	ImGui::SameLine();
-	bool change_x = ImGui::DragFloat("##x3", &(s.x), 0.005f);
-	//if (ImGui::DragFloat("##x3", &(s.x), 0.005f))
+	//ImGui::TableNextRow();
+	//ImGui::TableNextColumn();
+	//ImGui::AlignTextToFramePadding();
+	//ImGui::Text("Scale");
+	//ImGui::TableNextColumn();
+	//
+	//ImGui::Text("X");
+	//ImGui::SameLine();
+	//bool change_x = ImGui::DragFloat("##x3", &(s.x), 0.005f);
+	////if (ImGui::DragFloat("##x3", &(s.x), 0.005f))
+	////{
+	////	clicked_object.setProperty(2, *clicked_object.getProperty(2));
+	////}
+
+	//ImGui::TableNextColumn();
+	//ImGui::Text("Y");
+	//ImGui::SameLine();
+	//bool change_y = ImGui::DragFloat("##y3", &(s.y), 0.005f);
+	////if (ImGui::DragFloat("##y3", &(clicked_object.getProperty(2)->y), 0.005f))
+	////{
+	////	clicked_object.setProperty(2, *clicked_object.getProperty(2));
+	////}
+	//
+	//ImGui::TableNextColumn();
+	//ImGui::Text("Z");
+	//ImGui::SameLine();
+	//bool change_z = ImGui::DragFloat("##z3", &(s.z), 0.005f);
+	////if (ImGui::DragFloat("##z3", &(clicked_object.getProperty(2)->z), 0.005f))
+	////{
+	////	clicked_object.setProperty(2, *clicked_object.getProperty(2));
+	////}
+
+	//if (change_x || change_y || change_z)
 	//{
-	//	clicked_object.setProperty(2, *clicked_object.getProperty(2));
+	//	clicked_object.setProperty(2, s);
 	//}
 
-	ImGui::TableNextColumn();
-	ImGui::Text("Y");
-	ImGui::SameLine();
-	bool change_y = ImGui::DragFloat("##y3", &(s.y), 0.005f);
-	//if (ImGui::DragFloat("##y3", &(clicked_object.getProperty(2)->y), 0.005f))
-	//{
-	//	clicked_object.setProperty(2, *clicked_object.getProperty(2));
-	//}
-	
-	ImGui::TableNextColumn();
-	ImGui::Text("Z");
-	ImGui::SameLine();
-	bool change_z = ImGui::DragFloat("##z3", &(s.z), 0.005f);
-	//if (ImGui::DragFloat("##z3", &(clicked_object.getProperty(2)->z), 0.005f))
-	//{
-	//	clicked_object.setProperty(2, *clicked_object.getProperty(2));
-	//}
-
-	if (change_x || change_y || change_z)
-	{
-		clicked_object.setProperty(2, s);
-	}
-
-	ImGui::TableNextColumn();
+	//ImGui::TableNextColumn();
 }
 
 PopupPanel::PopupPanel(string name) : ImGuiPanel(name)
@@ -520,8 +534,8 @@ PopupPanel::~PopupPanel()
 }
 
 void PopupPanel::popup(
-	vector<shared_ptr<GameObject>>& scene_objects, 
-	shared_ptr<GameObject>& clicked_object,
+	vector<shared_ptr<Object>>& scene_objects, 
+	shared_ptr<Object>& clicked_object,
 	bool& is_popup, bool& is_clicked_gizmo)
 {
 	if (clicked_object)
@@ -548,8 +562,8 @@ void PopupPanel::popup(
 	}
 }
 
-void PopupPanel::render(vector<shared_ptr<GameObject>>& scene_objects,
-						shared_ptr<GameObject>& clicked_object)
+void PopupPanel::render(vector<shared_ptr<Object>>& scene_objects,
+						shared_ptr<Object>& clicked_object)
 {
 	if (ImGui::BeginMenu("Edit"))
 	{
@@ -566,17 +580,17 @@ void PopupPanel::render(vector<shared_ptr<GameObject>>& scene_objects,
 
 	if (clicked_object)
 	{
-		if (clicked_object->getSoftBodySolver() == nullptr)
-		{
-			if (ImGui::MenuItem("Add SoftbodySolver"))
-			{
-				cout << "Add softbodysolver" << endl;
-				clicked_object->addSoftBodySolver();
-			}	
-		}
-		else
-		{
-			ImGui::Text("Already Added SoftBodySolver");
-		}
+		//if (clicked_object->getSoftBodySolver() == nullptr)
+		//{
+		//	if (ImGui::MenuItem("Add SoftbodySolver"))
+		//	{
+		//		cout << "Add softbodysolver" << endl;
+		//		clicked_object->addSoftBodySolver();
+		//	}	
+		//}
+		//else
+		//{
+		//	ImGui::Text("Already Added SoftBodySolver");
+		//}
 	}
 }

@@ -7,128 +7,13 @@
 #include "Material.h"
 #include "Mesh.h"
 
-Shader::Shader() : m_shader_ID(0), m_paths({})
-{}
+Shader::Shader(
+	const GLuint& id, 
+	const string& name, 
+	const vector<string> paths) :
+	m_shader_ID(id), m_name(name), m_paths(paths) {}
 
-Shader::Shader(const vector<string> paths) 
-	: m_shader_ID(0),  m_paths(paths)
-{}
-
-Shader::~Shader() 
-{}
-
-bool Shader::processShader()
-{
-	//cout << "Load shader file: " << endl;
-
-	vector<GLuint> shaders(m_paths.size(), 0);
-
-	for (int i = 0; i < m_paths.size(); ++i)
-	{
-		if (!compileShader(m_paths.at(i), types[i], shaders[i]))
-			assert(0);
-	}
-
-	//if (!compileShader(m_paths.at(0), GL_VERTEX_SHADER, vert_shader) || 
-	//	!compileShader(m_paths.at(1), GL_FRAGMENT_SHADER, frag_shader))
-	//	assert(0);
-
-	//if (m_paths.size() > 2)
-	//{
-	//	compileShader(m_paths.at(2), GL_GEOMETRY_SHADER, geom_shader);
-	//}
-
-	m_shader_ID = glCreateProgram();
-
-	for (int i = 0; i < m_paths.size(); ++i)
-	{
-		glAttachShader(m_shader_ID, shaders[i]);
-	}
-
-	//glAttachShader(m_shader_ID, vert_shader);
-	//glAttachShader(m_shader_ID, frag_shader);
-
-	//if (m_paths.size() > 2)
-	//	glAttachShader(m_shader_ID, geom_shader);
-
-	glLinkProgram(m_shader_ID);
-
-	GLint success;
-	glGetProgramiv(m_shader_ID, GL_LINK_STATUS, &success);
-	if (!success)
-	{
-		char infoLog[512];
-		memset(infoLog, 0, 512);
-		glGetProgramInfoLog(m_shader_ID, 512, nullptr, infoLog);
-		printf("Compile Failed: %s", infoLog);
-		return false;
-	}
-
-
-	for (int i = 0; i < m_paths.size(); ++i)
-	{
-		glDeleteShader(shaders[i]);
-	}
-
-	//glDeleteShader(vert_shader);
-	//glDeleteShader(frag_shader);
-
-	//if (m_paths.size() > 2)
-	//	glDeleteShader(geom_shader);
-
-	return true;
-}
-
-bool Shader::compileShader(const string& filePath, GLenum shaderType, GLuint& outShader)
-{
-	//printf("  -Compile %s \n", filePath.c_str());
-
-	ifstream shader_file(filePath);
-	if (shader_file.is_open())
-	{
-		stringstream sstream;
-		sstream << shader_file.rdbuf();
-
-		string contents = sstream.str();
-		const char* contents_char = contents.c_str();
-
-		outShader = glCreateShader(shaderType);
-		glShaderSource(outShader, 1, &contents_char, nullptr);
-		glCompileShader(outShader);
-
-		if (!isCompiled(outShader))
-		{
-			printf("Failed to compile shader %s \n", filePath.c_str());
-			return false;
-		}
-
-		shader_file.close();
-	}
-	else
-	{
-		printf("Shader file not found! %s \n", filePath.c_str());
-		return false;
-	}
-
-	return true;
-}
-
-bool Shader::isCompiled(GLuint& shader)
-{
-	GLint status;
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-	
-	if (status != GL_TRUE)
-	{
-		char buffer[512];
-		memset(buffer, 0, 512);
-		glGetShaderInfoLog(shader, 511, nullptr, buffer);
-		printf("GLSL Complile Failed: %s", buffer);
-		return false;
-	}
-
-	return true;
-}
+Shader::~Shader() {}
 
 void Shader::load()
 {
@@ -166,7 +51,7 @@ void Shader::setMat4(const string& name, const glm::mat4& matrix) const
 	glUniformMatrix4fv(glGetUniformLocation(m_shader_ID, name.c_str()), 1, GL_FALSE, value_ptr(matrix));
 }
 
-void Shader::setPVM(const glm::mat4& P, const glm::mat4& V, glm::mat4& m) const
+void Shader::setPVM(const glm::mat4& P, const glm::mat4& V, const glm::mat4& m) const
 {
 	setMat4("projection", P);
 	setMat4("view", V);

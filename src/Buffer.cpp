@@ -192,6 +192,33 @@ void VertexBuffer::unbind() const
 	glBindVertexArray(0);
 }
 
+void VertexBuffer::getBBoxBoundary(const glm::mat4& M, glm::vec3& bbox_min, glm::vec3& bbox_max)
+{
+	if (m_layouts.size() == 0) return;
+
+	vector<glm::vec3> positions;
+	for (const auto& it : m_layouts)
+	{
+		glm::vec4 p = glm::vec4(it.position, 1.0f);
+		p = M * p;
+		positions.push_back(glm::vec3(p.x, p.y, p.z));
+	}
+
+	bbox_min = bbox_max = positions.at(0);
+
+	for (const auto& it : positions)
+	{
+		if (it.x < bbox_min.x) bbox_min.x = it.x;
+		if (it.x > bbox_max.x) bbox_max.x = it.x;
+
+		if (it.y < bbox_min.y) bbox_min.y = it.y;
+		if (it.y > bbox_max.y) bbox_max.y = it.y;
+
+		if (it.z < bbox_min.z) bbox_min.z = it.z;
+		if (it.z > bbox_max.z) bbox_max.z = it.z;
+	}
+}
+
 FrameBuffer::FrameBuffer() 
 	: m_RBO(0), m_FBO(0), m_framebuffer_texture(0), m_width(0), m_height(0)
 {

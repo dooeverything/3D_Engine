@@ -22,6 +22,8 @@ public:
 	void setActive();
 	void unload();
 
+	inline int getWidth() { return m_width; };
+	inline int getHeight() { return m_height; };
 	inline int getWidth() const { return m_width; };
 	inline int getHeight() const { return m_height; };
 	inline unsigned int getTextureID() const { return m_texture_ID; };

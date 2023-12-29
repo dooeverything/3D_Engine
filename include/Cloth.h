@@ -6,12 +6,12 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "GameObject.h"
 #include "Particle.h"
+#include "Object.h"
 
 using namespace std;
 
-class Cloth : public GameObject
+class Cloth : public Object
 {
 public:
 	Cloth();
@@ -24,7 +24,7 @@ public:
 
 	virtual void draw(const glm::mat4& P, const glm::mat4& V,
 		Light& light, glm::vec3& view_pos, ShadowMap& shadow,
-		IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut);
+		IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut) override;
 
 
 private:
@@ -41,6 +41,9 @@ private:
 
 	vector<shared_ptr<ClothParticle>> m_particles;
 	unordered_map<info::uint, ClothParticle*> m_hash;
+
+	vector<info::VertexLayout> m_layouts;
+	vector<info::uint> m_indices;
 
 	float m_scale;
 	float m_width;

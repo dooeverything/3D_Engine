@@ -15,7 +15,7 @@ SoftBodySolver::SoftBodySolver(Mesh* mesh) :
 
 	m_dx = 0.1;
 	m_mesh = mesh;
-	m_layouts = mesh->getBuffer().getLayouts();
+	m_layouts = mesh->getVertices();
 	cout << "size of layout: " << m_layouts.size() << endl;
 
 	m_hash_size = m_layouts.size() * 2;
@@ -57,15 +57,15 @@ void SoftBodySolver::getTet(TetMesh& tet_mesh)
 		surf_x.push_back(p);
 	}
 
-	vector<info::uint> indices = m_mesh->getBuffer().getIndices();
+	vector<info::uint> indices = m_mesh->getIndices();
 	for (int i = 0; i < indices.size() - 2; i += 3)
 	{
 		Vec3i index(indices[i], indices[i + 1], indices[i + 2]);
 		surf_f.push_back(index);
 	}
 
-	Vec3f xmin(m_mesh->getBox().getMin().x, m_mesh->getBox().getMin().y, m_mesh->getBox().getMin().z);
-	Vec3f xmax(m_mesh->getBox().getMax().x, m_mesh->getBox().getMax().y, m_mesh->getBox().getMax().z);
+	Vec3f xmin(m_mesh->getMin().x, m_mesh->getMin().y, m_mesh->getMin().z);
+	Vec3f xmax(m_mesh->getMax().x, m_mesh->getMax().y, m_mesh->getMax().z);
 
 	Vec3f origin = xmin - Vec3f(2 * m_dx);
 	int ni = (int)std::ceil((xmax[0] - xmin[0]) / m_dx) + 5,
@@ -253,7 +253,7 @@ void SoftBodySolver::getTetIds()
 	cout << endl;
 
 	m_tet_mesh = make_unique<Mesh>("tet");
-	m_tet_mesh->getBuffer().createBuffers(new_layouts);
+	m_tet_mesh->setupBuffer(new_layouts);
 }
 
 void SoftBodySolver::getEdgeIds()
@@ -306,7 +306,7 @@ void SoftBodySolver::getEdgeIds()
 	cout << endl;
 
 	m_tet_mesh = make_unique<Mesh>("tet");
-	m_tet_mesh->getBuffer().createBuffers(new_layouts);
+	m_tet_mesh->setupBuffer(new_layouts);
 }
 
 glm::ivec3 SoftBodySolver::getGridPos(glm::vec3 pos)
@@ -384,7 +384,7 @@ void SoftBodySolver::simulate()
 		}
 	}
 
-	m_mesh->getBuffer().updateBuffer(m_layouts);
+	m_mesh->updateBuffer(m_layouts);
 
 	buildHash();
 }

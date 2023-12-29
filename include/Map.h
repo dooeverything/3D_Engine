@@ -12,10 +12,9 @@
 #include "Buffer.h"
 #include "Texture.h"
 
-class GameObject;
+class Object;
 class Light;
 class Mesh;
-class Shader;
 
 using namespace std;
 
@@ -30,8 +29,6 @@ protected:
 	int m_width;
 	int m_height;
 	string m_name;
-
-	shared_ptr<Shader> m_shader;
 	shared_ptr<Mesh> m_mesh;
 };
 
@@ -42,8 +39,8 @@ public:
 	ShadowMap(int width, int height, glm::vec3 m_position, bool perspective);
 	~ShadowMap();
 
-	void draw(vector<shared_ptr<GameObject>>& gameobjects);
-	void draw(shared_ptr<GameObject>& gameobject);
+	void draw(vector<shared_ptr<Object>>& gameobjects);
+	void draw(shared_ptr<Object>& gameobject);
 
 	inline ShadowBuffer& getBuffer() const { return *m_shadow_buffer; };
 	inline glm::mat4* getProj() { return &m_proj; };
@@ -73,7 +70,6 @@ public:
 
 private:
 	shared_ptr<CubemapBuffer> m_cubemap_buffer;
-	unique_ptr<Shader> m_shader_background;
 	shared_ptr<Texture> m_hdr_texture;
 };
 
@@ -89,7 +85,6 @@ public:
 
 private:
 	shared_ptr<CubemapBuffer> m_irradiance_buffer;
-	unique_ptr<Shader> m_shader_background;
 };
 
 class PrefilterMap : public Map
@@ -126,7 +121,7 @@ public:
 	EnvironmentMap(glm::vec3 position);
 	~EnvironmentMap();
 
-	void draw(vector<shared_ptr<GameObject>>& gameobjects, Light& light);
+	void draw(vector<shared_ptr<Object>>& gameobjects, Light& light);
 private:
 	const unsigned int WIDTH = 512;
 	const unsigned int HEIGHT = 512;

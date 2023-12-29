@@ -1,12 +1,12 @@
 #include "SPHSystemCuda.h"
 #include "SPHSolverKernel.cuh"
-
+#include "MeshImporter.h"
+#include "ShaderManager.h"
 #include "Particle.h"
+#include "Quad.h"
 
-SPHSystemCuda::SPHSystemCuda(float width, float height, float depth)
+SPHSystemCuda::SPHSystemCuda(float width, float height, float depth) : Object("FluidGPU")
 {
-	m_name = "Fluid";
-
 	cout << endl;
 	cout << "********************Fluid on GPU Information********************" << endl;
 	m_params.grid_cell = 0.10f;
@@ -33,10 +33,6 @@ SPHSystemCuda::SPHSystemCuda(float width, float height, float depth)
 	t = 0.005f;
 	render_type = 1;
 	iteration = 1;
-
-	vector<string> shader_path = { "assets/shaders/BRDF.vert", "assets/shaders/BRDF.frag" };
-	m_shader = make_shared<Shader>(shader_path);
-	m_shader->processShader();
 
 	initFramebuffer();
 	initShader();
@@ -88,7 +84,7 @@ void SPHSystemCuda::initParticle()
 
 	cout << "Box Size: " << box_x << " " << box_y << " " << box_z << endl;
 
-	if (m_mesh == nullptr)
+	if (true)
 	{
 		vector<glm::vec3> box;
 		for (float x = -box_x; x <= box_x; x += box_x * 2)
@@ -197,9 +193,9 @@ void SPHSystemCuda::initParticle()
 			20,21,22, 20,22,23
 		};
 		
-		m_mesh = make_shared<Mesh>("Fluid Boundary");
-		m_mesh->getBuffer().createBuffers(layouts, indices);
-		m_mesh->computeBoundingBox();	
+		shared_ptr<Mesh> mesh = make_shared<Mesh>("Fluid Boundary");
+		mesh->setupBuffer(layouts, indices);
+		addMesh(mesh);
 	}
 
 	if (m_point == nullptr)
@@ -227,15 +223,11 @@ void SPHSystemCuda::initParticle()
 
 	computeBlocks(m_particles.size());
 
-	m_min_box = m_mesh->getBox().getMin();
-	m_max_box = m_mesh->getBox().getMax();
+	m_min_box = getMin();
+	m_max_box = getMax();
 
-	setScale(m_property.at(2));
-	setRotation(m_property.at(1));
-	setPosition(m_property.at(0));
-
-	glm::vec4 bmin = *m_mesh->getPosition() * *m_mesh->getScale() * glm::vec4(m_min_box, 1.0);
-	glm::vec4 bmax = *m_mesh->getPosition() * *m_mesh->getScale() * glm::vec4(m_max_box, 1.0);
+	glm::vec4 bmin = getModelTransform() * glm::vec4(m_min_box, 1.0);
+	glm::vec4 bmax = getModelTransform() * glm::vec4(m_max_box, 1.0);
 
 	m_params.min_box = glm::vec3(bmin.x, bmin.y, bmin.z);
 	m_params.max_box = glm::vec3(bmax.x, bmax.y, bmax.z);
@@ -279,37 +271,30 @@ void SPHSystemCuda::initFramebuffer()
 
 void SPHSystemCuda::initShader()
 {
-	vector<string> depth_shader = { "assets/shaders/Point.vert", "assets/shaders/Point.frag" };
-	m_shader_depth = make_unique<Shader>(depth_shader);
-	m_shader_depth->processShader();
-
 	vector<string> blur_shader = { "assets/shaders/Debug.vert", "assets/shaders/Smooth.frag" };
-	m_screen = make_unique<GameObject>("assets/models/Debug.txt", blur_shader);
+	ShaderManager::createShader("Smooth", blur_shader);
+
+	vector<string> point_shader = { "assets/shaders/Point.vert", "assets/shaders/Point.frag" };
+	ShaderManager::createShader("Point", point_shader);
 
 	vector<string> curvature_shader = { "assets/shaders/Debug.vert", "assets/shaders/CurvatureFlow.frag" };
-	m_shader_curvature = make_unique<Shader>(curvature_shader);
-	m_shader_curvature->processShader();
+	ShaderManager::createShader("Curvature", curvature_shader);
 
 	vector<string> curvature_normal_shader = { "assets/shaders/Debug.vert", "assets/shaders/CurvatureNormal.frag" };
-	m_shader_curvature_normal = make_unique<Shader>(curvature_normal_shader);
-	m_shader_curvature_normal->processShader();
+	ShaderManager::createShader("CurvatureNormal", curvature_normal_shader);
 
 	vector<string> render_shader = { "assets/shaders/Debug.vert", "assets/shaders/Render.frag" };
-	m_shader_render = make_unique<Shader>(render_shader);
-	m_shader_render->processShader();
+	ShaderManager::createShader("FluidRender", render_shader);
 }
 
 void SPHSystemCuda::simulate()
 {
-	setRotation(glm::vec3(0.0f));
+	updateTransform(glm::vec3(0.0f), Transform::ROTATE);
 
 	if (!m_simulation) return;
 	
-	setScale(m_property.at(2));
-	setPosition(m_property.at(0));
-
-	glm::vec4 bmin = *m_mesh->getPosition() * *m_mesh->getScale() * glm::vec4(m_min_box, 1.0);
-	glm::vec4 bmax = *m_mesh->getPosition() * *m_mesh->getScale() * glm::vec4(m_max_box, 1.0);
+	glm::vec4 bmin = getModelTransform() * glm::vec4(m_min_box, 1.0);
+	glm::vec4 bmax = getModelTransform() * glm::vec4(m_max_box, 1.0);
 
 	m_params.min_box = glm::vec3(bmin.x, bmin.y, bmin.z);
 	m_params.max_box = glm::vec3(bmax.x, bmax.y, bmax.z);
@@ -343,36 +328,39 @@ void SPHSystemCuda::draw(const glm::mat4& P, const glm::mat4& V,
 	Light& light, glm::vec3& view_pos, ShadowMap& shadow,
 	IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut)
 {
+
 	simulate();
 
-	m_shader_render->load();
+	shared_ptr<Shader> shader = ShaderManager::getShader("FluidRender");
+	shader->load();
 	glActiveTexture(GL_TEXTURE0);
 	m_fb_normal->bindFrameTexture();
-	m_shader_render->setInt("map", 0);
-	m_screen->getMesh()->draw();
+	shader->setInt("map", 0);
+	Quad::getQuad()->draw();
 
-	m_shader->load();
+	shader = ShaderManager::getShader("Default");
+	shader->load();
 	glm::mat4 shadow_proj = (*shadow.getProj()) * (*shadow.getView());
-	m_shader->setMat4("light_matrix", shadow_proj);
-	m_shader->setVec3("light_pos", *shadow.getPosition());
-	m_shader->setVec3("view_pos", view_pos);
-	m_shader->setLight(light);
-	m_shader->setInt("preview", 0);
+	shader->setMat4("light_matrix", shadow_proj);
+	shader->setVec3("light_pos", *shadow.getPosition());
+	shader->setVec3("view_pos", view_pos);
+	shader->setLight(light);
+	shader->setInt("preview", 0);
 
 	// Load shadow map as texture
-	m_shader->setInt("shadow_map", 0);
+	shader->setInt("shadow_map", 0);
 	glActiveTexture(GL_TEXTURE0);
 	shadow.getBuffer().bindFrameTexture();
-	m_shader->setInt("irradiance_map", 1);
+	shader->setInt("irradiance_map", 1);
 	glActiveTexture(GL_TEXTURE0 + 1);
 	irradiance.getCubemapBuffer()->bindCubemapTexture();
-	m_shader->setInt("prefilter_map", 2);
+	shader->setInt("prefilter_map", 2);
 	glActiveTexture(GL_TEXTURE0 + 2);
 	prefilter.getCubemapBuffer()->bindCubemapTexture();
-	m_shader->setInt("lut_map", 3);
+	shader->setInt("lut_map", 3);
 	glActiveTexture(GL_TEXTURE0 + 3);
 	lut.getFrameBuffer()->bindFrameTexture();
-	m_mesh->draw(P, V, *m_shader);
+	drawMesh(P, V, getModelTransform(), *shader);
 
 }
 
@@ -390,23 +378,26 @@ void SPHSystemCuda::computeDepth(const glm::mat4& P, const glm::mat4& V)
 {
 	float aspect = float(m_fb_width / m_fb_height);
 	float point_scale = m_fb_width / aspect * (1.0f / tanf(glm::radians(45.0f)));
-
+	shared_ptr<Shader> shader = ShaderManager::getShader("Point");
+	if (shader == nullptr) assert(0);
 	m_fb->bind();
 		glClear(GL_DEPTH_BUFFER_BIT);
-		m_point->getShader().load();
-		m_point->getShader().setFloat("point_radius", m_params.grid_cell * m_params.SCALE);
-		m_point->getShader().setFloat("point_scale", point_scale);
+		shader->load();
+		shader->setFloat("point_radius", m_params.grid_cell * m_params.SCALE);
+		shader->setFloat("point_scale", point_scale);
 		m_point->drawPoint(P, V);
 	m_fb->unbind();
+
 }
 
 void SPHSystemCuda::computeCurvature(const glm::mat4& P, const glm::mat4& V)
 {
+	shared_ptr<Shader> shader = ShaderManager::getShader("Curvature");
 	glm::vec2 res = glm::vec2(m_fb_width, m_fb_height);
-	m_shader_curvature->load();
-	m_shader_curvature->setInt("map", 0);
-	m_shader_curvature->setMat4("projection", P);
-	m_shader_curvature->setVec2("res", res);
+	shader->load();
+	shader->setInt("map", 0);
+	shader->setMat4("projection", P);
+	shader->setVec2("res", res);
 
 	m_fb_curvature->bind();
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -414,7 +405,7 @@ void SPHSystemCuda::computeCurvature(const glm::mat4& P, const glm::mat4& V)
 	glActiveTexture(GL_TEXTURE0);
 	m_fb->bindFrameTexture();
 
-	m_screen->getMesh()->draw();
+	Quad::getQuad()->draw();
 	m_fb_curvature->unbind();
 
 	bool swap = false;
@@ -428,7 +419,7 @@ void SPHSystemCuda::computeCurvature(const glm::mat4& P, const glm::mat4& V)
 			glActiveTexture(GL_TEXTURE0);
 			m_fb_curvature2->bindFrameTexture();
 
-			m_screen->getMesh()->draw();
+			Quad::getQuad()->draw();
 			m_fb_curvature->unbind();
 		}
 		else
@@ -439,7 +430,7 @@ void SPHSystemCuda::computeCurvature(const glm::mat4& P, const glm::mat4& V)
 			glActiveTexture(GL_TEXTURE0);
 			m_fb_curvature->bindFrameTexture();
 
-			m_screen->getMesh()->draw();
+			Quad::getQuad()->draw();
 			m_fb_curvature2->unbind();
 		}
 
@@ -450,32 +441,32 @@ void SPHSystemCuda::computeCurvature(const glm::mat4& P, const glm::mat4& V)
 void SPHSystemCuda::computeNormal(const glm::mat4& P, const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap)
 {
 	glm::vec2 inverse_tex = glm::vec2(1.0 / m_fb_width, 1.0 / m_fb_height);
-
+	shared_ptr<Shader> shader = ShaderManager::getShader("CurvatureNormal");
 	m_fb_normal->bind();
 	{
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		m_shader_curvature_normal->load();
+		shader->load();
 
-		m_shader_curvature_normal->setInt("map", 0);
+		shader->setInt("map", 0);
 		glActiveTexture(GL_TEXTURE0);
 		m_fb_curvature2->bindFrameTexture();
 
-		m_shader_curvature_normal->setInt("depth_map", 1);
+		shader->setInt("depth_map", 1);
 		glActiveTexture(GL_TEXTURE1);
 		depth.getBuffer().bindFrameTexture();
 
-		m_shader_curvature_normal->setInt("cubemap", 2);
+		shader->setInt("cubemap", 2);
 		glActiveTexture(GL_TEXTURE2);
 		cubemap.getCubemapBuffer()->bindCubemapTexture();
 
-		m_shader_curvature_normal->setMat4("projection", P);
-		m_shader_curvature_normal->setMat4("view", V);
-		m_shader_curvature_normal->setVec2("inverse_tex", inverse_tex);
-		m_shader_curvature_normal->setInt("render_type", render_type);
+		shader->setMat4("projection", P);
+		shader->setMat4("view", V);
+		shader->setVec2("inverse_tex", inverse_tex);
+		shader->setInt("render_type", render_type);
 
-		m_screen->getMesh()->draw();
+		Quad::getQuad()->draw();
 	}
 	m_fb_normal->unbind();
 }

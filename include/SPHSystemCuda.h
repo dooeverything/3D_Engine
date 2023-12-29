@@ -5,14 +5,14 @@
 #include <unordered_map>
 
 #include "Camera.h"
-#include "GameObject.h"
+#include "Object.h"
 #include "Point.h"
 //#include "Particle.h"
 
 class FluidParticle;
 
 // Host
-class SPHSystemCuda : public GameObject
+class SPHSystemCuda : public Object
 {
 public:
 	SPHSystemCuda(float width, float height, float depth);
@@ -44,18 +44,11 @@ private:
 	vector<int> m_hash;
 
 	unique_ptr<Point> m_point;
-	unique_ptr<GameObject> m_screen;
 	
 	unique_ptr<ShadowBuffer> m_fb;
 	unique_ptr<ShadowBuffer> m_fb_curvature;
 	unique_ptr<ShadowBuffer> m_fb_curvature2;
 	unique_ptr<FrameBuffer> m_fb_normal;
-
-	unique_ptr<Shader> m_shader_depth;
-	unique_ptr<Shader> m_shader_curvature;
-	unique_ptr<Shader> m_shader_curvature_normal;
-	unique_ptr<Shader> m_shader_normal;
-	unique_ptr<Shader> m_shader_render;
 
 	info::SPHParams m_params;
 

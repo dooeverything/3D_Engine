@@ -33,6 +33,7 @@ public:
 	inline void setBaseColor(glm::vec3 color) { m_base_color = color; };
 	inline void setMetallic(float metallic) { m_metallic = metallic; };
 	inline void setRoughness(float roughness) { m_roughness = roughness; };
+
 private:
 	shared_ptr<Texture> m_texture;
 

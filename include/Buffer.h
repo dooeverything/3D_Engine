@@ -31,6 +31,8 @@ public:
 	void bind() const;
 	void unbind() const;
 	
+	void getBBoxBoundary(const glm::mat4& M, glm::vec3& bbox_min, glm::vec3& bbox_max);
+
 	inline vector<info::VertexLayout>& getLayouts() { return m_layouts; };
 	inline vector<unsigned int> getIndices() { return m_indices; };
 	inline unsigned int getSizeOfIndices() { return n_indices; };

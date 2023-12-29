@@ -4,7 +4,7 @@
 
 #include <unordered_map>
 
-#include "GameObject.h"
+#include "Object.h"
 #include "Tri.h"
 
 struct TerrainVertex
@@ -17,7 +17,7 @@ struct TerrainVertex
 		: pos(p), color(c), next(nullptr) {};
 };
 
-class Terrain : public GameObject
+class Terrain : public Object
 {
 public:
 	Terrain(float res);

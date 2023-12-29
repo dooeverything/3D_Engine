@@ -1,10 +1,8 @@
 #include "Terrain.h"
-
-Terrain::Terrain(float res) 
+#include "ShaderManager.h"
+Terrain::Terrain(float res) : Object("Terrain")
 {
 	cout << "*************************Terrain Constructor*************************" << endl;
-
-	m_name = "Terrain";
 
 	m_res = 64.0;
 	m_width = 10.0f;
@@ -22,13 +20,13 @@ Terrain::Terrain(float res)
 
 	createVertex();
 
-	vector<string> shader_path = { "assets/shaders/Terrain.vert",
+	vector<string> shader_paths = { "assets/shaders/Terrain.vert",
 								   "assets/shaders/Terrain.frag",
 								   "assets/shaders/Terrain.tcs",
 								   "assets/shaders/Terrain.tes" };
 
-	m_shader = make_shared<Shader>(shader_path);
-	m_shader->processShader();
+	ShaderManager::createShader("Terrain", shader_paths);
+
 
 	cout << "*************************Terrain Constructed!*************************" << endl;
 	cout << endl;
@@ -117,8 +115,9 @@ void Terrain::createVertex()
 	// color
 	vector<glm::vec3> colors(layouts.size(), glm::vec3(1.0f));
 
-	m_mesh = make_shared<Mesh>("Terrain");
-	m_mesh->getBuffer().createBuffers(layouts, colors);
+	shared_ptr<Mesh> mesh = make_shared<Mesh>("Terrain");
+	mesh->setupBuffer(layouts);
+	addMesh(mesh);
 }
 
 void Terrain::updateVertex(glm::vec3 ray_dir, glm::vec3 ray_pos, bool mouse_down)
@@ -215,7 +214,7 @@ void Terrain::updateVertex(glm::vec3 ray_dir, glm::vec3 ray_pos, bool mouse_down
 		}
 	}
 
-	vector<info::VertexLayout> layouts = m_mesh->getBuffer().getLayouts();
+	vector<info::VertexLayout> layouts = getVertices();
 	for (int i = 0; i < layouts.size(); ++i)
 	{
 		glm::vec2 uv = layouts[i].texCoord;
@@ -226,7 +225,8 @@ void Terrain::updateVertex(glm::vec3 ray_dir, glm::vec3 ray_pos, bool mouse_down
 		}
 	}
 
-	m_mesh->getBuffer().updateBuffer(layouts);
+	updateBuffer(layouts);
+	computeBBox();
 
 	for (int i = 0; i < m_trimeshes.size(); ++i)
 	{
@@ -246,20 +246,21 @@ void Terrain::draw(const glm::mat4& P, const glm::mat4& V,
 	Light& light, glm::vec3& view_pos, ShadowMap& shadow,
 	IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut)
 {
-	m_shader->load();
-	glm::mat4 shadow_proj = (*shadow.getProj()) * (*shadow.getView());
-	m_shader->setMat4("light_matrix", shadow_proj);
-	m_shader->setVec3("view_pos", view_pos);
-	m_shader->setLight(light);
-	m_shader->setVec3("hit_pos", m_hit);
-	m_shader->setFloat("brush_size", m_brush_size);
+	shared_ptr<Shader> shader = ShaderManager::getShader("Terrain");
 
-	m_shader->setInt("shadow_map", 0);
+	shader->load();
+	glm::mat4 shadow_proj = (*shadow.getProj()) * (*shadow.getView());
+	shader->setMat4("light_matrix", shadow_proj);
+	shader->setVec3("view_pos", view_pos);
+	shader->setLight(light);
+	shader->setVec3("hit_pos", m_hit);
+	shader->setFloat("brush_size", m_brush_size);
+
+	shader->setInt("shadow_map", 0);
 	glActiveTexture(GL_TEXTURE0);
 	shadow.getBuffer().bindFrameTexture();
 
-
-	m_mesh->drawTerrain(P, V, *m_shader, m_res);
+	drawTerrain(P, V, *shader, m_res);
 }
 
 void Terrain::renderProperty()

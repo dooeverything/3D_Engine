@@ -20,6 +20,8 @@ namespace info
     const int HASH_SIZE = 100000;
     const float PI = 3.14159265f;
 
+    const vector<string> BASIC_SHADER = { "assets/shaders/BRDF.vert",  "assets/shaders/BRDF.frag" };
+    const vector<string> PREVIEW_SHADER = { "assets/shaders/Preview.vert",  "assets/shaders/Preview.frag" };
 
 	struct VertexLayout
 	{

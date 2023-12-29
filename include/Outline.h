@@ -11,7 +11,7 @@
 
 using namespace std;
 
-class GameObject;
+class Object;
 class Shader;
 
 class Outline
@@ -19,17 +19,14 @@ class Outline
 public:
 	Outline(int width, int height);
 	~Outline();
-	void setupBuffers(GameObject& go, const glm::mat4& V, float width, float height);
-	void draw(GameObject& go);
+	void setupBuffers(Object& go, const glm::mat4& V, float width, float height);
+	void draw(Object& go);
 
 	inline GLuint getOutlineFrame() { return m_outline_buffers.back()->getTextureID(); };
 	void clearOutlineFrame();
 
 private:
 	vector<unique_ptr<FrameBuffer>> m_outline_buffers;
-	unique_ptr<GameObject> m_debug;
-	unique_ptr<Shader> m_mask_shader;
-	unique_ptr<Shader> m_outline_shader;
 };
 
 

@@ -1,9 +1,9 @@
 #include "SPHSystem.h"
-
-SPHSystem::SPHSystem(float width, float height, float depth)
+#include "MeshImporter.h"
+#include "ShaderManager.h"
+#include "Quad.h"
+SPHSystem::SPHSystem(float width, float height, float depth) : Object("Fluid")
 {
-	m_name = "Fluid";
-
 	cout << endl;
 	cout << "********************Fluid on Single CPU Information********************" << endl;
 	setParticleRadius(0.10f);
@@ -32,7 +32,9 @@ SPHSystem::SPHSystem(float width, float height, float depth)
 	setupFB();
 	setupShader();
 	
-	m_mesh = make_shared<Mesh>("Fluid Boundary");
+	shared_ptr<Mesh> mesh = make_shared<Mesh>("Fluid Boundary");
+	addMesh(mesh);
+
 	initParticles();
 	buildHash();
 
@@ -78,24 +80,20 @@ void SPHSystem::setupFB()
 
 void SPHSystem::setupShader()
 {
-	vector<string> depth_shader = { "assets/shaders/Point.vert", "assets/shaders/Point.frag" };
-	m_shader_depth = make_unique<Shader>(depth_shader);
-	m_shader_depth->processShader();
-
 	vector<string> blur_shader = { "assets/shaders/Debug.vert", "assets/shaders/Smooth.frag" };
-	m_screen = make_unique<GameObject>("assets/models/Debug.txt", blur_shader);
+	ShaderManager::createShader("Smooth", blur_shader);
 
-	vector<string> curvature_shader = { "assets/shaders/Debug.vert", "assets/shaders/CurvatureFlow.frag" };
-	m_shader_curvature = make_unique<Shader>(curvature_shader);
-	m_shader_curvature->processShader();
+	vector<string> point_shader = { "assets/shaders/Point.vert", "assets/shaders/Point.frag" };
+	ShaderManager::createShader("Point", point_shader);
 
-	vector<string> curvature_normal_shader = { "assets/shaders/Debug.vert", "assets/shaders/CurvatureNormal.frag" };
-	m_shader_curvature_normal = make_unique<Shader>(curvature_normal_shader);
-	m_shader_curvature_normal->processShader();
+	vector<string> curvature_shader = { "assets/shaders/Quad.vert", "assets/shaders/CurvatureFlow.frag" };
+	ShaderManager::createShader("Curvature", curvature_shader);
 
-	vector<string> render_shader = { "assets/shaders/Debug.vert", "assets/shaders/Render.frag" };
-	m_shader_render = make_unique<Shader>(render_shader);
-	m_shader_render->processShader();
+	vector<string> curvature_normal_shader = { "assets/shaders/Quad.vert", "assets/shaders/CurvatureNormal.frag" };
+	ShaderManager::createShader("CurvatureNormal", curvature_normal_shader);
+
+	vector<string> render_shader = { "assets/shaders/Quad.vert", "assets/shaders/Render.frag" };
+	ShaderManager::createShader("FluidRender", render_shader);
 }
 
 void SPHSystem::initParticles()
@@ -143,9 +141,7 @@ void SPHSystem::initParticles()
 			}
 		}
 	}
-	m_mesh->getBuffer().createBuffers(layouts_box);
-	m_mesh->computeBoundingBox();
-
+	setupVertices(layouts_box);
 
 	if (m_point == nullptr)
 	{
@@ -184,11 +180,7 @@ void SPHSystem::update()
 
 	glm::vec3 box = glm::vec3(box_x, box_y, box_z);
 	
-	setScale(m_property.at(2));
-	setRotation(m_property.at(1));
-	setPosition(m_property.at(0));
-
-	glm::vec4 b = *m_mesh->getPosition() * *m_mesh->getScale() * glm::vec4(box, 1.0);
+	glm::vec4 b = getModelTransform() * glm::vec4(box, 1.0);
 
 	for (int i = 0; i < m_particles.size(); ++i)
 	{
@@ -252,8 +244,8 @@ void SPHSystem::updateDensPress()
 		FluidParticle* p1 = m_particles[i].get();
 		glm::ivec3 grid_pos = snapToGrid(p1->m_position);
 
-		cout << p1->m_position << " "
-			 << grid_pos.x << " " << grid_pos.y << " " << grid_pos.z << endl;
+		/*cout << p1->m_position << " "
+			 << grid_pos.x << " " << grid_pos.y << " " << grid_pos.z << endl;*/
 
 		for (int x = -1; x <= 1; x++)
 		{
@@ -368,73 +360,76 @@ void SPHSystem::getDepth(const glm::mat4& P, const glm::mat4& V, Camera& camera)
 {
 	float aspect = float(m_fb_width / m_fb_height);
 	float point_scale = m_fb_width / aspect * (1.0f / tanf(glm::radians(45.0f)));
+	shared_ptr<Shader> shader = ShaderManager::getShader("Point");
 
 	m_fb->bind();
 		glClear(GL_DEPTH_BUFFER_BIT);
-		m_point->getShader().load();
-		m_point->getShader().setFloat("point_radius", H * SCALE);
-		m_point->getShader().setFloat("point_scale", point_scale);
+		shader->load();
+		shader->setFloat("point_radius", H * SCALE);
+		shader->setFloat("point_scale", point_scale);
 		m_point->drawPoint(P, V);
 	m_fb->unbind();
 }
 
 void SPHSystem::blurDepth()
 {
-	glm::vec2 dir_x = glm::vec2(1.0 / m_fb_width, 0.0);
-	glm::vec2 dir_y = glm::vec2(0.0, 1.0 / m_fb_height);
-	
-	m_fb_blur_x->bind();
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		m_screen->getShader()->load();
-		glActiveTexture(GL_TEXTURE0);
-		m_fb->bindFrameTexture();
-		m_screen->getShader()->setInt("map", 0);
-		m_screen->getShader()->setVec2("dir", dir_x);
-		m_screen->getMesh()->draw();
-	m_fb_blur_x->unbind();
+	//glm::vec2 dir_x = glm::vec2(1.0 / m_fb_width, 0.0);
+	//glm::vec2 dir_y = glm::vec2(0.0, 1.0 / m_fb_height);
+	//
+	//m_fb_blur_x->bind();
+	//	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//	m_screen->getShader()->load();
+	//	glActiveTexture(GL_TEXTURE0);
+	//	m_fb->bindFrameTexture();
+	//	m_screen->getShader()->setInt("map", 0);
+	//	m_screen->getShader()->setVec2("dir", dir_x);
+	//	m_screen->getMesh()->draw();
+	//m_fb_blur_x->unbind();
 
-	m_fb_blur_y->bind();
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		m_screen->getShader()->load();
-		glActiveTexture(GL_TEXTURE0);
-		m_fb_blur_x->bindFrameTexture();
-		m_screen->getShader()->setInt("map", 0);
-		m_screen->getShader()->setVec2("dir", dir_y);
-		m_screen->getMesh()->draw();
-	m_fb_blur_y->unbind();
+	//m_fb_blur_y->bind();
+	//	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//	m_screen->getShader()->load();
+	//	glActiveTexture(GL_TEXTURE0);
+	//	m_fb_blur_x->bindFrameTexture();
+	//	m_screen->getShader()->setInt("map", 0);
+	//	m_screen->getShader()->setVec2("dir", dir_y);
+	//	m_screen->getMesh()->draw();
+	//m_fb_blur_y->unbind();
 
-	m_fb_blur_x->bind();
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		m_screen->getShader()->load();
-		glActiveTexture(GL_TEXTURE0);
-		m_fb_blur_y->bindFrameTexture();
-		m_screen->getShader()->setInt("map", 0);
-		m_screen->getShader()->setVec2("dir", dir_x);
-		m_screen->getMesh()->draw();
-	m_fb_blur_x->unbind();
+	//m_fb_blur_x->bind();
+	//	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//	m_screen->getShader()->load();
+	//	glActiveTexture(GL_TEXTURE0);
+	//	m_fb_blur_y->bindFrameTexture();
+	//	m_screen->getShader()->setInt("map", 0);
+	//	m_screen->getShader()->setVec2("dir", dir_x);
+	//	m_screen->getMesh()->draw();
+	//m_fb_blur_x->unbind();
 
-	m_fb_blur_y->bind();
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		m_screen->getShader()->load();
-		glActiveTexture(GL_TEXTURE0);
-		m_fb_blur_x->bindFrameTexture();
-		m_screen->getShader()->setInt("map", 0);
-		m_screen->getShader()->setVec2("dir", dir_y);
-		m_screen->getMesh()->draw();
-	m_fb_blur_y->unbind();
+	//m_fb_blur_y->bind();
+	//	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//	m_screen->getShader()->load();
+	//	glActiveTexture(GL_TEXTURE0);
+	//	m_fb_blur_x->bindFrameTexture();
+	//	m_screen->getShader()->setInt("map", 0);
+	//	m_screen->getShader()->setVec2("dir", dir_y);
+	//	m_screen->getMesh()->draw();
+	//m_fb_blur_y->unbind();
 }
 
 void SPHSystem::getCurvature(const glm::mat4& P, const glm::mat4& V)
 {
+	shared_ptr<Shader> shader = ShaderManager::getShader("Curvature");
+
 	glm::vec2 res = glm::vec2(m_fb_width, m_fb_height);
-	m_shader_curvature->load();
-	m_shader_curvature->setInt("map", 0);
-	m_shader_curvature->setMat4("projection", P);
-	m_shader_curvature->setVec2("res", res);
+	shader->load();
+	shader->setInt("map", 0);
+	shader->setMat4("projection", P);
+	shader->setVec2("res", res);
 
 	m_fb_curvature->bind();
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -442,7 +437,7 @@ void SPHSystem::getCurvature(const glm::mat4& P, const glm::mat4& V)
 		glActiveTexture(GL_TEXTURE0);
 		m_fb->bindFrameTexture();
 		
-		m_screen->getMesh()->draw();
+		Quad::getQuad()->draw();
 	m_fb_curvature->unbind();
 
 	bool swap = false;
@@ -456,8 +451,8 @@ void SPHSystem::getCurvature(const glm::mat4& P, const glm::mat4& V)
 				glActiveTexture(GL_TEXTURE0);
 				m_fb_curvature2->bindFrameTexture();
 				
-				m_screen->getMesh()->draw();
-			m_fb_curvature->unbind();			
+				Quad::getQuad()->draw();
+			m_fb_curvature->unbind();
 		}
 		else
 		{
@@ -467,7 +462,7 @@ void SPHSystem::getCurvature(const glm::mat4& P, const glm::mat4& V)
 				glActiveTexture(GL_TEXTURE0);
 				m_fb_curvature->bindFrameTexture();
 				
-				m_screen->getMesh()->draw();
+				Quad::getQuad()->draw();
 			m_fb_curvature2->unbind();
 		}
 
@@ -477,44 +472,47 @@ void SPHSystem::getCurvature(const glm::mat4& P, const glm::mat4& V)
 
 void SPHSystem::getNormal(const glm::mat4& P, const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap)
 {
-	glm::vec2 inverse_tex = glm::vec2(1.0 / m_fb_width, 1.0 / m_fb_height);
-	
+	shared_ptr<Shader> shader = ShaderManager::getShader("CurvatureNormal");
+
+	glm::vec2 inverse_tex = glm::vec2(1.0 / m_fb_width, 1.0 / m_fb_height);	
 	m_fb_normal->bind();
 	{
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		m_shader_curvature_normal->load();
+		shader->load();
 		
-		m_shader_curvature_normal->setInt("map", 0);
+		shader->setInt("map", 0);
 		glActiveTexture(GL_TEXTURE0);
 		m_fb_curvature2->bindFrameTexture();
 		
-		m_shader_curvature_normal->setInt("depth_map", 1);
+		shader->setInt("depth_map", 1);
 		glActiveTexture(GL_TEXTURE1);
 		depth.getBuffer().bindFrameTexture();
 
-		m_shader_curvature_normal->setInt("cubemap", 2);
+		shader->setInt("cubemap", 2);
 		glActiveTexture(GL_TEXTURE0 + 2);
 		cubemap.getCubemapBuffer()->bindCubemapTexture();
 	
-		m_shader_curvature_normal->setMat4("projection", P);
-		m_shader_curvature_normal->setMat4("view", V);
-		m_shader_curvature_normal->setVec2("inverse_tex", inverse_tex);
-		m_shader_curvature_normal->setInt("render_type", render_type);
+		shader->setMat4("projection", P);
+		shader->setMat4("view", V);
+		shader->setVec2("inverse_tex", inverse_tex);
+		shader->setInt("render_type", render_type);
 		
-		m_screen->getMesh()->draw();
+		Quad::getQuad()->draw();
 	}
 	m_fb_normal->unbind();
 }
 
 void SPHSystem::draw()
 {
-	m_shader_render->load();
+	shared_ptr<Shader> shader = ShaderManager::getShader("FluidRender");
+
+	shader->load();
 	glActiveTexture(GL_TEXTURE0);
 	m_fb_normal->bindFrameTexture();
-	m_shader_render->setInt("map", 0);
-	m_screen->getMesh()->draw();
+	shader->setInt("map", 0);
+	Quad::getQuad()->draw();
 }
 
 void SPHSystem::reset()

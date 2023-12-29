@@ -147,9 +147,6 @@
     <ClCompile Include="src\Point.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\GameObject.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\Geometry.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -160,6 +157,27 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Tri.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MeshImporter.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ShaderManager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Quad.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Transform.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Grid.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Gizmo.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BoundingBox.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -308,9 +326,6 @@
     <ClInclude Include="include\Geometry.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\GameObject.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\Outline.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -318,6 +333,27 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\Tri.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MeshImporter.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ShaderManager.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Quad.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Transform.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Grid.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Gizmo.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\BoundingBox.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

@@ -5,14 +5,14 @@
 #include <unordered_map>
 
 #include "Camera.h"
-#include "GameObject.h"
+#include "Object.h"
 #include "Particle.h"
 #include "Point.h"
 //#include "Object.h"
 
 const int TABLE_SIZE = 100000;
 
-class SPHSystem : public GameObject
+class SPHSystem : public Object
 {
 public:
     SPHSystem(float width, float height, float depth);
@@ -81,20 +81,12 @@ private:
     
     unique_ptr<Point> m_point;
 
-    unique_ptr<GameObject> m_screen;
-
     unique_ptr<ShadowBuffer> m_fb;
     unique_ptr<ShadowBuffer> m_fb_blur_x;
     unique_ptr<ShadowBuffer> m_fb_blur_y;
     unique_ptr<ShadowBuffer> m_fb_curvature;
     unique_ptr<ShadowBuffer> m_fb_curvature2;
     unique_ptr<FrameBuffer> m_fb_normal;
-
-    unique_ptr<Shader> m_shader_depth;
-    unique_ptr<Shader> m_shader_curvature;
-    unique_ptr<Shader> m_shader_curvature_normal;
-    unique_ptr<Shader> m_shader_normal;
-    unique_ptr<Shader> m_shader_render;
 
     float m_grid_width;
     float m_grid_height;

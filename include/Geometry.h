@@ -2,12 +2,12 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
 
-#include "GameObject.h"
+#include "Object.h"
 
-class Geometry : public GameObject
+class Geometry : public Object
 {
 public:
-	Geometry();
+	Geometry(const string& name);
 	~Geometry();
 
 private:

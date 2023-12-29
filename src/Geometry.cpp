@@ -1,27 +1,21 @@
 #include "Geometry.h"
-
-Geometry::Geometry() : GameObject()
+#include "Mesh.h"
+Geometry::Geometry(const string& name) : Object(name)
 {}
 
 Geometry::~Geometry()
 {}
 
 Sphere::Sphere(bool is_create_gizmo) :
-	Geometry(), m_division(32.0f), m_radius(1.0f)
+	Geometry("Sphere"), m_division(32.0f), m_radius(1.0f)
 {
 	cout << "********************Create Sphere Constructor********************" << endl;
 
-	m_name = "Sphere";
-
 	vector<info::VertexLayout> layouts = calculateVertex();
 	vector<unsigned int> indices = calculateIndex();
-	m_mesh = make_shared<Mesh>(m_name);
-	m_mesh->getBuffer().createBuffers(layouts, indices);
-	m_mesh->computeBoundingBox();
-
-	vector<string> shader_path = { "assets/shaders/BRDF.vert", "assets/shaders/BRDF.frag" };
-	m_shader = make_shared<Shader>(shader_path);
-	m_shader->processShader();
+	shared_ptr<Mesh> mesh = make_shared<Mesh>("Sphere");
+	mesh->setupBuffer(layouts, indices);
+	addMesh(mesh);
 
 	cout << "********************Finish create sphere********************\n" << endl;
 }
