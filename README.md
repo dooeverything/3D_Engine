@@ -37,7 +37,7 @@
 - [ ] Shadow (Point light)
 - [ ] Skeleton Animation
 - [ ] Environment mapping
-- [X] enhanced fbx loader
+- [X] ~~enhanced fbx loader~~
 - [ ] Bump mapping
 - [X] ~~Marching Cube~~
 - [X] ~~Terrain~~
