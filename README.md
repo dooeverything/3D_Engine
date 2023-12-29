@@ -37,10 +37,10 @@
 - [ ] Shadow (Point light)
 - [ ] Skeleton Animation
 - [ ] Environment mapping
-- [ ] enhanced fbx loader
+- [X] enhanced fbx loader
 - [ ] Bump mapping
 - [X] ~~Marching Cube~~
 - [X] ~~Terrain~~
 - [ ] 3D gizmos for rotation and scale
-- [x] ~~Optimize SPH Simulation (multi-thread)~~
+- [X] ~~Optimize SPH Simulation (multi-thread)~~
 - [ ] Cloth - Object Collision
