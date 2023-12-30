@@ -41,6 +41,6 @@
 - [ ] Bump mapping
 - [X] ~~Marching Cube~~
 - [X] ~~Terrain~~
-- [ ] 3D gizmos for rotation and scale
+- [X] ~~3D gizmos for rotation and scale~~
 - [X] ~~Optimize SPH Simulation (multi-thread)~~
 - [ ] Cloth - Object Collision
