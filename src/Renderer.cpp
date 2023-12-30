@@ -58,14 +58,16 @@ void Renderer::init()
 	m_test = make_unique<Texture>("assets/textures/ArrowTranslation.png");
 	m_test->loadTexture();	
 
-	m_test2 = make_unique<Texture>("assets/textures/ArrowRotation.png");
+	m_test2 = make_unique<Texture>("assets/textures/ArrowScale.png");
 	m_test2->loadTexture();
 
 	ShaderManager::createShader("Default", info::BASIC_SHADER);
 	ShaderManager::createShader("Preview", info::PREVIEW_SHADER);
 
 	cout << "********************Loading Gizmos********************" << endl;
-	m_gizmos = make_shared<Gizmo>();
+	m_gizmos.resize(2);
+	m_gizmos.at(0) = make_shared<Gizmo>("assets/models/ArrowTranslation.fbx", "translation");
+	m_gizmos.at(1) = make_shared<Gizmo>("assets/models/ArrowScale.fbx", "scale");
 	cout << "********************Finish loading gizmo********************\n" << endl;
 
 	// Setup lights
@@ -238,30 +240,93 @@ void Renderer::moveObject(Object& go)
 		case SDL_MOUSEBUTTONUP:
 			m_is_mouse_down = false;
 			m_is_moving_gizmo = false;
-			m_gizmos->setIsClick(false);
+			m_gizmos.at(go.getTransformType())->setIsClick(false);
 			break;
 
 		case SDL_MOUSEBUTTONDOWN:
 			if (event.button.button == SDL_BUTTON_LEFT)
 			{
-				cout << "DOWN!!! Click gizmo: " << go.getMoveAxis() << endl;
-				m_gizmos->setIsClick(true);
+				m_gizmos.at(go.getTransformType())->setIsClick(true);
 				m_is_moving_gizmo = true;
 				break;
 			}
 
 		case SDL_MOUSEMOTION:
-			if (m_gizmos->getIsClick())
+			if (m_gizmos.at(go.getTransformType())->getIsClick())
 			{
-				cout << m_gizmos->getIsClick() << endl;
-				cout << "Motion Click gizmo: " << go.getMoveAxis() << endl;
-				go.calcTransform(m_camera->getForward(), Transform::TRANSLATE);
+				go.calcTransform(m_camera->getForward());
 				break;
 			}
 		}
 	}
 
 	m_frame_events.clear();
+}
+
+void Renderer::renderButtons()
+{
+	ImGui::GetStyle().WindowRounding = 10.0f;
+	ImGuiWindowFlags flag =  ImGuiWindowFlags_NoTitleBar;
+	static bool use_text_color_for_tint = false;
+	bool is_open = true;
+	static bool pressed = true;
+	ImGui::Begin("#button", &is_open, flag);
+	{
+		ImVec2 pos = ImGui::GetCursorScreenPos();
+		ImVec2 uv_min = ImVec2(0.0f, 0.0f);                 // Top-left
+		ImVec2 uv_max = ImVec2(1.0f, 1.0f);                 // Lower-right
+		ImVec4 bg_col = ImVec4(1.0f, 1.0f, 1.0f, 0.0f);     // Black background
+		ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+
+		if (pressed)
+		{
+			m_gizmos.at(0)->setDraw(true);
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
+		}
+		else
+		{
+			m_gizmos.at(0)->setDraw(false);
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 0.5f });
+		}
+
+		if (ImGui::ImageButton("#translation", (ImTextureID)m_test->getTextureID(), ImVec2(25, 25),
+			uv_min, uv_max, bg_col, tint_col))
+		{
+			pressed = 1 - pressed;
+		}
+		ImGui::PopStyleColor();
+
+	}
+	ImGui::End();
+	
+	ImGui::Begin("#button", &is_open, flag);
+	{
+		ImVec2 pos = ImGui::GetCursorScreenPos();
+		ImVec2 uv_min = ImVec2(0.0f, 0.0f);                 // Top-left
+		ImVec2 uv_max = ImVec2(1.0f, 1.0f);                 // Lower-right
+		ImVec4 bg_col = ImVec4(1.0f, 1.0f, 1.0f, 0.0f);             // Black background
+		ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);           // No tint
+
+		if (!pressed)
+		{
+			m_gizmos.at(1)->setDraw(true);
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
+		}
+		else
+		{
+			m_gizmos.at(1)->setDraw(false);
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 0.5f });
+		}
+
+		if (ImGui::ImageButton("#scale", (ImTextureID)m_test2->getTextureID(), ImVec2(25, 25),
+			uv_min, uv_max, bg_col, tint_col))
+		{
+			pressed = 1 - pressed;
+		}
+		ImGui::PopStyleColor();
+
+	}
+	ImGui::End();
 }
 
 void Renderer::renderImGui()
@@ -275,55 +340,7 @@ void Renderer::renderImGui()
 	bool demo = true;
 	ImGui::ShowDemoWindow(&demo);
 
-
-	ImGui::GetStyle().WindowRounding = 10.0f;
-	ImGuiWindowFlags flag = ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove;
-	static bool use_text_color_for_tint = false;
-	bool is_open = true;
-	ImGui::Begin("#test", &is_open, flag);
-	{
-		ImVec2 pos = ImGui::GetCursorScreenPos();
-		ImVec2 uv_min = ImVec2(0.0f, 0.0f);                 // Top-left
-		ImVec2 uv_max = ImVec2(1.0f, 1.0f);                 // Lower-right
-		ImVec4 bg_col = ImVec4(1.0f, 1.0f, 1.0f, 0.0f);             // Black background
-		ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);           // No tint
-		
-		static bool pressed = true;
-
-		if(pressed) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
-		else ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 0.5f });
-
-		if (ImGui::ImageButton("#translation", (ImTextureID)m_test->getTextureID(), ImVec2(25, 25),
-			uv_min, uv_max, bg_col, tint_col))
-		{
-			pressed = 1 - pressed;
-		}
-		ImGui::PopStyleColor();
-		
-	}
-	ImGui::End();
-
-	ImGui::Begin("#test2", &is_open, flag);
-	{
-		ImVec2 pos = ImGui::GetCursorScreenPos();
-		ImVec2 uv_min = ImVec2(0.0f, 0.0f);                 // Top-left
-		ImVec2 uv_max = ImVec2(1.0f, 1.0f);                 // Lower-right
-		ImVec4 bg_col = ImVec4(1.0f, 1.0f, 1.0f, 0.0f);             // Black background
-		ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);           // No tint
-		static bool pressed2 = false;
-
-		if (pressed2) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
-		else ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 0.5f });
-
-		if (ImGui::ImageButton("#translation", (ImTextureID)m_test2->getTextureID(), ImVec2(25, 25),
-			uv_min, uv_max, bg_col, tint_col))
-		{
-			pressed2 = 1 - pressed2;
-		}
-		ImGui::PopStyleColor();
-
-	}
-	ImGui::End();
+	renderButtons();
 
 	// Draw panels
 	for (auto& it : m_panels)
@@ -412,13 +429,10 @@ void Renderer::renderImGui()
 
 void Renderer::renderScene()
 {
-	//cout << "Render Scene" << endl;
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glViewport(0, 0, m_framebuffer_multi->getWidth(), m_framebuffer_multi->getHeight());
 
-	glm::vec3 cam_pos = m_camera->getPos();
-
 	// Setup world to pixel coordinate transformation 
+	glm::vec3 cam_pos = m_camera->getPos();
 	const glm::mat4& P = m_camera->getSP();
 	const glm::mat4& V = m_camera->getV();
 
@@ -440,7 +454,6 @@ void Renderer::renderScene()
 			if (m_scene_objects[i]->isClick(ray_dir, ray_pos))
 			{
 				float hit = m_scene_objects[i]->getMesh()->getRayHitMin();
-				cout << "hit!: " << hit << endl;
 				if (hit < min_hit)
 				{
 					m_click_object = m_scene_objects[i];
@@ -457,37 +470,6 @@ void Renderer::renderScene()
 					m_click_object = nullptr;
 			}
 		}
-
-		//for (int i = 0; i < m_scene_objects.size(); ++i)
-		//{
-		//	m_scene_objects[i]->isClick(ray_dir, ray_pos);
-		//}
-
-		//if (!m_scene_objects.empty())
-		//{
-		//	std::sort(m_scene_objects.begin(), m_scene_objects.end(),
-		//		[](const shared_ptr<Object>& lhs, const shared_ptr<Object>& rhs)
-		//		{
-		//			float d1 = lhs->getMesh()->getRayHitMin();
-		//			float d2 = rhs->getMesh()->getRayHitMin();
-		//			return d1 < d2;
-		//		});
-		//	
-
-		//	if(m_scene_objects.at(0)->getIsClick())
-		//	{
-		//		m_click_object = m_scene_objects.at(0);
-		//	}
-		//	else
-		//	{
-		//		if (m_click_object != nullptr)
-		//		{		
-		//			if(m_click_object->getIsPopup() == false)
-		//				m_click_object = nullptr;
-		//		}
-		//	}
-		//}
-
 	}
 	
 	//if (m_click_object != nullptr)
@@ -501,27 +483,32 @@ void Renderer::renderScene()
 	// Check whether any gizmos is clicked
 	if (m_is_moving_gizmo)
 	{
-		m_gizmos->computeBBox(m_click_object->getCenter(), cam_pos);
-
+		m_gizmos.at(0)->computeBBox(m_click_object->getCenter(), cam_pos);
+		m_gizmos.at(1)->computeBBox(m_click_object->getCenter(), cam_pos);
 		moveObject(*m_click_object);
 	}
 	else if(m_click_object != nullptr && is_popup == false && !m_is_drag)
 	{
-		m_gizmos->computeBBox(m_click_object->getCenter(), cam_pos);
-
-		//int axis =  - 1;
-		if (m_gizmos->clickAxis(ray_dir, ray_pos))
+		m_gizmos.at(0)->computeBBox(m_click_object->getCenter(), cam_pos);
+		m_gizmos.at(1)->computeBBox(m_click_object->getCenter(), cam_pos);
+		
+		for (int i = 0; i < 2; ++i)
 		{
-			cout << "Clicked axis" << endl;
-			m_is_click_gizmo = true;
-			m_click_object->setMoveAxis(m_gizmos->getIsAxisRayHit()-1);
-			moveObject(*m_click_object);
-		}
-		else
-		{
-			//cout << "Not click gizmo" << endl;
-			m_click_object->setMoveAxis(-1);
-			m_is_click_gizmo = false;
+			if (m_gizmos.at(i)->getIsDraw())
+			{
+				if (m_gizmos.at(i)->clickAxis(ray_dir, ray_pos))
+				{
+					m_is_click_gizmo = true;
+					m_click_object->setMoveAxis(m_gizmos.at(i)->getIsAxisRayHit() - 1);
+					m_click_object->setTransformType(i);
+					moveObject(*m_click_object);
+				}
+				else
+				{
+					m_is_click_gizmo = false;
+					m_click_object->setMoveAxis(-1);
+				}			
+			}
 		}
 	}
 
@@ -533,24 +520,16 @@ void Renderer::renderScene()
 	);
 
 	// Draw objects
-	//cout << "Render objects" << endl;
 	for (int i = 0; i < m_scene_objects.size(); ++i)
 	{
-		//if (m_scene_objects.at(i)->getSoftBodySolver())
-		//{
-		//	m_scene_objects.at(i)->getSoftBodySolver()->simulate();
-		//}
-
 		m_scene_objects.at(i)->draw(P, V, *m_lights.at(0), cam_pos,
 			*m_shadow_map, *m_irradiancemap, *m_prefilter, *m_lut);
 	}
 
 	// Draw background
-	//cout << "Render cubemap" << endl;
 	m_cubemap->draw(P, V);
 
 	// Draw Grid
-	//cout << "render grid" << endl;
 	m_grid->draw(P, V, cam_pos);
 
 	if (m_click_object != nullptr)
@@ -564,7 +543,8 @@ void Renderer::renderScene()
 
 		// Draw gizmos for clicked objects
 		glDisable(GL_DEPTH_TEST);
-		m_gizmos->draw(P, V, cam_pos);
+		m_gizmos.at(0)->draw(P, V, cam_pos);
+		m_gizmos.at(1)->draw(P, V, cam_pos);
 		glEnable(GL_DEPTH_TEST);
 	}
 

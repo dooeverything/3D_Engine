@@ -12,8 +12,8 @@ public:
 	enum Type
 	{
 		TRANSLATE = 0,
-		ROTATE = 1,
-		SCALE = 2
+		SCALE = 1,
+		ROTATE = 2,
 	};
 
 	Transform() :

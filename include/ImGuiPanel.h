@@ -15,9 +15,6 @@ class Object;
 class Material;
 class FrameBuffer;
 class Texture;
-//class Cloth;
-//class MarchingCube;
-//class SPHSystemCuda;
 
 using namespace std;
 

@@ -16,7 +16,7 @@ void Transform::setRotation(const glm::vec3& r)
 
 void Transform::setScale(const glm::vec3& s)
 {
-	m_s = s;
+	m_s += s;
 	updateScale();
 }
 
@@ -42,7 +42,7 @@ void Transform::updateRotation()
 
 void Transform::updateScale()
 {
-	m_scale = m_scale * glm::scale(glm::mat4(1.0f), glm::abs(m_s));
+	m_scale = glm::scale(glm::mat4(1.0f), glm::abs(m_s));
 }
 
 void Transform::renderTranslationPanel()

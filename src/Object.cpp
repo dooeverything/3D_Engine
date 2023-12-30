@@ -9,7 +9,7 @@
 
 Object::Object() :
 	m_mesh(nullptr), m_name(""),
-	m_id(0), m_move_axis(-1),
+	m_id(0), m_move_axis(-1), m_transform_type(Transform::TRANSLATE),
 	m_click(false), m_delete(false), m_is_popup(false)
 {
 }
@@ -170,14 +170,14 @@ string Object::getIdName()
 	return m_id_name;
 }
 
-void Object::calcTransform(const glm::vec3& forward, Transform::Type type)
+void Object::calcTransform(const glm::vec3& forward)
 {
 	int final_x = 0;
 	int final_y = 0;
 	float moveCellSize = 0.1f;
 	SDL_GetRelativeMouseState(&final_x, &final_y);
 
-	cout << "Move " << m_move_axis << endl;
+	//cout << "Move " << m_move_axis << endl;
 	glm::vec3 t = glm::vec3(0.0, 0.0, 0.0);
 	if (m_move_axis == 0)
 	{
@@ -235,7 +235,7 @@ void Object::calcTransform(const glm::vec3& forward, Transform::Type type)
 		}
 	}
 
-	updateTransform(t, type);
+	updateTransform(t, m_transform_type);
 }
 
 void Object::updateTransform(const glm::vec3& t, Transform::Type type)
@@ -271,6 +271,18 @@ void Object::setId(int id)
 	cout << m_id << endl;
 	cout << sid << endl;
 	m_id_name = m_name + "_" + sid;
+}
+
+void Object::setTransformType(int type)
+{
+	if (type == 0)
+	{
+		m_transform_type = Transform::TRANSLATE;
+	}
+	else if (type == 1)
+	{
+		m_transform_type = Transform::SCALE;
+	}
 }
 
 void Object::setupFramebuffer(const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap, Camera& camera)

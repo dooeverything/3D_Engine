@@ -5,14 +5,14 @@
 #include "MeshImporter.h"
 #include "Mesh.h"
 
-Gizmo::Gizmo() :
-	m_center(glm::vec3(0.0f)),
-	m_click(false), m_hit_axis(-1)
+Gizmo::Gizmo(const string& path, const string& name) :
+	m_center(glm::vec3(0.0f)), m_name(name),
+	m_click(false), m_hit_axis(-1), m_is_draw(false)
 {
 	cout << "Gizmo constructor " << endl;
 
 	shared_ptr<MeshImporter> importer;
-	importer = MeshImporter::create("assets/models/ArrowNew.fbx");
+	importer = MeshImporter::create(path);
 	importer->importMesh(m_gizmos);
 
 	const vector<string> shader_paths = { "assets/shaders/Arrow.vert", "assets/shaders/Arrow.frag" };
@@ -20,7 +20,7 @@ Gizmo::Gizmo() :
 
 	m_Ms.resize(4);
 
-	cout << "Mesh complete" << endl;
+	cout << "Gizmo complete \n" << endl;
 }
 
 Gizmo::~Gizmo() {}
@@ -45,6 +45,9 @@ bool Gizmo::clickAxis(glm::vec3 ray_dir, glm::vec3 ray_pos)
 
 void Gizmo::draw(const glm::mat4& P, const glm::mat4& V, const glm::vec3& view_pos)
 {
+	if (!m_is_draw) return;
+
+	//cout << "Draw: " << m_name << endl;
 	shared_ptr<Shader> shader = ShaderManager::getShader("Arrow");
 	
 	glm::vec3 color_x = glm::vec3(225.0f, 10.0f, 99.0f) / 255.0f;	

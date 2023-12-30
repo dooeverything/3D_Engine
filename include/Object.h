@@ -30,7 +30,7 @@ public:
 	virtual void drawInstance(glm::mat4& P, glm::mat4& V);
 
 	inline bool isClick(glm::vec3& ray_dir, glm::vec3& ray_pos) {  return m_mesh->intersect(ray_dir, ray_pos); };
-	void calcTransform(const glm::vec3& forward, Transform::Type type);
+	void calcTransform(const glm::vec3& forward);
 	void updateTransform(const glm::vec3& t, Transform::Type type);
 	inline void updateVertices(const vector<info::VertexLayout>& vertices) { m_mesh->updateBuffer(vertices); };
 	inline void setupVertices(const vector<info::VertexLayout>& vertices) { m_mesh->setupBuffer(vertices); };
@@ -52,11 +52,13 @@ public:
 	virtual inline shared_ptr<Mesh> getMesh() { return m_mesh; };
 	virtual inline bool getIsClick() { return m_click; };
 	virtual inline bool getIsDelete() { return m_delete; };
+	Transform::Type getTransformType() { return m_transform_type; };
 
 	virtual inline void setIsClick(bool click) { m_click = click; };
 	virtual inline void setIsDelete(bool d) { m_delete = d; };
 	virtual inline void setName(const string& name) { m_name = name; };
 	virtual void setId(int id);
+	void setTransformType(int type);
 	
 	virtual void setupFramebuffer(const glm::mat4& V, 
 								  ShadowMap& depth, 
@@ -84,6 +86,7 @@ protected:
 private:
 
 	Transform m_transform;
+	Transform::Type m_transform_type;
 
 	shared_ptr<Mesh> m_mesh;
 	

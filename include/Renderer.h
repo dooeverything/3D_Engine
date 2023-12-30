@@ -32,6 +32,7 @@ public:
 	void handleInput();
 	void moveObject(Object& go);
 
+	void renderButtons();
 	void renderImGui();
 	void renderScene();
 
@@ -55,8 +56,12 @@ private:
 	unique_ptr<EnvironmentMap> m_environment;
 	
 	unique_ptr<Outline> m_outline;
-	shared_ptr<Gizmo> m_gizmos;
 	shared_ptr<Object> m_click_object;
+	
+	vector<shared_ptr<Gizmo>> m_gizmos;
+	//shared_ptr<Gizmo> m_gizmos;
+	//shared_ptr<Gizmo> m_gizmos_test;
+
 	shared_ptr<SPHSystemCuda> m_sph;
 
 	vector<SDL_Event> m_frame_events;
