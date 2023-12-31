@@ -2,9 +2,11 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <CudaCompile Include="src\SPHSolverKernel.cu">
-      <Filter>src</Filter>
+      <Filter>src\Physics</Filter>
     </CudaCompile>
-    <CudaCompile Include="include\SPHSolverKernel.cuh" />
+    <CudaCompile Include="include\SPHSolverKernel.cuh">
+      <Filter>include\Physics</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -19,69 +21,57 @@
     <Filter Include="quartet">
       <UniqueIdentifier>{a8c4d242-6bb8-441b-8339-33e71c3b7252}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\Object">
+      <UniqueIdentifier>{a55b752e-ae33-4158-9dc0-7251a3e7f0f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Scene">
+      <UniqueIdentifier>{5139a334-af2b-442e-97eb-c9fcdc122df1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Scene\SceneHelper">
+      <UniqueIdentifier>{4fd76782-e878-4984-98ea-f3d479f053fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Mesh">
+      <UniqueIdentifier>{a853e429-9ce5-4b81-ad67-e77a035d75ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Math">
+      <UniqueIdentifier>{a28a449c-13fd-4b3c-b036-1e85f9a889a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Shader">
+      <UniqueIdentifier>{6086b895-745a-4325-a58e-e2b5ff058576}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Physics">
+      <UniqueIdentifier>{c80d8bdb-7f28-4c30-924c-45025d6191da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Extras">
+      <UniqueIdentifier>{c841c3a6-39d2-455e-8370-b04126e19030}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Mesh">
+      <UniqueIdentifier>{7fc5d769-df04-413f-884b-4b40e01623d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Math">
+      <UniqueIdentifier>{5a98ff4c-9b9b-4d15-af87-2a2902df0c18}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Extras">
+      <UniqueIdentifier>{df1c0f7f-caf8-492a-bcd5-f56e07b789d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Physics">
+      <UniqueIdentifier>{963bc63b-1149-4725-a5e6-70d74fb395de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Shader">
+      <UniqueIdentifier>{92fcf98f-da3f-4845-8ee5-a483d24ab469}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Scene">
+      <UniqueIdentifier>{80ff77f4-9d34-4881-a57e-f003cd917bb5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Scene\SceneHelper">
+      <UniqueIdentifier>{0ef187bf-eb2f-40b3-ba5a-86bb8385962f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Object">
+      <UniqueIdentifier>{5cc135c1-23a7-4c79-a850-bbba7e4ba60f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Buffer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Camera.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Cloth.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\FileDialog.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ImguiPanel.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Light.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\main.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Map.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\MarchingCube.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Material.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Mesh.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Object.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Particle.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Picker.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Quaternion.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Renderer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SDL_GL_Window.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Shader.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SPHSystem.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SPHSystemCuda.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Texture.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui_demo.cpp">
@@ -104,9 +94,6 @@
     </ClCompile>
     <ClCompile Include="C:\vclib\imgui-docking\imgui.cpp">
       <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SoftBodySolver.cpp">
-      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="C:\vclib\quartet\src\feature.cpp">
       <Filter>quartet</Filter>
@@ -144,110 +131,107 @@
     <ClCompile Include="C:\vclib\quartet\src\trimesh.cpp">
       <Filter>quartet</Filter>
     </ClCompile>
-    <ClCompile Include="src\Point.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\BoundingBox.cpp">
+      <Filter>src\Mesh</Filter>
     </ClCompile>
-    <ClCompile Include="src\Geometry.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\Buffer.cpp">
+      <Filter>src\Mesh</Filter>
     </ClCompile>
-    <ClCompile Include="src\Outline.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\Material.cpp">
+      <Filter>src\Mesh</Filter>
     </ClCompile>
-    <ClCompile Include="src\Terrain.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Tri.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\Mesh.cpp">
+      <Filter>src\Mesh</Filter>
     </ClCompile>
     <ClCompile Include="src\MeshImporter.cpp">
-      <Filter>src</Filter>
+      <Filter>src\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Texture.cpp">
+      <Filter>src\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Tri.cpp">
+      <Filter>src\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Quaternion.cpp">
+      <Filter>src\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FileDialog.cpp">
+      <Filter>src\Extras</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Particle.cpp">
+      <Filter>src\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Point.cpp">
+      <Filter>src\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SoftBodySolver.cpp">
+      <Filter>src\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SPHSystem.cpp">
+      <Filter>src\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SPHSystemCuda.cpp">
+      <Filter>src\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Shader.cpp">
+      <Filter>src\Shader</Filter>
     </ClCompile>
     <ClCompile Include="src\ShaderManager.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Quad.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Transform.cpp">
-      <Filter>src</Filter>
+      <Filter>src\Shader</Filter>
     </ClCompile>
     <ClCompile Include="src\Grid.cpp">
-      <Filter>src</Filter>
+      <Filter>src\Scene\SceneHelper</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Light.cpp">
+      <Filter>src\Scene\SceneHelper</Filter>
     </ClCompile>
     <ClCompile Include="src\Gizmo.cpp">
-      <Filter>src</Filter>
+      <Filter>src\Scene\SceneHelper</Filter>
     </ClCompile>
-    <ClCompile Include="src\BoundingBox.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\Map.cpp">
+      <Filter>src\Scene\SceneHelper</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Outline.cpp">
+      <Filter>src\Scene\SceneHelper</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Camera.cpp">
+      <Filter>src\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ImguiPanel.cpp">
+      <Filter>src\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Picker.cpp">
+      <Filter>src\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer.cpp">
+      <Filter>src\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SDL_GL_Window.cpp">
+      <Filter>src\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Cloth.cpp">
+      <Filter>src\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Geometry.cpp">
+      <Filter>src\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MarchingCube.cpp">
+      <Filter>src\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Object.cpp">
+      <Filter>src\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Quad.cpp">
+      <Filter>src\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Terrain.cpp">
+      <Filter>src\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Transform.cpp">
+      <Filter>src\Object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Buffer.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Camera.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Cloth.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FastNoiseLite.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FileDialog.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\ImguiPanel.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Light.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Map.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\MarchingCube.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Material.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mesh.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Object.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Particle.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Picker.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Quaternion.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Renderer.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\SDL_GL_Window.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Shader.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\SPHSystem.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\SPHSystemCuda.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Texture.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Utils.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imstb_truetype.h">
       <Filter>imgui</Filter>
     </ClInclude>
@@ -274,9 +258,6 @@
     </ClInclude>
     <ClInclude Include="C:\vclib\imgui-docking\imconfig.h">
       <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="include\SoftBodySolver.h">
-      <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="C:\vclib\quartet\src\array3.h">
       <Filter>quartet</Filter>
@@ -320,41 +301,110 @@
     <ClInclude Include="C:\vclib\quartet\src\vec.h">
       <Filter>quartet</Filter>
     </ClInclude>
-    <ClInclude Include="include\Point.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\Geometry.h">
-      <Filter>include</Filter>
+      <Filter>include\Object</Filter>
     </ClInclude>
-    <ClInclude Include="include\Outline.h">
-      <Filter>include</Filter>
+    <ClInclude Include="include\Cloth.h">
+      <Filter>include\Object</Filter>
     </ClInclude>
-    <ClInclude Include="include\Terrain.h">
-      <Filter>include</Filter>
+    <ClInclude Include="include\ImguiPanel.h">
+      <Filter>include\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="include\Tri.h">
-      <Filter>include</Filter>
+    <ClInclude Include="include\Renderer.h">
+      <Filter>include\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="include\MeshImporter.h">
-      <Filter>include</Filter>
+    <ClInclude Include="include\SDL_GL_Window.h">
+      <Filter>include\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="include\ShaderManager.h">
-      <Filter>include</Filter>
+    <ClInclude Include="include\Map.h">
+      <Filter>include\Scene\SceneHelper</Filter>
     </ClInclude>
-    <ClInclude Include="include\Quad.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Transform.h">
-      <Filter>include</Filter>
+    <ClInclude Include="include\Light.h">
+      <Filter>include\Scene\SceneHelper</Filter>
     </ClInclude>
     <ClInclude Include="include\Grid.h">
-      <Filter>include</Filter>
+      <Filter>include\Scene\SceneHelper</Filter>
     </ClInclude>
-    <ClInclude Include="include\Gizmo.h">
-      <Filter>include</Filter>
+    <ClInclude Include="include\Buffer.h">
+      <Filter>include\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mesh.h">
+      <Filter>include\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Material.h">
+      <Filter>include\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MeshImporter.h">
+      <Filter>include\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Texture.h">
+      <Filter>include\Mesh</Filter>
     </ClInclude>
     <ClInclude Include="include\BoundingBox.h">
-      <Filter>include</Filter>
+      <Filter>include\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Picker.h">
+      <Filter>include\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Camera.h">
+      <Filter>include\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Tri.h">
+      <Filter>include\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Quaternion.h">
+      <Filter>include\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Shader.h">
+      <Filter>include\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ShaderManager.h">
+      <Filter>include\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FastNoiseLite.h">
+      <Filter>include\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MarchingCube.h">
+      <Filter>include\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Particle.h">
+      <Filter>include\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Point.h">
+      <Filter>include\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Object.h">
+      <Filter>include\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Quad.h">
+      <Filter>include\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Outline.h">
+      <Filter>include\Scene\SceneHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SoftBodySolver.h">
+      <Filter>include\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SPHSystem.h">
+      <Filter>include\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SPHSystemCuda.h">
+      <Filter>include\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Terrain.h">
+      <Filter>include\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Transform.h">
+      <Filter>include\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FileDialog.h">
+      <Filter>include\Extras</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utils.h">
+      <Filter>include\Extras</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Gizmo.h">
+      <Filter>include\Scene\SceneHelper</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

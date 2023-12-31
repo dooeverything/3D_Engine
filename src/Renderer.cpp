@@ -45,7 +45,7 @@ void Renderer::init()
 	
 	glm::vec3 light_pos = { 1.0f, 1.0f, 1.0f };
 	m_depth_map = make_unique<ShadowMap>(256, 256);
-	m_shadow_map = make_unique<ShadowMap>(256, 256, light_pos, false);
+	m_shadow_map = make_unique<ShadowMap>(1024, 1024, light_pos, false);
 	m_cubemap = make_unique<CubeMap>(256, 256);
 	m_irradiancemap = make_unique<IrradianceMap>(32, 32);
 	m_prefilter = make_unique<PrefilterMap>(256, 256);
@@ -266,10 +266,15 @@ void Renderer::moveObject(Object& go)
 void Renderer::renderButtons()
 {
 	ImGui::GetStyle().WindowRounding = 10.0f;
-	ImGuiWindowFlags flag =  ImGuiWindowFlags_NoTitleBar;
+	ImGuiWindowFlags flag =  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
 	static bool use_text_color_for_tint = false;
 	bool is_open = true;
 	static bool pressed = true;
+
+	ImGui::SetNextWindowSize(ImVec2(50, 85));
+	ImVec2 button_pos = ImVec2(m_sdl_window->getSceneMin().x + 10, m_sdl_window->getSceneMin().y + 10);
+	ImGui::SetNextWindowPos(button_pos);
+
 	ImGui::Begin("#button", &is_open, flag);
 	{
 		ImVec2 pos = ImGui::GetCursorScreenPos();
@@ -282,11 +287,13 @@ void Renderer::renderButtons()
 		{
 			m_gizmos.at(0)->setDraw(true);
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
 		}
 		else
 		{
 			m_gizmos.at(0)->setDraw(false);
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 0.5f });
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f });
 		}
 
 		if (ImGui::ImageButton("#translation", (ImTextureID)m_test->getTextureID(), ImVec2(25, 25),
@@ -294,6 +301,7 @@ void Renderer::renderButtons()
 		{
 			pressed = 1 - pressed;
 		}
+		ImGui::PopStyleColor();
 		ImGui::PopStyleColor();
 
 	}
@@ -311,20 +319,26 @@ void Renderer::renderButtons()
 		{
 			m_gizmos.at(1)->setDraw(true);
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
+			//ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.0f, 8.0f, 1.0f });
+			//ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f });
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
 		}
 		else
 		{
 			m_gizmos.at(1)->setDraw(false);
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 0.5f });
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.5f, 0.5f, 0.5f, 1.0f });
+			//ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f });
 		}
-
+		
 		if (ImGui::ImageButton("#scale", (ImTextureID)m_test2->getTextureID(), ImVec2(25, 25),
 			uv_min, uv_max, bg_col, tint_col))
 		{
 			pressed = 1 - pressed;
 		}
 		ImGui::PopStyleColor();
-
+		ImGui::PopStyleColor();
+		//ImGui::PopStyleColor();
 	}
 	ImGui::End();
 }
@@ -338,8 +352,6 @@ void Renderer::renderImGui()
 
 	bool demo = true;
 	ImGui::ShowDemoWindow(&demo);
-
-	renderButtons();
 
 	// Draw panels
 	for (auto& it : m_panels)
@@ -412,6 +424,8 @@ void Renderer::renderImGui()
 		ImGui::EndChild();
 	}
 	ImGui::End();
+
+	renderButtons();
 
 	// ImGui docking
 	ImGui::Render();
@@ -531,14 +545,14 @@ void Renderer::renderScene()
 	// Draw Grid
 	m_grid->draw(P, V, cam_pos);
 
+	// Draw Outline
+	glDisable(GL_DEPTH_TEST);
+	m_outline->draw(*m_click_object);
+	glEnable(GL_DEPTH_TEST);
+
 	if (m_click_object != nullptr)
 	{
 		if (m_click_object->getName() == "Terrain") return;
-
-		// Draw Outline
-		glDisable(GL_DEPTH_TEST);
-		m_outline->draw(*m_click_object);
-		glEnable(GL_DEPTH_TEST);
 
 		// Draw gizmos for clicked objects
 		glDisable(GL_DEPTH_TEST);

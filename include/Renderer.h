@@ -39,6 +39,10 @@ public:
 	void end();
 
 private:
+	vector<SDL_Event> m_frame_events;
+	vector<shared_ptr<Light>> m_lights;
+	vector<shared_ptr<ImGuiPanel>> m_panels;
+	
 	unique_ptr<SDL_GL_Window> m_sdl_window;
 	unique_ptr<Camera> m_camera;
 	unique_ptr<Grid> m_grid;
@@ -56,18 +60,15 @@ private:
 	unique_ptr<EnvironmentMap> m_environment;
 	
 	unique_ptr<Outline> m_outline;
-	shared_ptr<Object> m_click_object;
 	
 	vector<shared_ptr<Gizmo>> m_gizmos;
 	//shared_ptr<Gizmo> m_gizmos;
 	//shared_ptr<Gizmo> m_gizmos_test;
 
+	vector<shared_ptr<Object>> m_scene_objects;
+	shared_ptr<Object> m_click_object;
 	shared_ptr<SPHSystemCuda> m_sph;
 
-	vector<SDL_Event> m_frame_events;
-	vector<shared_ptr<Object>> m_scene_objects;
-	vector<shared_ptr<Light>> m_lights;
-	vector<shared_ptr<ImGuiPanel>> m_panels;
 	
 	unique_ptr<Texture> m_test;
 	unique_ptr<Texture> m_test2;

@@ -172,50 +172,75 @@ void ObjectPanel::render(
 	vector<shared_ptr<Object>>& scene_objects, 
 	shared_ptr<Object>& clicked_object)
 {
+	string name_clicked = "";	
 	ImGui::Begin("Scene Objects");
 	{
 		calculatePanelSize();
 
-		int selected_index = -1;
+		if (scene_objects.size() == 0)
+		{ 
+			ImGui::End();
+			return;
+		}
+
+		static vector<bool> selections(scene_objects.size(), false);
+		if (selections.size() != scene_objects.size())
+		{
+			selections.resize(scene_objects.size());
+			selections = vector<bool>(scene_objects.size(), false);
+		}
+		
+		//for (int i = 0; i < scene_objects.size(); ++i)
+		//{
+		//	string name = scene_objects.at(i)->getIdName();
+		//	if (name != name_clicked)
+		//	{
+		//		selections.at(i) = false;
+		//	}
+		//	else
+		//	{
+		//		selections.at(i) = true;
+		//	}
+		//}
+
 		if (clicked_object == nullptr)
 		{
-			selected_index = -1;
+			selections = vector<bool>(scene_objects.size(), false);
+		}
+		else
+		{
+			name_clicked = clicked_object->getIdName();
 		}
 
 		for (int i = 0; i < scene_objects.size(); ++i)
 		{
 			string name = scene_objects.at(i)->getIdName();
-
-			if (clicked_object != nullptr)
+			
+			if (ImGui::Selectable(name.c_str(), (selections.at(i) || name == name_clicked)))
 			{
-				string name_clicked = clicked_object->getIdName();
-				if (name_clicked == name)
+				if (!ImGui::GetIO().KeyCtrl)
 				{
-					selected_index = i;
+					selections = vector<bool>(scene_objects.size(), false);
+					//memset(&selections, 0, sizeof(selections));
 				}
+
+				cout << "Scene " << scene_objects.size() << endl;
+				cout << "selection: " << selections.size() << endl;
+
+				bool select = selections.at(i);
+				select ^= 1;
+				selections.at(i) = select;
 			}
+		}
 
-			if (ImGui::Selectable(name.c_str(), selected_index == i))
+		for (int i = 0; i < selections.size(); ++i)
+		{
+			if (selections.at(i) == true)
 			{
-				if (selected_index == i)
-				{
-					// unselect, if the selected_index is clicked again
-					selected_index = -1;
-					break;
-				}
-
-				selected_index = i;
+				scene_objects.at(i)->setIsClick(true);
+				clicked_object = scene_objects.at(i);
 				break;
 			}
-		}
-
-		if (selected_index != -1)
-		{
-			clicked_object = scene_objects.at(selected_index);
-		}
-		else
-		{
-			clicked_object = nullptr;
 		}
 	}
 	ImGui::End();
