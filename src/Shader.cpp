@@ -15,12 +15,6 @@ Shader::Shader(
 
 Shader::~Shader() {}
 
-void Shader::load()
-{
-	//cout << "Shader SetActive " << m_shader_ID << " from " << m_paths.at(0) << endl;
-	glUseProgram(m_shader_ID);
-}
-
 void Shader::setInt(const string& name, int value) const
 {
 	glUniform1i(glGetUniformLocation(m_shader_ID, name.c_str()), value);
@@ -58,7 +52,7 @@ void Shader::setPVM(const glm::mat4& P, const glm::mat4& V, const glm::mat4& m) 
 	setMat4("model", m);
 }
 
-void Shader::setLight(const Light& light)
+void Shader::setLight(const Light& light) const
 {
 	glm::vec3 dir = light.getDir();
 	glm::vec3 amb = light.getAmb();
@@ -70,15 +64,10 @@ void Shader::setLight(const Light& light)
 	setVec3("light.specular", spec);
 }
 
-void Shader::setMaterial(const Material& material)
+void Shader::setMaterial(const Material& material) const
 {
 	setVec3("mat.color", material.getBaseColor());
 	setFloat("mat.metallic", material.getMetallic());
 	setFloat("mat.roughness", material.getRoughness());
 	setFloat("mat.ao", material.getAO());
-}
-
-void Shader::unload()
-{
-	glDeleteProgram(m_shader_ID);
 }

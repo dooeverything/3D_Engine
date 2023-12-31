@@ -16,15 +16,27 @@
 
 using namespace std;
 
+class Sphere;
+class Shader;
+class FileDialog;
+class FrameBuffer;
+
 class Material
 {
 public:
 	Material();
 	~Material();
 
+ 	void loadMaterialToShader(const Shader& shader);
+	bool hasTexture();
 	void addTexture(const string& path);
+	void renderProperty(Sphere& preview_object, const FrameBuffer& preview_fb);
 
-	inline shared_ptr<Texture> getTexture() const { return m_texture; };
+	inline void addTextureBase(const vector<shared_ptr<Texture>>& textures) { m_textures_base = textures; };
+	inline void addTextureSpecular(const vector<shared_ptr<Texture>>& textures) { m_textures_specular = textures; };
+	inline void addTextureNormal(const vector<shared_ptr<Texture>>& textures) { m_textures_normal = textures; };
+	inline void addTextureHeight(const vector<shared_ptr<Texture>>& textures) { m_textures_height = textures; };
+
 	inline glm::vec3 getBaseColor() const { return m_base_color; };
 	inline float getMetallic() const { return m_metallic; };
 	inline float getRoughness() const { return m_roughness; };
@@ -35,7 +47,11 @@ public:
 	inline void setRoughness(float roughness) { m_roughness = roughness; };
 
 private:
-	shared_ptr<Texture> m_texture;
+	unique_ptr<FileDialog> m_fd;
+	vector<shared_ptr<Texture>> m_textures_base;
+	vector<shared_ptr<Texture>> m_textures_specular;
+	vector<shared_ptr<Texture>> m_textures_normal;
+	vector<shared_ptr<Texture>> m_textures_height;
 
 	string m_type;
 	glm::vec3 m_base_color;

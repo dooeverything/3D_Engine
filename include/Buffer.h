@@ -65,16 +65,16 @@ public:
 	FrameBuffer();
 	virtual void createBuffers(int width, int height, bool multisample = false);
 	
-	void bind();
+	void bind() const;
 	void bindDraw();
 	void bindRead();
-	void unbind();
+	void unbind() const;
 	void bindFrameTexture();
 	void rescaleFrame(int width, int height);
 
-	GLuint getTextureID() { return m_framebuffer_texture; };
-	int getWidth() { return m_width; };
-	int getHeight() { return m_height; };
+	GLuint getTextureID() const { return m_framebuffer_texture; };
+	int getWidth() const { return m_width; };
+	int getHeight() const { return m_height; };
 
 protected:
 	GLuint m_FBO;

@@ -12,6 +12,7 @@
 #include "FileDialog.h"
 
 class Object;
+class Sphere;
 class Material;
 class FrameBuffer;
 class Texture;
@@ -73,15 +74,7 @@ public:
 
 private:
 	unique_ptr<FrameBuffer> m_preview_fb;
-	unique_ptr<Object> m_preview_object;
-	unique_ptr<FileDialog> m_fd;
-
-	void renderPreview(const Material& mat);
-	void renderPreview(const vector<shared_ptr<Texture>>& tex);
-
-	void translatePanel(Object& clicked_object);
-	void rotatePanel(Object& clicked_object);
-	void scalePanel(Object& clicked_object);
+	unique_ptr<Sphere> m_preview_object;
 };
 
 class PopupPanel : public ImGuiPanel

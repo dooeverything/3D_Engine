@@ -148,21 +148,6 @@ void ImGuiMenuBar::render(
 void ImGuiMenuBar::addObject(
 	const vector<shared_ptr<Object>>& scene_objects, Object& add_object)
 {
-	/*if (add_object.getPath() != "")
-	{
-		auto last = add_object.getPath().find_last_of('/');
-		if (last == -1)
-		{
-			last = add_object.getPath().find_last_of('\\');
-		}
-		string temp = add_object.getPath().substr(last + 1, add_object.getPath().length());
-		name = temp.substr(0, temp.find_last_of('.'));
-	}
-	else
-	{
-		name = add_object.getName();
-	}*/
-
 	string name = add_object.getName();
 	int count = 0;
 	for (auto& it : scene_objects)
@@ -262,11 +247,10 @@ void PropertyPanel::render(
 
 		string name = clicked_object->getIdName();
 		const char* object_name = name.c_str();
-		ImGui::Text(object_name);
+		//ImGui::Text(object_name);
 		
 		// Transform panel
-		bool expand_transform = ImGui::TreeNode("Transform");
-		if (expand_transform)
+		if (ImGui::CollapsingHeader("Transform"))
 		{
 			static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
 			ImVec2 cell_padding(0.0f, 2.0f);
@@ -274,264 +258,26 @@ void PropertyPanel::render(
 			ImGui::BeginTable("Transform", 4);
 			ImU32 cell_bg_color = ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.7f, 0.65f));
 			
-			translatePanel(*clicked_object);
-			rotatePanel(*clicked_object);
-			scalePanel(*clicked_object);
+			clicked_object->renderTransformProperty();
 
 			ImGui::EndTable();
 			ImGui::PopStyleVar();
-			ImGui::TreePop();
 		}
 
 		// Material Panel
-		bool expand_material = ImGui::TreeNode("Material");
-		if (expand_material)
-		{
-			shared_ptr<Material> mat = clicked_object->getMesh()->getMaterial();
-			if (clicked_object->getMesh()->getTexture().size() > 0)
-			{
-				//cout << "Clicked object " << clicked_object->getName() << " , " << clicked_object->getMesh()->getTexture().size() << endl;
-				vector<shared_ptr<Texture>> tex = clicked_object->getMesh()->getTexture();
-				renderPreview(tex);
-				ImGui::Image((ImTextureID)m_preview_fb->getTextureID(), ImVec2(100.0, 100.0), ImVec2(0, 1), ImVec2(1, 0));
-			}
-			else
-			{
-				renderPreview(*mat);
-				ImGui::Image((ImTextureID)m_preview_fb->getTextureID(), ImVec2(100.0, 100.0), ImVec2(0, 1), ImVec2(1, 0));
-				ImGui::Dummy(ImVec2(0.0f, 5.0f));
+		if (ImGui::CollapsingHeader("Material"))
+		{	
+			clicked_object->renderMeshProperty(*m_preview_object, *m_preview_fb);
 
-				if (mat->getTexture() == nullptr)
-				{
-					ImGuiColorEditFlags misc_flags = ImGuiColorEditFlags_DisplayRGB;
-					misc_flags |= ImGuiColorEditFlags_NoSidePreview;
-
-					glm::vec3 color_mat = mat->getBaseColor();
-					ImVec4 color = ImVec4(color_mat.x, color_mat.y, color_mat.z, 1.0);
-					ImGui::Text("Color");
-					ImGui::ColorPicker3("##Color", (float*)&color, misc_flags);
-					mat->setBaseColor(glm::vec3(color.x, color.y, color.z));
-					
-					//static float slider_f = 0.5f;
-					
-					ImGui::Dummy(ImVec2(0.0f, 5.0f));
-					
-					ImGuiSliderFlags flags = ImGuiSliderFlags_None;
-					
-					ImVec2 cell_padding(-1.0f, 2.0f);
-					ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
-					ImGui::BeginTable("PBR", 2);
-
-					ImGui::TableNextRow();
-					ImGui::TableNextColumn();
-					ImGui::AlignTextToFramePadding();
-					
-					ImGui::Text("Metallic");
-					ImGui::TableNextColumn();
-					float metallic = mat->getMetallic();
-					ImGui::SliderFloat("##Metallic", &metallic, 0.0f, 1.0f, "%.3f", flags);
-					mat->setMetallic(metallic);
-
-					//ImGui::Dummy(ImVec2(0.0f, 5.0f));
-					ImGui::TableNextRow();
-					ImGui::TableNextColumn();
-					ImGui::Text("Roughness");
-					ImGui::TableNextColumn();
-					float roughness = mat->getRoughness();
-					ImGui::SliderFloat("##Roughness", &roughness, 0.0f, 1.0f, "%.3f", flags);
-					mat->setRoughness(roughness);
-					
-					ImGui::EndTable();
-					ImGui::PopStyleVar();
-				}
-
-				ImGui::Dummy(ImVec2(0.0f, 5.0f));
-
-				bool load_texture = ImGui::Button("Apply texture");
-				if (load_texture)
-				{
-					m_fd = make_unique<FileDialog>();
-					string path = m_fd->OpenFile(".jpg");
-					if (path != "")
-					{
-						cout << "Open: " << path << endl;
-						mat->addTexture(path);
-					}
-				}
-			}
-			ImGui::TreePop();
+			//ImGui::TreePop();
 		}
-		
-		clicked_object->renderProperty();
-
-		
-		//if (clicked_object->getSoftBodySolver())
-		//{
-		//	clicked_object->getSoftBodySolver()->renderProperty();
-		//}
 	}
 	ImGui::End();
 }
 
-void PropertyPanel::renderPreview(const Material& mat)
-{
-	m_preview_fb->bind();
-		glViewport(0, 0, 256, 256);
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		m_preview_object->drawPreview(mat);
-	m_preview_fb->unbind();
-}
+PopupPanel::PopupPanel(string name) : ImGuiPanel(name) {}
 
-void PropertyPanel::renderPreview(const vector<shared_ptr<Texture>>& tex)
-{
-	m_preview_fb->bind();
-		glViewport(0, 0, 256, 256);
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		m_preview_object->drawPreview(tex);
-	m_preview_fb->unbind();
-}
-
-void PropertyPanel::translatePanel(Object& clicked_object)
-{
-	//glm::vec3 t = clicked_object.get(0);
-	//
-	//ImGui::TableNextRow();
-	//ImGui::TableNextColumn();
-	//ImGui::AlignTextToFramePadding();
-	//ImGui::Text("Position");
-
-	//ImGui::TableNextColumn();
-	//ImGui::Text("X");
-	//ImGui::SameLine();
-	//bool change_x = ImGui::DragFloat("##x1", &(t.x), 0.005f);
-	////if (ImGui::DragFloat("##x1", &(t.x), 0.005f))
-	////{
-	////	//clicked_object.setProperty(0, *clicked_object.getProperty(0));
-	////}
-
-	//ImGui::TableNextColumn();
-	//ImGui::Text("Y");
-	//ImGui::SameLine();
-	//bool change_y = ImGui::DragFloat("##y1", &(t.y), 0.005f);
-	////if (ImGui::DragFloat("##y1", &(t.y), 0.005f))
-	////{
-	////	//clicked_object.setProperty(0, *clicked_object.getProperty(0));
-	////}
-
-	//ImGui::TableNextColumn();
-	//ImGui::Text("Z");
-	//ImGui::SameLine();
-	//bool change_z = ImGui::DragFloat("##z1", &(t.z), 0.005f);
-	////if (ImGui::DragFloat("##z1", &(t.z), 0.005f))
-	////{
-	////	//clicked_object.setProperty(0, *clicked_object.getProperty(0));
-	////}
-
-	//if (change_x || change_y || change_z)
-	//{
-	//	clicked_object.setProperty(0, t);
-	//}
-
-	//ImGui::TableNextColumn();
-}
-
-void PropertyPanel::rotatePanel(Object& clicked_object)
-{
-	//glm::vec3 r = clicked_object.getProperty(1);
-	//
-	//ImGui::TableNextRow();
-	//ImGui::TableNextColumn();
-	//ImGui::AlignTextToFramePadding();
-	//ImGui::Text("Rotation");
-
-	//ImGui::TableNextColumn();
-	//ImGui::Text("X");
-	//ImGui::SameLine();
-	//bool change_x = ImGui::DragFloat("##x2", &(r.x), 0.005f);
-	////if (ImGui::DragFloat("##x2", &(clicked_object.getProperty(1)->x), 0.1f))
-	////{
-	////	clicked_object.setProperty(1, *clicked_object.getProperty(1));
-	////}
-
-	//ImGui::TableNextColumn();
-	//ImGui::Text("Y");
-	//ImGui::SameLine();
-	//bool change_y = ImGui::DragFloat("##y2", &(r.y), 0.005f);
-	////if (ImGui::DragFloat("##y2", &(clicked_object.getProperty(1)->y), 0.1f))
-	////{
-	////	clicked_object.setProperty(1, *clicked_object.getProperty(1));
-	////}
-
-	//ImGui::TableNextColumn();
-	//ImGui::Text("Z");
-	//ImGui::SameLine();
-	//bool change_z = ImGui::DragFloat("##z2", &(r.z), 0.005f);
-	////if (ImGui::DragFloat("##z2", &(clicked_object.getProperty(1)->z), 0.1f))
-	////{
-	////	clicked_object.setProperty(1, *clicked_object.getProperty(1));
-	////}
-
-	//if (change_x || change_y || change_z)
-	//{
-	//	clicked_object.setProperty(1, r);
-	//}
-	//
-	//ImGui::TableNextColumn();
-}
-
-void PropertyPanel::scalePanel(Object& clicked_object)
-{
-	//glm::vec3 s = clicked_object.getProperty(2);
-
-	//ImGui::TableNextRow();
-	//ImGui::TableNextColumn();
-	//ImGui::AlignTextToFramePadding();
-	//ImGui::Text("Scale");
-	//ImGui::TableNextColumn();
-	//
-	//ImGui::Text("X");
-	//ImGui::SameLine();
-	//bool change_x = ImGui::DragFloat("##x3", &(s.x), 0.005f);
-	////if (ImGui::DragFloat("##x3", &(s.x), 0.005f))
-	////{
-	////	clicked_object.setProperty(2, *clicked_object.getProperty(2));
-	////}
-
-	//ImGui::TableNextColumn();
-	//ImGui::Text("Y");
-	//ImGui::SameLine();
-	//bool change_y = ImGui::DragFloat("##y3", &(s.y), 0.005f);
-	////if (ImGui::DragFloat("##y3", &(clicked_object.getProperty(2)->y), 0.005f))
-	////{
-	////	clicked_object.setProperty(2, *clicked_object.getProperty(2));
-	////}
-	//
-	//ImGui::TableNextColumn();
-	//ImGui::Text("Z");
-	//ImGui::SameLine();
-	//bool change_z = ImGui::DragFloat("##z3", &(s.z), 0.005f);
-	////if (ImGui::DragFloat("##z3", &(clicked_object.getProperty(2)->z), 0.005f))
-	////{
-	////	clicked_object.setProperty(2, *clicked_object.getProperty(2));
-	////}
-
-	//if (change_x || change_y || change_z)
-	//{
-	//	clicked_object.setProperty(2, s);
-	//}
-
-	//ImGui::TableNextColumn();
-}
-
-PopupPanel::PopupPanel(string name) : ImGuiPanel(name)
-{
-}
-
-PopupPanel::~PopupPanel()
-{
-}
+PopupPanel::~PopupPanel() {}
 
 void PopupPanel::popup(
 	vector<shared_ptr<Object>>& scene_objects, 
@@ -577,20 +323,4 @@ void PopupPanel::render(vector<shared_ptr<Object>>& scene_objects,
 	}
 
 	ImGui::SeparatorText("Physics");
-
-	if (clicked_object)
-	{
-		//if (clicked_object->getSoftBodySolver() == nullptr)
-		//{
-		//	if (ImGui::MenuItem("Add SoftbodySolver"))
-		//	{
-		//		cout << "Add softbodysolver" << endl;
-		//		clicked_object->addSoftBodySolver();
-		//	}	
-		//}
-		//else
-		//{
-		//	ImGui::Text("Already Added SoftBodySolver");
-		//}
-	}
 }

@@ -336,7 +336,6 @@ void Renderer::renderImGui()
 	ImGui::NewFrame();
 	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
-	
 	bool demo = true;
 	ImGui::ShowDemoWindow(&demo);
 
@@ -414,7 +413,7 @@ void Renderer::renderImGui()
 	}
 	ImGui::End();
 
-	// imGui docking
+	// ImGui docking
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -453,7 +452,7 @@ void Renderer::renderScene()
 		{
 			if (m_scene_objects[i]->isClick(ray_dir, ray_pos))
 			{
-				float hit = m_scene_objects[i]->getMesh()->getRayHitMin();
+				float hit = m_scene_objects[i]->getRayHitMin();
 				if (hit < min_hit)
 				{
 					m_click_object = m_scene_objects[i];
@@ -547,7 +546,6 @@ void Renderer::renderScene()
 		m_gizmos.at(1)->draw(P, V, cam_pos);
 		glEnable(GL_DEPTH_TEST);
 	}
-
 }
 
 void Renderer::end()

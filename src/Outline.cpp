@@ -33,7 +33,7 @@ Outline::~Outline()
 
 void Outline::setupBuffers(Object& go, const glm::mat4& V, float width, float height)
 {
-	if (go.getMesh() == nullptr) return;
+	//if (go.getMesh() == nullptr) return;
 
 	float aspect = width / height;
 	glm::mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
@@ -44,14 +44,7 @@ void Outline::setupBuffers(Object& go, const glm::mat4& V, float width, float he
 	m_outline_buffers.at(0)->bind();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	shader->load();
-	if (go.getMesh()->getSizeIndices() > 1)
-	{
-		go.getMesh()->draw(P, V, go.getModelTransform(), *shader);
-	}
-	else
-	{
-		go.getMesh()->draw(P, V, go.getModelTransform(), *shader, true);
-	}
+	go.drawMesh(P, V, *shader);
 	m_outline_buffers.at(0)->unbind();
 
 	shader = ShaderManager::getShader("Debug");

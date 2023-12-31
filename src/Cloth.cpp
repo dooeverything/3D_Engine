@@ -1,6 +1,7 @@
 #include "Cloth.h"
 #include "Object.h"
 #include "MeshImporter.h"
+#include "Material.h"
 #include <cmath>
 
 Cloth::Cloth() : Object("Cloth")
@@ -12,10 +13,6 @@ Cloth::Cloth() : Object("Cloth")
 	n_sub_steps = 3;
 	t_sub = t / n_sub_steps;
 
-	//m_property[2] = glm::vec3(m_scale);
-	//glm::mat4 t = glm::mat4(1.0f);
-	//t = glm::scale(t, m_property[2]);
-	
 	vector<shared_ptr<Mesh>> meshes;
 	shared_ptr<MeshImporter> importer = MeshImporter::create("assets/models/Cloth.fbx");
 	importer->importMesh(meshes);
@@ -126,8 +123,6 @@ info::uint Cloth::getHashIndex(glm::ivec3& pos)
 void Cloth::simulate()
 {
 	if (!m_simulate) return;
-
-	//vector<info::VertexLayout> update_layouts = m_mesh->getBuffer().getLayouts();
 
 	for (int i = 0; i < m_layouts.size(); ++i)
 	{

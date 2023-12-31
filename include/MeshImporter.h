@@ -63,7 +63,7 @@ private:
 	void processNode(const aiNode* node, const aiScene* scene, vector<shared_ptr<Mesh>>& meshes);
 	shared_ptr<VertexBuffer> processBuffer(const aiMesh* mesh, const aiScene* scene, const string& name, const glm::mat4& m);
 	shared_ptr<Material> processMaterial(const aiMesh* mesh, const aiScene* scene); // Object material handling functions
-	vector<shared_ptr<Texture>> processTextures(const aiMesh* mesh, const aiScene* scene, Material* material);
+	void processTextures(const aiMesh* mesh, const aiScene* scene, Material* material);
 	vector<shared_ptr<Texture>> loadTexture(shared_ptr<aiMaterial> mat, aiTextureType type, string typeName); 	// Texture handling functions
 	glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& aiMat);
 

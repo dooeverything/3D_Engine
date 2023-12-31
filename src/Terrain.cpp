@@ -1,5 +1,7 @@
 #include "Terrain.h"
+#include "Shader.h"
 #include "ShaderManager.h"
+
 Terrain::Terrain(float res) : Object("Terrain")
 {
 	cout << "*************************Terrain Constructor*************************" << endl;
@@ -38,7 +40,6 @@ Terrain::~Terrain()
 
 int Terrain::getIndex(const glm::vec2& uv)
 {
-	//cout << uv.x + m_res * uv.y << endl;
 	return uv.x + m_res * uv.y;
 }
 
@@ -125,7 +126,6 @@ void Terrain::updateVertex(glm::vec3 ray_dir, glm::vec3 ray_pos, bool mouse_down
 
 	m_hit = glm::vec3(-1000.0f);
 	if (!m_is_edit) return;
-
 
 	float t = 0.0f;
 

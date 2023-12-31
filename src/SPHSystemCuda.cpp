@@ -1,6 +1,7 @@
 #include "SPHSystemCuda.h"
 #include "SPHSolverKernel.cuh"
 #include "MeshImporter.h"
+#include "Shader.h"
 #include "ShaderManager.h"
 #include "Particle.h"
 #include "Quad.h"
@@ -360,7 +361,7 @@ void SPHSystemCuda::draw(const glm::mat4& P, const glm::mat4& V,
 	shader->setInt("lut_map", 3);
 	glActiveTexture(GL_TEXTURE0 + 3);
 	lut.getFrameBuffer()->bindFrameTexture();
-	drawMesh(P, V, getModelTransform(), *shader);
+	drawMesh(P, V, *shader);
 
 }
 

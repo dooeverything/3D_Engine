@@ -234,10 +234,11 @@ void FBXImporter::processNode(
 		aiMesh* ai_mesh = scene->mMeshes[node->mMeshes[i]];
 		shared_ptr<VertexBuffer> buffer = processBuffer(ai_mesh, scene, node->mName.C_Str(), node_transformation);
 		shared_ptr<Material> material = processMaterial(ai_mesh, scene);
-		vector<shared_ptr<Texture>> textures = processTextures(ai_mesh, scene, material.get());
+		processTextures(ai_mesh, scene, material.get());
 
-		shared_ptr<Mesh> mesh = make_shared<Mesh>(node->mName.C_Str(), buffer, textures, material);
+		shared_ptr<Mesh> mesh = make_shared<Mesh>(node->mName.C_Str(), buffer, material);
 		meshes.emplace_back(mesh);
+
 		cout << "push mesh from fbx" << endl;
 	}
 
@@ -364,27 +365,24 @@ shared_ptr<Material> FBXImporter::processMaterial(const aiMesh* mesh, const aiSc
 	return material;
 }
 
-vector<shared_ptr<Texture>> FBXImporter::processTextures(const aiMesh* mesh, const aiScene* scene, Material* material)
+void FBXImporter::processTextures(const aiMesh* mesh, const aiScene* scene, Material* material)
 {
+	cout << "Process Textures " << endl;
 
 	shared_ptr<aiMaterial> ai_material = make_shared<aiMaterial>();
 	ai_material->CopyPropertyList(ai_material.get(), scene->mMaterials[mesh->mMaterialIndex]);
 
-	vector<shared_ptr<Texture>> textures;
 	vector<shared_ptr<Texture>> diffuses = loadTexture(ai_material, aiTextureType_DIFFUSE, "color");
-	textures.insert(textures.end(), make_move_iterator(diffuses.begin()), make_move_iterator(diffuses.end()));
+	material->addTextureBase(diffuses);
 
 	vector<shared_ptr<Texture>> speculars = loadTexture(ai_material, aiTextureType_SPECULAR, "specular");
-	textures.insert(textures.end(), make_move_iterator(speculars.begin()), make_move_iterator(speculars.end()));
+	material->addTextureSpecular(speculars);
 
 	vector<shared_ptr<Texture>> normals = loadTexture(ai_material, aiTextureType_HEIGHT, "normal");
-	textures.insert(textures.end(), make_move_iterator(normals.begin()), make_move_iterator(normals.end()));
+	material->addTextureNormal(normals);
 
 	vector<shared_ptr<Texture>> heights = loadTexture(ai_material, aiTextureType_AMBIENT, "ambient");
-	textures.insert(textures.end(), make_move_iterator(heights.begin()), make_move_iterator(heights.end()));
-
-	cout << "Process Textures " << endl;
-	return textures;
+	material->addTextureHeight(heights);
 }
 
 vector<shared_ptr<Texture>> FBXImporter::loadTexture(shared_ptr<aiMaterial> mat, aiTextureType type, string typeName)

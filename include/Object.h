@@ -10,6 +10,9 @@
 #include "Transform.h"
 
 class SoftBodySolver;
+class Material;
+class Sphere;
+class FrameBuffer;
 
 using namespace std;
 
@@ -21,12 +24,11 @@ public:
 	Object(const shared_ptr<Mesh>& mesh);
 	~Object();
 	
-	virtual void drawMesh(const glm::mat4& P, const glm::mat4& V, const glm::mat4& M, Shader& shader);
-	virtual void drawPreview(const Material& mat);
-	virtual void drawPreview(const vector<shared_ptr<Texture>>& tex);
 	virtual void draw(const glm::mat4& P, const glm::mat4& V,
 		Light& light, glm::vec3& view_pos, ShadowMap& shadow,
 		IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut);
+
+	virtual void drawMesh(const glm::mat4& P, const glm::mat4& V, const Shader& shader);
 	virtual void drawInstance(glm::mat4& P, glm::mat4& V);
 
 	inline bool isClick(glm::vec3& ray_dir, glm::vec3& ray_pos) {  return m_mesh->intersect(ray_dir, ray_pos); };
@@ -39,26 +41,25 @@ public:
 	void addSoftBodySolver();
 	inline void addMesh(const shared_ptr<Mesh>& mesh) { m_mesh = mesh; computeBBox(); };
 
-	virtual string getIdName();
-	virtual inline int getId() { return m_id; };
-	virtual inline string getName() { return m_mesh->getName(); };
-	
-	virtual inline glm::mat4 getModelTransform() { return m_transform.getModelTransform(); };
-	virtual inline glm::vec3 getSize() { return m_mesh->getSize(); };
-	virtual inline glm::vec3 getMin() { return m_mesh->getMin(); };
-	virtual inline glm::vec3 getMax() { return m_mesh->getMax(); };
+	string getIdName();
+	inline glm::mat4 getModelTransform() { return m_transform.getModelTransform(); };
+	inline glm::vec3 getSize() { return m_mesh->getSize(); };
+	inline glm::vec3 getMin() { return m_mesh->getMin(); };
+	inline glm::vec3 getMax() { return m_mesh->getMax(); };
 	inline glm::vec3 getCenter() { return m_mesh->getCenter(); };
-
-	virtual inline shared_ptr<Mesh> getMesh() { return m_mesh; };
-	virtual inline bool getIsClick() { return m_click; };
-	virtual inline bool getIsDelete() { return m_delete; };
+	inline string getName() { return m_mesh->getName(); };
+	inline float getRayHitMin() { return m_mesh->getRayHitMin(); };
+	inline int getId() { return m_id; };
+	inline bool getIsClick() { return m_click; };
+	inline bool getIsDelete() { return m_delete; };
 	Transform::Type getTransformType() { return m_transform_type; };
 
-	virtual inline void setIsClick(bool click) { m_click = click; };
-	virtual inline void setIsDelete(bool d) { m_delete = d; };
-	virtual inline void setName(const string& name) { m_name = name; };
-	virtual void setId(int id);
+	inline void setIsClick(bool click) { m_click = click; };
+	inline void setIsDelete(bool d) { m_delete = d; };
+	inline void setName(const string& name) { m_name = name; };
+	void setId(int id);
 	void setTransformType(int type);
+	inline void setMaterial(const shared_ptr<Material>& material) { m_mesh->setMaterial(material); };
 	
 	virtual void setupFramebuffer(const glm::mat4& V, 
 								  ShadowMap& depth, 
@@ -73,18 +74,18 @@ public:
 	virtual inline void setMoveAxis(int axis) { m_move_axis = axis; };
 	virtual inline void setIsPopup(bool p) { m_is_popup = p; };
 
-	virtual void renderProperty() { return; };
+	virtual void renderMeshProperty(Sphere& preview_object, const FrameBuffer& preview_fb) { m_mesh->renderProperty(preview_object, preview_fb); };
+	virtual void renderTransformProperty() { m_transform.renderProperty(); computeBBox(); };
 	virtual void updateVertex(glm::vec3 ray_dir, glm::vec3 ray_pos, bool mouse_down) { return; };
 	
 protected:
-	void drawTerrain(const glm::mat4& P, const glm::mat4& V, Shader& shader, float res);
+	void drawTerrain(const glm::mat4& P, const glm::mat4& V, const Shader& shader, float res);
 	inline vector<info::VertexLayout> getVertices() { return m_mesh->getVertices(); };
 	inline vector<info::uint> getIndices() { return m_mesh->getIndices(); };
 	inline void updateBuffer(const vector<info::VertexLayout>& layouts) { m_mesh->updateBuffer(layouts); };
 	void computeBBox();
 
 private:
-
 	Transform m_transform;
 	Transform::Type m_transform_type;
 

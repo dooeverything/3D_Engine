@@ -69,20 +69,11 @@ void ShadowMap::draw(vector<shared_ptr<Object>>& gameobjects)
 		glClear(GL_DEPTH_BUFFER_BIT);
 		for (auto& it : gameobjects)
 		{
-			if (it->getMesh() == nullptr) continue;
+			//if (it->getMesh() == nullptr) continue;
 		
 			if (it->getName() == "Fluid") continue;
 
-			shader->load();
-
-			if (it->getMesh()->getSizeIndices() > 1)
-			{
-				it->getMesh()->draw(m_proj, m_view, it->getModelTransform(), *shader);
-			}
-			else
-			{
-				it->getMesh()->draw(m_proj, m_view, it->getModelTransform(), *shader, true);
-			}
+			it->drawMesh(m_proj, m_view, *shader);
 		}
 	m_shadow_buffer->unbind();
 }

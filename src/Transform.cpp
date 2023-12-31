@@ -4,7 +4,7 @@
 
 void Transform::setTranslation(const glm::vec3& p)
 {
-	m_t = p;
+	m_t += p;
 	updateTranslation();
 }
 
@@ -22,27 +22,36 @@ void Transform::setScale(const glm::vec3& s)
 
 void Transform::updateTranslation()
 {
-	m_translation = m_translation * glm::translate(glm::mat4(1.0f), m_t);
+	m_translation = glm::translate(glm::mat4(1.0f), m_t);
 }
 
 void Transform::updateRotation()
 {
+	glm::mat4 r = glm::mat4(1.0f);
 	for (int i = 0; i < 3; ++i)
 	{
 		glm::vec3 axis = glm::vec3(0.0f);
 		axis[i] = 1.0f;
-		float angle = glm::radians(m_r[i]);
-
+		float angle = m_r[i]; // glm::radians(m_r[i]);
 		Quaternion q;
 		q.set(axis, angle);
 		glm::mat4 m = q.getMatrix();
-		m_rotation *= m;
+		r *= m;
 	}
+
+	m_rotation = r;
 }
 
 void Transform::updateScale()
 {
 	m_scale = glm::scale(glm::mat4(1.0f), glm::abs(m_s));
+}
+
+void Transform::renderProperty()
+{
+	renderTranslationPanel();
+	renderRotationPanel();
+	renderScalePanel();
 }
 
 void Transform::renderTranslationPanel()

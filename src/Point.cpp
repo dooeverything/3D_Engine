@@ -1,5 +1,6 @@
 #include "Point.h"
 #include "ShaderManager.h"
+#include "Shader.h"
 
 Point::Point(const vector<info::VertexLayout>& layouts)
 {
@@ -19,5 +20,5 @@ void Point::drawPoint(const glm::mat4& P, const glm::mat4& V)
 	glm::mat4 M = glm::mat4(1.0f);
 	shader->setPVM(P, V, M);
 
-	m_mesh->drawInstance(P, V);
+	m_mesh->drawInstance();
 }

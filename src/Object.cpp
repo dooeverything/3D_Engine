@@ -1,29 +1,30 @@
 #include "Object.h"
-#include "SoftBodySolver.h"
+
+#include "glm/gtx/string_cast.hpp"
+
+#include "Buffer.h"
 #include "Material.h"
 #include "MeshImporter.h"
+#include "Shader.h"
 #include "ShaderManager.h"
+#include "SoftBodySolver.h"
+#include "Geometry.h"
 #include "Gizmo.h"
 #include "Light.h"
-#include "glm/gtx/string_cast.hpp"
 
 Object::Object() :
 	m_mesh(nullptr), m_name(""),
 	m_id(0), m_move_axis(-1), m_transform_type(Transform::TRANSLATE),
-	m_click(false), m_delete(false), m_is_popup(false)
-{
-}
+	m_click(false), m_delete(false), m_is_popup(false) {}
 
 Object::Object(const string& name) :
 	m_mesh(nullptr), m_name(name),
-	m_id(0), m_move_axis(-1),
-	m_click(false), m_delete(false), m_is_popup(false)
-{
-}
+	m_id(0), m_move_axis(-1), m_transform_type(Transform::TRANSLATE),
+	m_click(false), m_delete(false), m_is_popup(false) {}
 
 Object::Object(const shared_ptr<Mesh>& mesh) :
 	m_mesh(mesh), m_name(m_mesh->getName()), 
-	m_id(0), m_move_axis(-1),
+	m_id(0), m_move_axis(-1), m_transform_type(Transform::TRANSLATE),
 	m_click(false), m_delete(false), m_is_popup(false)
 {
 	computeBBox();
@@ -32,94 +33,22 @@ Object::Object(const shared_ptr<Mesh>& mesh) :
 Object::~Object()
 {}
 
-void Object::drawMesh(const glm::mat4& P, const glm::mat4& V, const glm::mat4& M, Shader& shader)
+void Object::drawMesh(
+	const glm::mat4& P, const glm::mat4& V,
+	const Shader& shader)
 {
-	m_mesh->draw(P, V, M, shader);
-}
-
-void Object::drawPreview(const Material & mat)
-{
-	shared_ptr<Shader> shader = ShaderManager::getShader("Preview");
-
-	glm::mat4 P = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
-	glm::mat4 V = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 M = glm::mat4(1.0f);
-
-	glm::vec3 dir = { -1.0f, -1.0f, -1.0f };
-	glm::vec3 amb = { 1.0f, 1.0f, 1.0f };
-	glm::vec3 diff = { 0.8f, 0.8f, 0.8f };
-	glm::vec3 spec = { 0.5f, 0.5f, 0.5f };
-	unique_ptr<Light> light = make_unique<Light>(dir, amb, diff, spec);
-	glm::vec3 view_pos = glm::vec3(0.0f, 0.0f, 3.0f);
-
-	shader->load();
-	shader->setVec3("view_pos", view_pos);
-	shader->setLight(*light);
-	shader->setMaterial(mat);
-	shader->setPVM(P, V, M);
-	shader->setInt("type", 3);
-
-	shader->setInt("shadow_map", 0);
-	glActiveTexture(GL_TEXTURE0);
-	shader->setInt("irradiance_map", 1);
-	glActiveTexture(GL_TEXTURE0 + 1);
-	shader->setInt("prefilter_map", 2);
-	glActiveTexture(GL_TEXTURE0 + 2);
-	shader->setInt("lut_map", 3);
-	glActiveTexture(GL_TEXTURE0 + 3);
-
-	if (mat.getTexture() != nullptr)
-	{
-		shader->setInt("type", 1);
-		shader->setInt("texture_map", 4);
-		glActiveTexture(GL_TEXTURE0 + 4);
-		mat.getTexture()->setActive();
-	}
-	m_mesh->draw();
-
-	glActiveTexture(GL_TEXTURE0);
-}
-
-void Object::drawPreview(const vector<shared_ptr<Texture>>& tex)
-{
-	shared_ptr<Shader> shader = ShaderManager::getShader("Preview");
-
-	glm::mat4 P = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
-	glm::mat4 V = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 M = glm::mat4(1.0f);
-
-	glm::vec3 dir = { -1.0f, -1.0f, -1.0f };
-	glm::vec3 amb = { 1.0f, 1.0f, 1.0f };
-	glm::vec3 diff = { 0.8f, 0.8f, 0.8f };
-	glm::vec3 spec = { 0.5f, 0.5f, 0.5f };
-	unique_ptr<Light> light = make_unique<Light>(dir, amb, diff, spec);
-	glm::vec3 view_pos = glm::vec3(0.0f, 0.0f, 3.0f);
-
-	shader->load();
-	shader->setVec3("view_pos", view_pos);
-	shader->setLight(*light);
-	shader->setPVM(P, V, M);
-
-	shader->setInt("shadow_map", 0);
-	glActiveTexture(GL_TEXTURE0);
-	shader->setInt("irradiance_map", 1);
-	glActiveTexture(GL_TEXTURE0 + 1);
-	shader->setInt("prefilter_map", 2);
-	glActiveTexture(GL_TEXTURE0 + 2);
-	shader->setInt("lut_map", 3);
-	glActiveTexture(GL_TEXTURE0 + 3);
-
-	shader->setInt("type", 1);
-	shader->setInt("texture_map", 4);
-	glActiveTexture(GL_TEXTURE0 + 4);
-	tex[0]->setActive();
+	shader.load();
+	shader.setPVM(P, V, m_transform.getModelTransform());
 
 	m_mesh->draw();
-
-	glActiveTexture(GL_TEXTURE0);
 }
 
-void Object::draw(const glm::mat4& P, const glm::mat4& V, Light& light, glm::vec3& view_pos, ShadowMap& shadow, IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut)
+void Object::draw(
+	const glm::mat4& P, 
+	const glm::mat4& V, 
+	Light& light, 
+	glm::vec3& view_pos, 
+	ShadowMap& shadow, IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut)
 {
 	shared_ptr<Shader> shader = ShaderManager::getShader("Default");
 
@@ -144,15 +73,14 @@ void Object::draw(const glm::mat4& P, const glm::mat4& V, Light& light, glm::vec
 	glActiveTexture(GL_TEXTURE0 + 3);
 	lut.getFrameBuffer()->bindFrameTexture();
 
-	if (m_mesh->getSizeIndices() > 1)
-		m_mesh->draw(P, V, m_transform.getModelTransform(), *shader);
-	else
-		m_mesh->draw(P, V, m_transform.getModelTransform(), *shader, true);
+	shader->setPVM(P, V, m_transform.getModelTransform());
+
+	m_mesh->draw(*shader);
 }
 
 void Object::drawInstance(glm::mat4& P, glm::mat4& V)
 {
-	m_mesh->drawInstance(P, V);
+	m_mesh->drawInstance();
 }
 
 void Object::resetRayHit()
@@ -290,9 +218,12 @@ void Object::setupFramebuffer(const glm::mat4& V, ShadowMap& depth, CubeMap& cub
 	return;
 }
 
-void Object::drawTerrain(const glm::mat4& P, const glm::mat4& V, Shader& shader, float res)
+void Object::drawTerrain(const glm::mat4& P, const glm::mat4& V, const Shader& shader, float res)
 {
-	m_mesh->drawTerrain(P, V, m_transform.getModelTransform(), shader, res);
+	shader.load();
+	shader.setPVM(P, V, m_transform.getModelTransform());
+
+	m_mesh->drawTerrain(shader, res);
 }
 
 void Object::computeBBox()

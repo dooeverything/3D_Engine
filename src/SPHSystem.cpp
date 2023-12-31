@@ -1,5 +1,6 @@
 #include "SPHSystem.h"
 #include "MeshImporter.h"
+#include "Shader.h"
 #include "ShaderManager.h"
 #include "Quad.h"
 SPHSystem::SPHSystem(float width, float height, float depth) : Object("Fluid")

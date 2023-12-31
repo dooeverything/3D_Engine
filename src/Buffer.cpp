@@ -296,7 +296,7 @@ void FrameBuffer::createBuffers(int width, int height, bool multisample)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void FrameBuffer::bind()
+void FrameBuffer::bind() const
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
 }
@@ -311,7 +311,7 @@ void FrameBuffer::bindRead()
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_FBO);
 }
 
-void FrameBuffer::unbind()
+void FrameBuffer::unbind() const
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

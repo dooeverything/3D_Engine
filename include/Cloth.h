@@ -26,7 +26,6 @@ public:
 		Light& light, glm::vec3& view_pos, ShadowMap& shadow,
 		IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut) override;
 
-
 private:
 	void initParticles();
 	void buildHash(vector<shared_ptr<ClothParticle>>& predict);

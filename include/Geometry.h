@@ -21,6 +21,9 @@ public:
 	Sphere(bool is_create_gizmo);
 	~Sphere();
 
+	virtual void drawPreview(const Material& mat);
+	virtual void drawPreview(const vector<shared_ptr<Texture>>& tex);
+
 private:
 	virtual vector<info::VertexLayout> calculateVertex();
 	virtual vector<unsigned int> calculateIndex();

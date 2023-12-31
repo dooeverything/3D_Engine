@@ -40,6 +40,7 @@ public:
 	inline glm::mat4 getScale() const { return m_scale; };
 	inline glm::mat4 getModelTransform() const { return m_translation * m_rotation * m_scale; };
 
+	void renderProperty();
 	void renderTranslationPanel();
 	void renderRotationPanel();
 	void renderScalePanel();

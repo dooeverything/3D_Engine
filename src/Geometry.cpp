@@ -1,5 +1,9 @@
 #include "Geometry.h"
 #include "Mesh.h"
+#include "Shader.h"
+#include "ShaderManager.h"
+#include "Light.h"
+
 Geometry::Geometry(const string& name) : Object(name)
 {}
 
@@ -24,6 +28,82 @@ Sphere::~Sphere()
 {
 	cout << "Delete Sphere" << endl;
 }
+
+
+void Sphere::drawPreview(const Material& mat)
+{
+	shared_ptr<Shader> shader = ShaderManager::getShader("Default");
+
+	glm::mat4 P = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
+	glm::mat4 V = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 M = glm::mat4(1.0f);
+
+	glm::vec3 dir = { -1.0f, -1.0f, -1.0f };
+	glm::vec3 amb = { 1.0f, 1.0f, 1.0f };
+	glm::vec3 diff = { 0.8f, 0.8f, 0.8f };
+	glm::vec3 spec = { 0.5f, 0.5f, 0.5f };
+	unique_ptr<Light> light = make_unique<Light>(dir, amb, diff, spec);
+	glm::vec3 view_pos = glm::vec3(0.0f, 0.0f, 3.0f);
+
+	shader->load();
+	shader->setVec3("view_pos", view_pos);
+	shader->setLight(*light);
+	shader->setMaterial(mat);
+	shader->setInt("type", 3);
+
+	shader->setInt("shadow_map", 0);
+	glActiveTexture(GL_TEXTURE0);
+	shader->setInt("irradiance_map", 1);
+	glActiveTexture(GL_TEXTURE0 + 1);
+	shader->setInt("prefilter_map", 2);
+	glActiveTexture(GL_TEXTURE0 + 2);
+	shader->setInt("lut_map", 3);
+	glActiveTexture(GL_TEXTURE0 + 3);
+
+	drawMesh(P, V, *shader);
+
+	glActiveTexture(GL_TEXTURE0);
+}
+
+void Sphere::drawPreview(const vector<shared_ptr<Texture>>& tex)
+{
+	shared_ptr<Shader> shader = ShaderManager::getShader("Preview");
+
+	glm::mat4 P = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
+	glm::mat4 V = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 M = glm::mat4(1.0f);
+
+	glm::vec3 dir = { -1.0f, -1.0f, -1.0f };
+	glm::vec3 amb = { 1.0f, 1.0f, 1.0f };
+	glm::vec3 diff = { 0.8f, 0.8f, 0.8f };
+	glm::vec3 spec = { 0.5f, 0.5f, 0.5f };
+	unique_ptr<Light> light = make_unique<Light>(dir, amb, diff, spec);
+	glm::vec3 view_pos = glm::vec3(0.0f, 0.0f, 3.0f);
+
+	shader->load();
+	shader->setVec3("view_pos", view_pos);
+	shader->setLight(*light);
+	shader->setPVM(P, V, M);
+
+	shader->setInt("shadow_map", 0);
+	glActiveTexture(GL_TEXTURE0);
+	shader->setInt("irradiance_map", 1);
+	glActiveTexture(GL_TEXTURE0 + 1);
+	shader->setInt("prefilter_map", 2);
+	glActiveTexture(GL_TEXTURE0 + 2);
+	shader->setInt("lut_map", 3);
+	glActiveTexture(GL_TEXTURE0 + 3);
+
+	//shader->setInt("type", 1);
+	//shader->setInt("texture_map", 4);
+	//glActiveTexture(GL_TEXTURE0 + 4);
+	//tex[0]->setActive();
+
+	drawMesh(P, V, *shader);
+
+	glActiveTexture(GL_TEXTURE0);
+}
+
 
 vector<info::VertexLayout> Sphere::calculateVertex()
 {
