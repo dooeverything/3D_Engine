@@ -2,6 +2,7 @@
 #include "imgui_internal.h"
 
 #include "Object.h"
+#include "ObjectCollection.h"
 #include "Outline.h"
 #include "SoftBodySolver.h"
 #include "ShaderManager.h"
@@ -15,7 +16,8 @@ Renderer::Renderer() :
 	m_shadow_map(nullptr), m_click_object(nullptr),
 	m_frame_events({}), m_scene_objects({}), m_lights({}), m_panels({}), m_gizmos({}),
 	m_is_running(true), m_ticks(0), m_start_time(0), m_is_mouse_down(false),
-	m_is_click_gizmo(false), m_mouse_in_panel(false), m_is_moving_gizmo(false), m_is_drag(false)
+	m_is_click_gizmo(false), m_mouse_in_panel(false), m_is_moving_gizmo(false), m_is_drag(false),
+	m_is_popup(false)
 {
 	m_sdl_window = make_unique<SDL_GL_Window>();
 	init();
@@ -51,15 +53,26 @@ void Renderer::init()
 	m_prefilter = make_unique<PrefilterMap>(256, 256);
 	m_lut = make_unique<LUTMap>(256, 256);
 
-	m_popup = make_unique<PopupPanel>("Popup");
-	m_panels.push_back(make_shared<ObjectPanel>("SceneObjects"));
-	m_panels.push_back(make_shared<PropertyPanel>("Properties"));
-	
-	m_test = make_unique<Texture>("assets/textures/ArrowTranslation.png");
-	m_test->loadTexture();	
+	m_panels.push_back(make_shared<SceneHierarchyPanel>());
+	m_panels.push_back(make_shared<PropertyPanel>());
+	m_popup_object = make_unique<PopupObject>();
+	m_popup_scene = make_unique<PopupSceneHierarchy>();
 
-	m_test2 = make_unique<Texture>("assets/textures/ArrowScale.png");
-	m_test2->loadTexture();
+	shared_ptr<Texture> arrow_translation = make_shared<Texture>("assets/textures/ArrowTranslation.png");
+	arrow_translation->loadTexture();
+	m_button_textures.emplace_back(arrow_translation);
+
+	shared_ptr<Texture> arrow_scale = make_shared<Texture>("assets/textures/ArrowScale.png");
+	arrow_scale->loadTexture();
+	m_button_textures.emplace_back(arrow_scale);
+
+	shared_ptr<Texture> play = make_shared<Texture>("assets/textures/Play.png");
+	play->loadTexture();
+	m_button_textures.emplace_back(play);
+
+	shared_ptr<Texture> pause = make_shared<Texture>("assets/textures/Pause.png");
+	pause->loadTexture();
+	m_button_textures.emplace_back(pause);
 
 	ShaderManager::createShader("Default", info::BASIC_SHADER);
 	ShaderManager::createShader("Preview", info::PREVIEW_SHADER);
@@ -69,6 +82,8 @@ void Renderer::init()
 	m_gizmos.at(0) = make_shared<Gizmo>("assets/models/ArrowTranslation.fbx", "translation");
 	m_gizmos.at(1) = make_shared<Gizmo>("assets/models/ArrowScale.fbx", "scale");
 	cout << "********************Finish loading gizmo********************\n" << endl;
+
+	m_scene_collections = make_shared<ObjectCollection>(-1);
 
 	// Setup lights
 	glm::vec3 dir = -light_pos;
@@ -170,6 +185,11 @@ void Renderer::handleInput()
 				}
 			}
 
+			if (m_panels.at(0)->mouseInPanel(pos.x, pos.y))
+			{
+				m_is_popup = true;
+			}
+
 			// if mouse is out of scene, then do nothing
 			if ( (pos.x < scene_min.x || pos.y < scene_min.y) && !m_is_drag)
 			{
@@ -205,6 +225,7 @@ void Renderer::handleInput()
 						m_is_mouse_down = true;
 					}
 
+					m_is_popup = false;
 					m_camera->processMouseDown(event);
 					m_frame_events.clear();
 					return; // To avoid dragging when mouse is clicked
@@ -296,7 +317,7 @@ void Renderer::renderButtons()
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f });
 		}
 
-		if (ImGui::ImageButton("#translation", (ImTextureID)m_test->getTextureID(), ImVec2(25, 25),
+		if (ImGui::ImageButton("#translation", (ImTextureID)m_button_textures.at(0)->getTextureID(), ImVec2(25, 25),
 			uv_min, uv_max, bg_col, tint_col))
 		{
 			pressed = 1 - pressed;
@@ -331,14 +352,83 @@ void Renderer::renderButtons()
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f });
 		}
 		
-		if (ImGui::ImageButton("#scale", (ImTextureID)m_test2->getTextureID(), ImVec2(25, 25),
+		if (ImGui::ImageButton("#scale", (ImTextureID)m_button_textures.at(1)->getTextureID(), ImVec2(25, 25),
 			uv_min, uv_max, bg_col, tint_col))
 		{
 			pressed = 1 - pressed;
 		}
 		ImGui::PopStyleColor();
 		ImGui::PopStyleColor();
-		//ImGui::PopStyleColor();
+	}
+	ImGui::End();
+
+	ImGui::SetNextWindowSize(ImVec2(50, 85));
+	float middle_x = (m_sdl_window->getSceneMin().x + m_sdl_window->getSceneMax().x) / 2.0f;
+	ImVec2 play_pos = ImVec2(middle_x - 25.0f, m_sdl_window->getSceneMin().y + 2.5f);
+	ImGui::SetNextWindowPos(play_pos);
+
+	static bool pressed2 = false;
+	ImGuiWindowFlags flag_play = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;;
+	ImGui::Begin("#button_play", &is_open, flag_play);
+	{
+		ImVec2 pos = ImGui::GetCursorScreenPos();
+		ImVec2 uv_min = ImVec2(0.0f, 0.0f);                 // Top-left
+		ImVec2 uv_max = ImVec2(1.0f, 1.0f);                 // Lower-right
+		ImVec4 bg_col = ImVec4(1.0f, 1.0f, 1.0f, 0.0f);             // Black background
+		ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);           // No tint
+
+		if (pressed2)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
+		}
+		else
+		{
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.5f, 0.5f, 0.5f, 1.0f });
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f });
+		}
+
+		if (ImGui::ImageButton("#scale", (ImTextureID)m_button_textures.at(2)->getTextureID(), ImVec2(25, 25),
+			uv_min, uv_max, bg_col, tint_col))
+		{
+			pressed2 = 1 - pressed2;
+		}
+		ImGui::PopStyleColor();
+		ImGui::PopStyleColor();
+	}
+	ImGui::End();
+
+
+	ImGui::SetNextWindowSize(ImVec2(50, 85));
+	ImVec2 pause_pos = ImVec2(middle_x + 25.0f, m_sdl_window->getSceneMin().y + 2.5f);
+	ImGui::SetNextWindowPos(pause_pos);
+
+	ImGui::Begin("#button_pause", &is_open, flag_play);
+	{
+		ImVec2 pos = ImGui::GetCursorScreenPos();
+		ImVec2 uv_min = ImVec2(0.0f, 0.0f);                 // Top-left
+		ImVec2 uv_max = ImVec2(1.0f, 1.0f);                 // Lower-right
+		ImVec4 bg_col = ImVec4(1.0f, 1.0f, 1.0f, 0.0f);             // Black background
+		ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);           // No tint
+
+		if (!pressed2)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
+		}
+		else
+		{
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.5f, 0.5f, 0.5f, 1.0f });
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f });
+		}
+
+		if (ImGui::ImageButton("#scale", (ImTextureID)m_button_textures.at(3)->getTextureID(), ImVec2(25, 25),
+			uv_min, uv_max, bg_col, tint_col))
+		{
+			pressed2 = 1 - pressed2;
+		}
+		ImGui::PopStyleColor();
+		ImGui::PopStyleColor();
 	}
 	ImGui::End();
 }
@@ -355,7 +445,7 @@ void Renderer::renderImGui()
 
 	// Draw panels
 	for (auto& it : m_panels)
-		it->render(m_scene_objects, m_click_object);
+		it->render(m_scene_collections, m_scene_objects, m_click_object);
 
 	bool open = true;
 	ImGui::Begin("Scenes", &open, ImGuiWindowFlags_MenuBar);
@@ -364,8 +454,8 @@ void Renderer::renderImGui()
 		{
 			if (ImGui::BeginMenu("Add"))
 			{
-				ImGuiMenuBar mb("SceneMenuBar");
-				mb.render(m_scene_objects, m_click_object);
+				ImGuiMenuBar mb;
+				mb.render(m_scene_collections, m_scene_objects, m_click_object);
 				ImGui::EndMenu();
 			}
 			ImGui::EndMenuBar();
@@ -485,13 +575,11 @@ void Renderer::renderScene()
 		}
 	}
 	
-	//if (m_click_object != nullptr)
-	//{
-	//	m_click_object->updateVertex(ray_dir, ray_pos, m_is_mouse_down);
-	//}
 
+	if(m_is_popup) m_popup_scene->popup(m_scene_collections, m_scene_objects, m_click_object);
+	
 	bool is_popup = false;
-	m_popup->popup(m_scene_objects, m_click_object, is_popup, m_is_click_gizmo);
+	m_popup_object->popup(m_scene_collections, m_scene_objects, m_click_object, is_popup, m_is_click_gizmo);
 
 	// Check whether any gizmos is clicked
 	if (m_is_moving_gizmo)
@@ -525,12 +613,25 @@ void Renderer::renderScene()
 		}
 	}
 
+	for (auto& it : m_scene_objects)
+	{
+		if (it->getIsDelete())
+		{
+			ObjectCollectionManager::removeObject(m_scene_collections, it);
+		}
+	}
+
 	m_scene_objects.erase(
 		remove_if(m_scene_objects.begin(), m_scene_objects.end(),
 			[](const shared_ptr<Object>& go) {return go->getIsDelete() == true; }
 		),
 		m_scene_objects.end()
 	);
+
+	for (int i = 0; i < m_scene_objects.size(); ++i)
+	{
+		m_scene_objects.at(i)->setObjectId(i);
+	}
 
 	// Draw objects
 	for (int i = 0; i < m_scene_objects.size(); ++i)

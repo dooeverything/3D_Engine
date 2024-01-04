@@ -50,16 +50,18 @@ public:
 	inline string getName() { return m_mesh->getName(); };
 	inline float getRayHitMin() { return m_mesh->getRayHitMin(); };
 	inline int getId() { return m_id; };
+	inline int getObjectId() { return m_object_id; };
 	inline bool getIsClick() { return m_click; };
 	inline bool getIsDelete() { return m_delete; };
 	Transform::Type getTransformType() { return m_transform_type; };
 
-	inline void setIsClick(bool click) { m_click = click; };
-	inline void setIsDelete(bool d) { m_delete = d; };
+	inline void setMaterial(const shared_ptr<Material>& material) { m_mesh->setMaterial(material); };
 	inline void setName(const string& name) { m_name = name; };
+	inline void setObjectId(int id) { m_object_id = id; };
 	void setId(int id);
 	void setTransformType(int type);
-	inline void setMaterial(const shared_ptr<Material>& material) { m_mesh->setMaterial(material); };
+	inline void setIsClick(bool click) { m_click = click; };
+	inline void setIsDelete(bool d) { m_delete = d; };
 	
 	virtual void setupFramebuffer(const glm::mat4& V, 
 								  ShadowMap& depth, 
@@ -67,13 +69,16 @@ public:
 								  Camera& camera);
 
 	// Getter
-	virtual inline int getMoveAxis() { return m_move_axis; };
-	virtual inline bool getIsPopup() { return m_is_popup; };
+	inline int getMoveAxis() { return m_move_axis; };
+	inline int getCollectionId() const { return m_collection; };
+	inline bool getIsPopup() { return m_is_popup; };
 
 	// Setter
-	virtual inline void setMoveAxis(int axis) { m_move_axis = axis; };
-	virtual inline void setIsPopup(bool p) { m_is_popup = p; };
+	inline void setMoveAxis(int axis) { m_move_axis = axis; };
+	inline void setCollectionId(int id) { m_collection = id; };
+	inline void setIsPopup(bool p) { m_is_popup = p; };
 
+	virtual void renderExtraProperty() { return; };
 	virtual void renderMeshProperty(Sphere& preview_object, const FrameBuffer& preview_fb) { m_mesh->renderProperty(preview_object, preview_fb); };
 	virtual void renderTransformProperty() { m_transform.renderProperty(); computeBBox(); };
 	virtual void updateVertex(glm::vec3 ray_dir, glm::vec3 ray_pos, bool mouse_down) { return; };
@@ -95,7 +100,10 @@ private:
 	string m_name;
 	int m_id;
 
+	int m_object_id;
+
 	int m_move_axis;
+	int m_collection;
 
 	bool m_click;
 	bool m_delete;

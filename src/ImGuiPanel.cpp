@@ -5,6 +5,7 @@
 #include "Geometry.h"
 #include "MarchingCube.h"
 #include "Object.h"
+#include "ObjectCollection.h"
 #include "SPHSystemCuda.h"
 #include "SoftBodySolver.h"
 #include "Terrain.h"
@@ -12,12 +13,9 @@
 #include "Material.h"
 
 ImGuiPanel::ImGuiPanel(string name) :
-	m_scene_min(ImVec2(0.0, 0.0)), m_scene_max(ImVec2(0.0, 0.0)), m_name(name)
-{
-}
+	m_scene_min(ImVec2(0.0, 0.0)), m_scene_max(ImVec2(0.0, 0.0)), m_name(name) {}
 
-ImGuiPanel::~ImGuiPanel()
-{}
+ImGuiPanel::~ImGuiPanel() {}
 
 void ImGuiPanel::calculatePanelSize()
 {
@@ -44,15 +42,13 @@ bool ImGuiPanel::mouseInPanel(int x, int y)
 	return true;
 }
 
-ImGuiMenuBar::ImGuiMenuBar(string name) :
-	ImGuiPanel(name), m_fd(nullptr)
-{
-}
+ImGuiMenuBar::ImGuiMenuBar() :
+	ImGuiPanel("MenuBar"), m_fd(nullptr) {}
 
-ImGuiMenuBar::~ImGuiMenuBar()
-{}
+ImGuiMenuBar::~ImGuiMenuBar() {}
 
 void ImGuiMenuBar::render(
+	shared_ptr<ObjectCollection>& collection,
 	vector<shared_ptr<Object>>& scene_objects, 
 	shared_ptr<Object>& clicked_object)
 {
@@ -63,6 +59,7 @@ void ImGuiMenuBar::render(
 		shared_ptr<MeshImporter> importer = MeshImporter::create("assets/models/Cube.txt");
 		importer->importMesh(mesh);
 		shared_ptr<Object> object = make_shared<Object>(mesh);
+		object->setObjectId(scene_objects.size());
 		scene_objects.push_back(object);
 		addObject(scene_objects, *object);
 	}
@@ -73,6 +70,7 @@ void ImGuiMenuBar::render(
 		shared_ptr<MeshImporter> importer = MeshImporter::create("assets/models/Plane.txt");
 		importer->importMesh(mesh);
 		shared_ptr<Object> object = make_shared<Object>(mesh);
+		object->setObjectId(scene_objects.size());
 		scene_objects.push_back(object);
 		addObject(scene_objects, *object);
 	}
@@ -83,6 +81,7 @@ void ImGuiMenuBar::render(
 		shared_ptr<MeshImporter> importer = MeshImporter::create("assets/models/Floor.txt");
 		importer->importMesh(mesh);
 		shared_ptr<Object> object = make_shared<Object>(mesh);
+		object->setObjectId(scene_objects.size());
 		scene_objects.push_back(object);
 		addObject(scene_objects, *object);
 	}
@@ -90,6 +89,7 @@ void ImGuiMenuBar::render(
 	if (ImGui::MenuItem("Sphere"))
 	{
 		shared_ptr<Object> sphere = make_shared<Sphere>(true);
+		sphere->setObjectId(scene_objects.size());
 		scene_objects.push_back(sphere);
 		addObject(scene_objects, *sphere);
 	}
@@ -97,6 +97,7 @@ void ImGuiMenuBar::render(
 	if (ImGui::MenuItem("Metaball"))
 	{
 		shared_ptr<Object> metaball = make_shared<Metaball>(1.0f);
+		metaball->setObjectId(scene_objects.size());
 		scene_objects.push_back(metaball);
 		addObject(scene_objects, *metaball);
 	}
@@ -105,6 +106,7 @@ void ImGuiMenuBar::render(
 	if (ImGui::MenuItem("Terrain"))
 	{
 		shared_ptr<Object> terrain = make_shared<Terrain>(20.0f);
+		terrain->setObjectId(scene_objects.size());
 		scene_objects.push_back(terrain);
 		addObject(scene_objects, *terrain);
 	}
@@ -113,6 +115,7 @@ void ImGuiMenuBar::render(
 	if (ImGui::MenuItem("Cloth"))
 	{
 		shared_ptr<Object> cloth = make_shared<Cloth>();
+		cloth->setObjectId(scene_objects.size());
 		scene_objects.push_back(cloth);
 		addObject(scene_objects, *cloth);
 	}
@@ -120,6 +123,7 @@ void ImGuiMenuBar::render(
 	if (ImGui::MenuItem("Fluid"))
 	{
 		shared_ptr<SPHSystemCuda> fluid = make_shared<SPHSystemCuda>(64.0f, 32.0f, 64.0f);
+		fluid->setObjectId(scene_objects.size());
 		scene_objects.push_back(fluid);
 		addObject(scene_objects, *fluid);
 	}
@@ -138,6 +142,7 @@ void ImGuiMenuBar::render(
 			for (const auto& it : meshes)
 			{
 				shared_ptr<Object> object = make_shared<Object>(it);
+				object->setObjectId(scene_objects.size());
 				scene_objects.push_back(object);
 				addObject(scene_objects, *object);
 			}
@@ -161,93 +166,121 @@ void ImGuiMenuBar::addObject(
 	}
 }
 
-ObjectPanel::ObjectPanel(string name) : 
-	ImGuiPanel(name)
+SceneHierarchyPanel::SceneHierarchyPanel() :
+	ImGuiPanel("SceneHierarchy")
 {}
 
-ObjectPanel::~ObjectPanel()
+SceneHierarchyPanel::~SceneHierarchyPanel()
 {}
 
-void ObjectPanel::render(
+void SceneHierarchyPanel::render(
+	shared_ptr<ObjectCollection>& collection,
 	vector<shared_ptr<Object>>& scene_objects, 
-	shared_ptr<Object>& clicked_object)
+	shared_ptr<Object>& active_object)
 {
-	string name_clicked = "";	
+	string name_active = "";	
 	ImGui::Begin("Scene Objects");
 	{
-		calculatePanelSize();
+		calculatePanelSize();		
+
+		static int n_objects = scene_objects.size();
+		static int selection_object = (1 << n_objects);
+		int change_size = scene_objects.size();
+		if (change_size != n_objects)
+		{
+			selection_object = (1 << change_size);
+			n_objects = change_size;
+			cout << "add " << "n_objects: " << n_objects << " with " << selection_object << endl;
+		}
+
+		if (active_object)
+		{
+			name_active = active_object->getIdName();
+		}
+		else
+		{
+			selection_object = 1 << n_objects;
+		}
+
+		//cout << selection_object << endl;
+
+		collection->renderPanel(active_object, n_objects, selection_object);
 
 		if (scene_objects.size() == 0)
-		{ 
+		{
 			ImGui::End();
 			return;
 		}
 
-		static vector<bool> selections(scene_objects.size(), false);
-		if (selections.size() != scene_objects.size())
-		{
-			selections.resize(scene_objects.size());
-			selections = vector<bool>(scene_objects.size(), false);
-		}
-		
-		//for (int i = 0; i < scene_objects.size(); ++i)
-		//{
-		//	string name = scene_objects.at(i)->getIdName();
-		//	if (name != name_clicked)
-		//	{
-		//		selections.at(i) = false;
-		//	}
-		//	else
-		//	{
-		//		selections.at(i) = true;
-		//	}
-		//}
-
-		if (clicked_object == nullptr)
-		{
-			selections = vector<bool>(scene_objects.size(), false);
-		}
-		else
-		{
-			name_clicked = clicked_object->getIdName();
-		}
-
-		for (int i = 0; i < scene_objects.size(); ++i)
+		int object_clicked = -1;
+		bool is_click_item = false;
+		for (int i = 0; i < n_objects; ++i)
 		{
 			string name = scene_objects.at(i)->getIdName();
-			
-			if (ImGui::Selectable(name.c_str(), (selections.at(i) || name == name_clicked)))
+
+			if (scene_objects.at(i)->getCollectionId() != -1)
 			{
-				if (!ImGui::GetIO().KeyCtrl)
+				if ((selection_object & (1 << i)) != 0)
 				{
-					selections = vector<bool>(scene_objects.size(), false);
-					//memset(&selections, 0, sizeof(selections));
+					object_clicked = i;
 				}
+				continue;
+			}
+			
+			const bool is_selected = (selection_object & (1 << i)) != 0;
+			ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_Leaf;
+			if (is_selected)
+				ImGui::TreeNodeEx((void*)(intptr_t)i, base_flags | ImGuiTreeNodeFlags_Selected, name.c_str());
+			else
+				ImGui::TreeNodeEx((void*)(intptr_t)i, base_flags, name.c_str());
 
-				cout << "Scene " << scene_objects.size() << endl;
-				cout << "selection: " << selections.size() << endl;
+			if (name == name_active && object_clicked == -1) object_clicked = i;
 
-				bool select = selections.at(i);
-				select ^= 1;
-				selections.at(i) = select;
+			if (ImGui::IsItemClicked())
+			{			
+				if (is_selected)
+				{
+					object_clicked = -1;
+					is_click_item = false;
+				}
+				else
+				{
+					object_clicked = i;
+					is_click_item = true;
+				}
+			}
+
+			if (ImGui::BeginDragDropSource())
+			{
+				ImGui::SetDragDropPayload("_TREENODE", NULL, 0);
+				ImGui::Text(name.c_str());
+				ImGui::EndDragDropSource();
+			}
+
+			ImGui::TreePop();
+			
+			if (object_clicked != -1)
+			{
+				if (ImGui::GetIO().KeyCtrl)
+					selection_object ^= (1 << object_clicked);          // CTRL+click to toggle
+				else
+					selection_object = (1 << object_clicked);           // Click to single-select
+				
+				active_object = scene_objects.at(object_clicked);
 			}
 		}
-
-		for (int i = 0; i < selections.size(); ++i)
+		
+		if (object_clicked == -1)
 		{
-			if (selections.at(i) == true)
-			{
-				scene_objects.at(i)->setIsClick(true);
-				clicked_object = scene_objects.at(i);
-				break;
-			}
+			active_object = nullptr;
+			selection_object = (1 << n_objects);
 		}
 	}
 	ImGui::End();
 }
 
-PropertyPanel::PropertyPanel(string name) :
-	ImGuiPanel(name),
+PropertyPanel::PropertyPanel() :
+	ImGuiPanel("Property"),
 	m_preview_fb(make_unique<FrameBuffer>()), m_preview_object(make_unique<Sphere>(false))
 {
 	m_preview_fb->createBuffers(256, 256);
@@ -257,6 +290,7 @@ PropertyPanel::~PropertyPanel()
 {}
 
 void PropertyPanel::render(
+	shared_ptr<ObjectCollection>& collection,
 	vector<shared_ptr<Object>>& scene_objects, 
 	shared_ptr<Object>& clicked_object)
 {
@@ -272,7 +306,6 @@ void PropertyPanel::render(
 
 		string name = clicked_object->getIdName();
 		const char* object_name = name.c_str();
-		//ImGui::Text(object_name);
 		
 		// Transform panel
 		if (ImGui::CollapsingHeader("Transform"))
@@ -296,15 +329,18 @@ void PropertyPanel::render(
 
 			//ImGui::TreePop();
 		}
+
+
 	}
 	ImGui::End();
 }
 
-PopupPanel::PopupPanel(string name) : ImGuiPanel(name) {}
+PopupObject::PopupObject() : ImGuiPanel("PopupObject") {}
 
-PopupPanel::~PopupPanel() {}
+PopupObject::~PopupObject() {}
 
-void PopupPanel::popup(
+void PopupObject::popup(
+	shared_ptr<ObjectCollection>& collection,
 	vector<shared_ptr<Object>>& scene_objects, 
 	shared_ptr<Object>& clicked_object,
 	bool& is_popup, bool& is_clicked_gizmo)
@@ -321,7 +357,7 @@ void PopupPanel::popup(
 				is_popup = true;
 				is_clicked_gizmo = false;
 
-				render(scene_objects, clicked_object);
+				render(collection, scene_objects, clicked_object);
 
 				ImGui::EndPopup();
 			}
@@ -333,8 +369,10 @@ void PopupPanel::popup(
 	}
 }
 
-void PopupPanel::render(vector<shared_ptr<Object>>& scene_objects,
-						shared_ptr<Object>& clicked_object)
+void PopupObject::render(
+	shared_ptr<ObjectCollection>& collection,
+	vector<shared_ptr<Object>>& scene_objects,
+	shared_ptr<Object>& clicked_object)
 {
 	if (ImGui::BeginMenu("Edit"))
 	{
@@ -348,4 +386,59 @@ void PopupPanel::render(vector<shared_ptr<Object>>& scene_objects,
 	}
 
 	ImGui::SeparatorText("Physics");
+}
+
+PopupSceneHierarchy::PopupSceneHierarchy() : ImGuiPanel("PopupScene")
+{
+}
+
+PopupSceneHierarchy::~PopupSceneHierarchy() {}
+
+void PopupSceneHierarchy::popup(
+	shared_ptr<ObjectCollection>& collection, 
+	vector<shared_ptr<Object>>& scene_objects, 
+	shared_ptr<Object>& clicked_object)
+{
+	if (ImGui::GetIO().MouseClicked[1])
+		ImGui::OpenPopup("popup2");
+
+	if (ImGui::BeginPopup("popup2"))
+	{
+		render(collection, scene_objects, clicked_object);
+
+		ImGui::EndPopup();
+	}
+}
+
+void PopupSceneHierarchy::render(
+	shared_ptr<ObjectCollection>& collection,
+	vector<shared_ptr<Object>>& scene_objects, 
+	shared_ptr<Object>& clicked_object)
+{
+	ImGui::Text("Scene Hierarchy Edit Menu");
+	ImGui::Separator();
+	if (ImGui::MenuItem("New Collection"))
+	{
+		cout << "Create a new collection" << endl;
+		shared_ptr<ObjectCollection> new_collection = make_shared<ObjectCollection>(static_cast<int>(collection->getNumChilds()));
+		new_collection->setParent(collection);
+		collection->addChild(new_collection);
+	}
+	
+	if (clicked_object)
+	{
+		if (ImGui::MenuItem("Delete"))
+		{
+			cout << "Delete" << endl;
+			clicked_object->setIsDelete(true);
+			clicked_object = nullptr;
+		}
+
+		if (ImGui::BeginMenu("Move"))
+		{
+			collection->renderPopup(clicked_object);
+			ImGui::EndMenu();
+		}
+	}
+
 }

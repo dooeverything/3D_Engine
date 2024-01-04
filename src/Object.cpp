@@ -14,17 +14,20 @@
 
 Object::Object() :
 	m_mesh(nullptr), m_name(""),
-	m_id(0), m_move_axis(-1), m_transform_type(Transform::TRANSLATE),
-	m_click(false), m_delete(false), m_is_popup(false) {}
+	m_id(0), m_move_axis(-1), m_collection(-1),
+	m_transform_type(Transform::TRANSLATE),
+	m_click(false), m_delete(false), m_is_popup(false){}
 
 Object::Object(const string& name) :
 	m_mesh(nullptr), m_name(name),
-	m_id(0), m_move_axis(-1), m_transform_type(Transform::TRANSLATE),
+	m_id(0), m_move_axis(-1), m_collection(-1),
+	m_transform_type(Transform::TRANSLATE),
 	m_click(false), m_delete(false), m_is_popup(false) {}
 
 Object::Object(const shared_ptr<Mesh>& mesh) :
 	m_mesh(mesh), m_name(m_mesh->getName()), 
-	m_id(0), m_move_axis(-1), m_transform_type(Transform::TRANSLATE),
+	m_id(0), m_move_axis(-1), m_collection(-1),
+	m_transform_type(Transform::TRANSLATE),
 	m_click(false), m_delete(false), m_is_popup(false)
 {
 	computeBBox();
@@ -196,8 +199,8 @@ void Object::setId(int id)
 	{
 		sid = "00" + sid;
 	}
-	cout << m_id << endl;
-	cout << sid << endl;
+	//cout << m_id << endl;
+	//cout << sid << endl;
 	m_id_name = m_name + "_" + sid;
 }
 

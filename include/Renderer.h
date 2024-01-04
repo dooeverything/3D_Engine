@@ -16,6 +16,7 @@ class Grid;
 class Outline;
 class MarchingCube;
 class SPHSystemCuda;
+class ObjectCollection;
 
 using namespace std;
 
@@ -41,12 +42,14 @@ public:
 private:
 	vector<SDL_Event> m_frame_events;
 	vector<shared_ptr<Light>> m_lights;
-	vector<shared_ptr<ImGuiPanel>> m_panels;
 	
 	unique_ptr<SDL_GL_Window> m_sdl_window;
 	unique_ptr<Camera> m_camera;
 	unique_ptr<Grid> m_grid;
-	unique_ptr<PopupPanel> m_popup;
+
+	vector<shared_ptr<ImGuiPanel>> m_panels;
+	unique_ptr<PopupObject> m_popup_object;
+	unique_ptr<PopupSceneHierarchy> m_popup_scene;
 
 	unique_ptr<FrameBuffer> m_framebuffer_multi;
 	unique_ptr<FrameBuffer> m_scene;
@@ -59,19 +62,14 @@ private:
 	unique_ptr<LUTMap> m_lut;
 	unique_ptr<EnvironmentMap> m_environment;
 	
-	unique_ptr<Outline> m_outline;
-	
 	vector<shared_ptr<Gizmo>> m_gizmos;
-	//shared_ptr<Gizmo> m_gizmos;
-	//shared_ptr<Gizmo> m_gizmos_test;
-
 	vector<shared_ptr<Object>> m_scene_objects;
+	shared_ptr<ObjectCollection> m_scene_collections;
 	shared_ptr<Object> m_click_object;
 	shared_ptr<SPHSystemCuda> m_sph;
+	unique_ptr<Outline> m_outline;
 
-	
-	unique_ptr<Texture> m_test;
-	unique_ptr<Texture> m_test2;
+	vector<shared_ptr<Texture>> m_button_textures;
 
 	long long m_start_time;
 	float m_ticks;
@@ -82,6 +80,8 @@ private:
 	bool m_is_drag;
 	bool m_is_click_gizmo;
 	bool m_is_moving_gizmo;
+	bool m_is_popup = false;
+
 };
 
 #endif

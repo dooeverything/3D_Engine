@@ -12,6 +12,7 @@
 #include "FileDialog.h"
 
 class Object;
+class ObjectCollection;
 class Sphere;
 class Material;
 class FrameBuffer;
@@ -25,7 +26,8 @@ public:
 	ImGuiPanel(string name);
 	~ImGuiPanel();
 	virtual void render(
-		vector<shared_ptr<Object>>& scene_objects, 
+		shared_ptr<ObjectCollection>& collection,
+		vector<shared_ptr<Object>>& scene_objects,
 		shared_ptr<Object>& clicked_object) = 0;
 
 	virtual void calculatePanelSize();
@@ -40,11 +42,12 @@ private:
 class ImGuiMenuBar : public ImGuiPanel
 {
 public:
-	ImGuiMenuBar(string name);
+	ImGuiMenuBar();
 	~ImGuiMenuBar();
 	virtual void render(
+		shared_ptr<ObjectCollection>& collection,
 		vector<shared_ptr<Object>>& scene_objects, 
-		shared_ptr<Object>& clicked_object);
+		shared_ptr<Object>& clicked_object) override;
 
 	virtual void addObject(
 		const vector<shared_ptr<Object>>& scene_objects, Object& add_object);
@@ -53,44 +56,66 @@ private:
 	unique_ptr<FileDialog> m_fd;
 };
 
-class ObjectPanel : public ImGuiPanel
+class SceneHierarchyPanel : public ImGuiPanel
 {
 public:
-	ObjectPanel(string name);
-	~ObjectPanel();
+	SceneHierarchyPanel();
+	~SceneHierarchyPanel();
 	virtual void render(
+		shared_ptr<ObjectCollection>& collection,
 		vector<shared_ptr<Object>>& scene_objects, 
-		shared_ptr<Object>& clicked_object);
+		shared_ptr<Object>& clicked_object) override;
 };
 
 class PropertyPanel : public ImGuiPanel
 {
 public:
-	PropertyPanel(string name);
+	PropertyPanel();
 	~PropertyPanel();
 	virtual void render(
+		shared_ptr<ObjectCollection>& collection,
 		vector<shared_ptr<Object>>& scene_objects, 
-		shared_ptr<Object>& clicked_object);
+		shared_ptr<Object>& clicked_object) override;
 
 private:
 	unique_ptr<FrameBuffer> m_preview_fb;
 	unique_ptr<Sphere> m_preview_object;
 };
 
-class PopupPanel : public ImGuiPanel
+class PopupObject : public ImGuiPanel
 {
 public:
-	PopupPanel(string name);
-	~PopupPanel();
+	PopupObject();
+	~PopupObject();
 
 	void popup(
+		shared_ptr<ObjectCollection>& collection,
 		vector<shared_ptr<Object>>& scene_objects,
 		shared_ptr<Object>& clicked_object,
 		bool& is_popup, bool& is_clicked_gizmo);
 
-	void render(
+	virtual void render(
+		shared_ptr<ObjectCollection>& collection,
+		vector<shared_ptr<Object>>& scene_objects,
+		shared_ptr<Object>& clicked_object) override;
+};
+
+class PopupSceneHierarchy : public ImGuiPanel
+{
+public:
+	PopupSceneHierarchy();
+	~PopupSceneHierarchy();
+
+	void popup(
+		shared_ptr<ObjectCollection>& collection,
 		vector<shared_ptr<Object>>& scene_objects,
 		shared_ptr<Object>& clicked_object);
+
+	virtual void render(
+		shared_ptr<ObjectCollection>& collection,
+		vector<shared_ptr<Object>>& scene_objects,
+		shared_ptr<Object>& clicked_object) override;
+	
 };
 
 #endif // !IMGUIPANEL_H

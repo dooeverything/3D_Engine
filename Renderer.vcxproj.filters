@@ -230,6 +230,9 @@
     <ClCompile Include="src\Transform.cpp">
       <Filter>src\Object</Filter>
     </ClCompile>
+    <ClCompile Include="src\ObjectCollection.cpp">
+      <Filter>src\Object</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="C:\vclib\imgui-docking\imstb_truetype.h">
@@ -405,6 +408,9 @@
     </ClInclude>
     <ClInclude Include="include\Gizmo.h">
       <Filter>include\Scene\SceneHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ObjectCollection.h">
+      <Filter>include\Object</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
