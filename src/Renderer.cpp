@@ -9,12 +9,14 @@
 #include "Quad.h"
 #include "Gizmo.h"
 #include "Grid.h"
+#include "ImGuiManager.h"
 
 unique_ptr<Quad> Quad::m_quad = nullptr;
+unique_ptr<ImGuiManager> ImGuiManager::m_manager = nullptr;
 
 Renderer::Renderer() :
 	m_shadow_map(nullptr), m_click_object(nullptr),
-	m_frame_events({}), m_scene_objects({}), m_lights({}), m_panels({}), m_gizmos({}),
+	m_frame_events({}), m_scene_objects({}), m_lights({}), m_gizmos({}),
 	m_is_running(true), m_ticks(0), m_start_time(0), m_is_mouse_down(false),
 	m_is_click_gizmo(false), m_mouse_in_panel(false), m_is_moving_gizmo(false), m_is_drag(false),
 	m_is_popup(false)
@@ -52,27 +54,6 @@ void Renderer::init()
 	m_irradiancemap = make_unique<IrradianceMap>(32, 32);
 	m_prefilter = make_unique<PrefilterMap>(256, 256);
 	m_lut = make_unique<LUTMap>(256, 256);
-
-	m_panels.push_back(make_shared<SceneHierarchyPanel>());
-	m_panels.push_back(make_shared<PropertyPanel>());
-	m_popup_object = make_unique<PopupObject>();
-	m_popup_scene = make_unique<PopupSceneHierarchy>();
-
-	shared_ptr<Texture> arrow_translation = make_shared<Texture>("assets/textures/ArrowTranslation.png");
-	arrow_translation->loadTexture();
-	m_button_textures.emplace_back(arrow_translation);
-
-	shared_ptr<Texture> arrow_scale = make_shared<Texture>("assets/textures/ArrowScale.png");
-	arrow_scale->loadTexture();
-	m_button_textures.emplace_back(arrow_scale);
-
-	shared_ptr<Texture> play = make_shared<Texture>("assets/textures/Play.png");
-	play->loadTexture();
-	m_button_textures.emplace_back(play);
-
-	shared_ptr<Texture> pause = make_shared<Texture>("assets/textures/Pause.png");
-	pause->loadTexture();
-	m_button_textures.emplace_back(pause);
 
 	ShaderManager::createShader("Default", info::BASIC_SHADER);
 	ShaderManager::createShader("Preview", info::PREVIEW_SHADER);
@@ -185,10 +166,7 @@ void Renderer::handleInput()
 				}
 			}
 
-			if (m_panels.at(0)->mouseInPanel(pos.x, pos.y))
-			{
-				m_is_popup = true;
-			}
+			m_is_popup = ImGuiManager::getImGuiManager()->isMouseInPanel(pos);
 
 			// if mouse is out of scene, then do nothing
 			if ( (pos.x < scene_min.x || pos.y < scene_min.y) && !m_is_drag)
@@ -284,155 +262,6 @@ void Renderer::moveObject(Object& go)
 	m_frame_events.clear();
 }
 
-void Renderer::renderButtons()
-{
-	ImGui::GetStyle().WindowRounding = 10.0f;
-	ImGuiWindowFlags flag =  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
-	static bool use_text_color_for_tint = false;
-	bool is_open = true;
-	static bool pressed = true;
-
-	ImGui::SetNextWindowSize(ImVec2(50, 85));
-	ImVec2 button_pos = ImVec2(m_sdl_window->getSceneMin().x + 10, m_sdl_window->getSceneMin().y + 10);
-	ImGui::SetNextWindowPos(button_pos);
-
-	ImGui::Begin("#button", &is_open, flag);
-	{
-		ImVec2 pos = ImGui::GetCursorScreenPos();
-		ImVec2 uv_min = ImVec2(0.0f, 0.0f);                 // Top-left
-		ImVec2 uv_max = ImVec2(1.0f, 1.0f);                 // Lower-right
-		ImVec4 bg_col = ImVec4(1.0f, 1.0f, 1.0f, 0.0f);     // Black background
-		ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-
-		if (pressed)
-		{
-			m_gizmos.at(0)->setDraw(true);
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
-		}
-		else
-		{
-			m_gizmos.at(0)->setDraw(false);
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 0.5f });
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f });
-		}
-
-		if (ImGui::ImageButton("#translation", (ImTextureID)m_button_textures.at(0)->getTextureID(), ImVec2(25, 25),
-			uv_min, uv_max, bg_col, tint_col))
-		{
-			pressed = 1 - pressed;
-		}
-		ImGui::PopStyleColor();
-		ImGui::PopStyleColor();
-
-	}
-	ImGui::End();
-	
-	ImGui::Begin("#button", &is_open, flag);
-	{
-		ImVec2 pos = ImGui::GetCursorScreenPos();
-		ImVec2 uv_min = ImVec2(0.0f, 0.0f);                 // Top-left
-		ImVec2 uv_max = ImVec2(1.0f, 1.0f);                 // Lower-right
-		ImVec4 bg_col = ImVec4(1.0f, 1.0f, 1.0f, 0.0f);             // Black background
-		ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);           // No tint
-
-		if (!pressed)
-		{
-			m_gizmos.at(1)->setDraw(true);
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
-			//ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.0f, 8.0f, 1.0f });
-			//ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f });
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
-		}
-		else
-		{
-			m_gizmos.at(1)->setDraw(false);
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.5f, 0.5f, 0.5f, 1.0f });
-			//ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f });
-		}
-		
-		if (ImGui::ImageButton("#scale", (ImTextureID)m_button_textures.at(1)->getTextureID(), ImVec2(25, 25),
-			uv_min, uv_max, bg_col, tint_col))
-		{
-			pressed = 1 - pressed;
-		}
-		ImGui::PopStyleColor();
-		ImGui::PopStyleColor();
-	}
-	ImGui::End();
-
-	ImGui::SetNextWindowSize(ImVec2(50, 85));
-	float middle_x = (m_sdl_window->getSceneMin().x + m_sdl_window->getSceneMax().x) / 2.0f;
-	ImVec2 play_pos = ImVec2(middle_x - 25.0f, m_sdl_window->getSceneMin().y + 2.5f);
-	ImGui::SetNextWindowPos(play_pos);
-
-	static bool pressed2 = false;
-	ImGuiWindowFlags flag_play = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;;
-	ImGui::Begin("#button_play", &is_open, flag_play);
-	{
-		ImVec2 pos = ImGui::GetCursorScreenPos();
-		ImVec2 uv_min = ImVec2(0.0f, 0.0f);                 // Top-left
-		ImVec2 uv_max = ImVec2(1.0f, 1.0f);                 // Lower-right
-		ImVec4 bg_col = ImVec4(1.0f, 1.0f, 1.0f, 0.0f);             // Black background
-		ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);           // No tint
-
-		if (pressed2)
-		{
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
-		}
-		else
-		{
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.5f, 0.5f, 0.5f, 1.0f });
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f });
-		}
-
-		if (ImGui::ImageButton("#scale", (ImTextureID)m_button_textures.at(2)->getTextureID(), ImVec2(25, 25),
-			uv_min, uv_max, bg_col, tint_col))
-		{
-			pressed2 = 1 - pressed2;
-		}
-		ImGui::PopStyleColor();
-		ImGui::PopStyleColor();
-	}
-	ImGui::End();
-
-
-	ImGui::SetNextWindowSize(ImVec2(50, 85));
-	ImVec2 pause_pos = ImVec2(middle_x + 25.0f, m_sdl_window->getSceneMin().y + 2.5f);
-	ImGui::SetNextWindowPos(pause_pos);
-
-	ImGui::Begin("#button_pause", &is_open, flag_play);
-	{
-		ImVec2 pos = ImGui::GetCursorScreenPos();
-		ImVec2 uv_min = ImVec2(0.0f, 0.0f);                 // Top-left
-		ImVec2 uv_max = ImVec2(1.0f, 1.0f);                 // Lower-right
-		ImVec4 bg_col = ImVec4(1.0f, 1.0f, 1.0f, 0.0f);             // Black background
-		ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);           // No tint
-
-		if (!pressed2)
-		{
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.8f, 0.8f, 0.8f, 1.0f });
-		}
-		else
-		{
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.5f, 0.5f, 0.5f, 1.0f });
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f });
-		}
-
-		if (ImGui::ImageButton("#scale", (ImTextureID)m_button_textures.at(3)->getTextureID(), ImVec2(25, 25),
-			uv_min, uv_max, bg_col, tint_col))
-		{
-			pressed2 = 1 - pressed2;
-		}
-		ImGui::PopStyleColor();
-		ImGui::PopStyleColor();
-	}
-	ImGui::End();
-}
-
 void Renderer::renderImGui()
 {
 	ImGui_ImplOpenGL3_NewFrame();
@@ -443,24 +272,15 @@ void Renderer::renderImGui()
 	bool demo = true;
 	ImGui::ShowDemoWindow(&demo);
 
-	// Draw panels
-	for (auto& it : m_panels)
-		it->render(m_scene_collections, m_scene_objects, m_click_object);
+	ImGuiManager::getImGuiManager()->drawMainMenu(m_scene_collections, m_scene_objects, m_click_object);
+
+	ImGuiManager::getImGuiManager()->drawButtons();
+
+	ImGuiManager::getImGuiManager()->drawPanels(m_scene_collections, m_scene_objects, m_click_object);
 
 	bool open = true;
-	ImGui::Begin("Scenes", &open, ImGuiWindowFlags_MenuBar);
+	ImGui::Begin("Scenes", &open);
 	{
-		if (ImGui::BeginMenuBar())
-		{
-			if (ImGui::BeginMenu("Add"))
-			{
-				ImGuiMenuBar mb;
-				mb.render(m_scene_collections, m_scene_objects, m_click_object);
-				ImGui::EndMenu();
-			}
-			ImGui::EndMenuBar();
-		}
-
 		ImGui::BeginChild("SceneRender");
 		{
 			ImVec2 scene_min = ImGui::GetWindowContentRegionMin();
@@ -514,8 +334,6 @@ void Renderer::renderImGui()
 		ImGui::EndChild();
 	}
 	ImGui::End();
-
-	renderButtons();
 
 	// ImGui docking
 	ImGui::Render();
@@ -576,10 +394,10 @@ void Renderer::renderScene()
 	}
 	
 
-	if(m_is_popup) m_popup_scene->popup(m_scene_collections, m_scene_objects, m_click_object);
-	
+	if (m_is_popup) ImGuiManager::getImGuiManager()->popupHierarchyMenu(m_scene_collections, m_scene_objects, m_click_object);
+
 	bool is_popup = false;
-	m_popup_object->popup(m_scene_collections, m_scene_objects, m_click_object, is_popup, m_is_click_gizmo);
+	ImGuiManager::getImGuiManager()->popupObjectMenu(m_scene_collections, m_scene_objects, m_click_object, is_popup, m_is_click_gizmo);
 
 	// Check whether any gizmos is clicked
 	if (m_is_moving_gizmo)
@@ -650,6 +468,27 @@ void Renderer::renderScene()
 	glDisable(GL_DEPTH_TEST);
 	m_outline->draw(*m_click_object);
 	glEnable(GL_DEPTH_TEST);
+
+	int type = ImGuiManager::getImGuiManager()->getTransformationType();
+	if (type != -1)
+	{
+		if (type == 0)
+		{
+			m_gizmos.at(0)->setDraw(true);
+			m_gizmos.at(1)->setDraw(false);
+		}
+
+		if (type == 1)
+		{
+			m_gizmos.at(0)->setDraw(false);
+			m_gizmos.at(1)->setDraw(true);
+		}
+	}
+	else
+	{
+		m_gizmos.at(0)->setDraw(false);
+		m_gizmos.at(1)->setDraw(false);
+	}
 
 	if (m_click_object != nullptr)
 	{

@@ -110,6 +110,8 @@
     <ClCompile Include="src\Geometry.cpp" />
     <ClCompile Include="src\Gizmo.cpp" />
     <ClCompile Include="src\Grid.cpp" />
+    <ClCompile Include="src\ImGuiButton.cpp" />
+    <ClCompile Include="src\ImGuiManager.cpp" />
     <ClCompile Include="src\ImguiPanel.cpp" />
     <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -171,6 +173,8 @@
     <ClInclude Include="include\Geometry.h" />
     <ClInclude Include="include\Gizmo.h" />
     <ClInclude Include="include\Grid.h" />
+    <ClInclude Include="include\ImGuiButton.h" />
+    <ClInclude Include="include\ImGuiManager.h" />
     <ClInclude Include="include\ImguiPanel.h" />
     <ClInclude Include="include\Light.h" />
     <ClInclude Include="include\Map.h" />

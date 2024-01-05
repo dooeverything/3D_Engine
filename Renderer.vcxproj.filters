@@ -233,6 +233,12 @@
     <ClCompile Include="src\ObjectCollection.cpp">
       <Filter>src\Object</Filter>
     </ClCompile>
+    <ClCompile Include="src\ImGuiButton.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ImGuiManager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="C:\vclib\imgui-docking\imstb_truetype.h">
@@ -411,6 +417,12 @@
     </ClInclude>
     <ClInclude Include="include\ObjectCollection.h">
       <Filter>include\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ImGuiButton.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ImGuiManager.h">
+      <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

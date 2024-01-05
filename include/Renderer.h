@@ -32,8 +32,6 @@ public:
 
 	void handleInput();
 	void moveObject(Object& go);
-
-	void renderButtons();
 	void renderImGui();
 	void renderScene();
 
@@ -46,10 +44,6 @@ private:
 	unique_ptr<SDL_GL_Window> m_sdl_window;
 	unique_ptr<Camera> m_camera;
 	unique_ptr<Grid> m_grid;
-
-	vector<shared_ptr<ImGuiPanel>> m_panels;
-	unique_ptr<PopupObject> m_popup_object;
-	unique_ptr<PopupSceneHierarchy> m_popup_scene;
 
 	unique_ptr<FrameBuffer> m_framebuffer_multi;
 	unique_ptr<FrameBuffer> m_scene;
@@ -68,8 +62,6 @@ private:
 	shared_ptr<Object> m_click_object;
 	shared_ptr<SPHSystemCuda> m_sph;
 	unique_ptr<Outline> m_outline;
-
-	vector<shared_ptr<Texture>> m_button_textures;
 
 	long long m_start_time;
 	float m_ticks;
