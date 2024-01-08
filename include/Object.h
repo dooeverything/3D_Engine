@@ -3,6 +3,9 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
+#include <unordered_map>
+#include <vector>
+
 #include "Camera.h"
 #include "Map.h"
 #include "Mesh.h"
@@ -24,14 +27,16 @@ public:
 	Object(const shared_ptr<Mesh>& mesh);
 	~Object();
 	
-	virtual void draw(const glm::mat4& P, const glm::mat4& V,
-		Light& light, glm::vec3& view_pos, ShadowMap& shadow,
-		IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut);
+	virtual void draw(
+		const glm::mat4& P,
+		const glm::mat4& V,
+		const glm::vec3& view_pos,
+		const Light& light);
 
 	virtual void drawMesh(const glm::mat4& P, const glm::mat4& V, const Shader& shader);
 	virtual void drawInstance(glm::mat4& P, glm::mat4& V);
 
-	inline bool isClick(glm::vec3& ray_dir, glm::vec3& ray_pos) {  return m_mesh->intersect(ray_dir, ray_pos); };
+	inline bool isClick(const glm::vec3& ray_dir, const glm::vec3& ray_pos) {  return m_mesh->intersect(ray_dir, ray_pos); };
 	void calcTransform(const glm::vec3& forward);
 	void updateTransform(const glm::vec3& t, Transform::Type type);
 	inline void updateVertices(const vector<info::VertexLayout>& vertices) { m_mesh->updateBuffer(vertices); };
@@ -62,11 +67,6 @@ public:
 	void setTransformType(int type);
 	inline void setIsClick(bool click) { m_click = click; };
 	inline void setIsDelete(bool d) { m_delete = d; };
-	
-	virtual void setupFramebuffer(const glm::mat4& V, 
-								  ShadowMap& depth, 
-								  CubeMap& cubemap, 
-								  Camera& camera);
 
 	// Getter
 	inline int getMoveAxis() { return m_move_axis; };

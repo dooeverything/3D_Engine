@@ -5,8 +5,8 @@
 #include "MeshImporter.h"
 #include "Mesh.h"
 
-Gizmo::Gizmo(const string& path, const string& name) :
-	m_center(glm::vec3(0.0f)), m_name(name),
+Gizmo::Gizmo(const string& path, const string& name, int type) :
+	m_center(glm::vec3(0.0f)), m_name(name), m_type(type),
 	m_click(false), m_hit_axis(-1), m_is_draw(false)
 {
 	cout << "Gizmo constructor " << endl;
@@ -47,6 +47,8 @@ void Gizmo::draw(const glm::mat4& P, const glm::mat4& V, const glm::vec3& view_p
 {
 	if (!m_is_draw) return;
 
+	glDisable(GL_DEPTH_TEST);
+
 	//cout << "Draw: " << m_name << endl;
 	shared_ptr<Shader> shader = ShaderManager::getShader("Arrow");
 	
@@ -77,6 +79,8 @@ void Gizmo::draw(const glm::mat4& P, const glm::mat4& V, const glm::vec3& view_p
 	shader->setPVM(P, V, m_Ms.at(0));
 	shader->setVec3("object_color", color_cube);
 	m_gizmos.at(0)->draw();
+
+	glEnable(GL_DEPTH_TEST);
 }
 
 void Gizmo::computeBBox(const glm::vec3& center, const glm::vec3& view_pos)
@@ -103,5 +107,17 @@ void Gizmo::computeBBox(const glm::vec3& center, const glm::vec3& view_pos)
 	for (int i = 0; i < m_gizmos.size(); ++i)
 	{
 		m_gizmos.at(i)->computeBBox(m_Ms[i]);
+	}
+}
+
+void Gizmo::checkDraw(int type)
+{
+	if (type != -1 && type == m_type)
+	{
+		m_is_draw = true;
+	}
+	else
+	{
+		m_is_draw = false;
 	}
 }

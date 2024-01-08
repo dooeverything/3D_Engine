@@ -27,9 +27,6 @@
     <Filter Include="include\Scene">
       <UniqueIdentifier>{5139a334-af2b-442e-97eb-c9fcdc122df1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="include\Scene\SceneHelper">
-      <UniqueIdentifier>{4fd76782-e878-4984-98ea-f3d479f053fb}</UniqueIdentifier>
-    </Filter>
     <Filter Include="include\Mesh">
       <UniqueIdentifier>{a853e429-9ce5-4b81-ad67-e77a035d75ba}</UniqueIdentifier>
     </Filter>
@@ -63,11 +60,14 @@
     <Filter Include="src\Scene">
       <UniqueIdentifier>{80ff77f4-9d34-4881-a57e-f003cd917bb5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\Scene\SceneHelper">
-      <UniqueIdentifier>{0ef187bf-eb2f-40b3-ba5a-86bb8385962f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\Object">
       <UniqueIdentifier>{5cc135c1-23a7-4c79-a850-bbba7e4ba60f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\SceneHelper">
+      <UniqueIdentifier>{0ef187bf-eb2f-40b3-ba5a-86bb8385962f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\SceneHelper">
+      <UniqueIdentifier>{4fd76782-e878-4984-98ea-f3d479f053fb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -180,24 +180,21 @@
       <Filter>src\Shader</Filter>
     </ClCompile>
     <ClCompile Include="src\Grid.cpp">
-      <Filter>src\Scene\SceneHelper</Filter>
+      <Filter>src\SceneHelper</Filter>
     </ClCompile>
     <ClCompile Include="src\Light.cpp">
-      <Filter>src\Scene\SceneHelper</Filter>
+      <Filter>src\SceneHelper</Filter>
     </ClCompile>
     <ClCompile Include="src\Gizmo.cpp">
-      <Filter>src\Scene\SceneHelper</Filter>
+      <Filter>src\SceneHelper</Filter>
     </ClCompile>
     <ClCompile Include="src\Map.cpp">
-      <Filter>src\Scene\SceneHelper</Filter>
+      <Filter>src\SceneHelper</Filter>
     </ClCompile>
     <ClCompile Include="src\Outline.cpp">
-      <Filter>src\Scene\SceneHelper</Filter>
+      <Filter>src\SceneHelper</Filter>
     </ClCompile>
     <ClCompile Include="src\Camera.cpp">
-      <Filter>src\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ImguiPanel.cpp">
       <Filter>src\Scene</Filter>
     </ClCompile>
     <ClCompile Include="src\Picker.cpp">
@@ -221,23 +218,32 @@
     <ClCompile Include="src\Object.cpp">
       <Filter>src\Object</Filter>
     </ClCompile>
-    <ClCompile Include="src\Quad.cpp">
-      <Filter>src\Object</Filter>
-    </ClCompile>
     <ClCompile Include="src\Terrain.cpp">
       <Filter>src\Object</Filter>
     </ClCompile>
     <ClCompile Include="src\Transform.cpp">
       <Filter>src\Object</Filter>
     </ClCompile>
-    <ClCompile Include="src\ObjectCollection.cpp">
-      <Filter>src\Object</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ImGuiButton.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\MapManager.cpp">
+      <Filter>src\SceneHelper</Filter>
     </ClCompile>
     <ClCompile Include="src\ImGuiManager.cpp">
-      <Filter>src</Filter>
+      <Filter>src\SceneHelper</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ImGuiButton.cpp">
+      <Filter>src\SceneHelper</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ObjectCollection.cpp">
+      <Filter>src\SceneHelper</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Quad.cpp">
+      <Filter>src\SceneHelper</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ObjectManager.cpp">
+      <Filter>src\SceneHelper</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ImguiPanel.cpp">
+      <Filter>src\SceneHelper</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -316,9 +322,6 @@
     <ClInclude Include="include\Cloth.h">
       <Filter>include\Object</Filter>
     </ClInclude>
-    <ClInclude Include="include\ImguiPanel.h">
-      <Filter>include\Scene</Filter>
-    </ClInclude>
     <ClInclude Include="include\Renderer.h">
       <Filter>include\Scene</Filter>
     </ClInclude>
@@ -326,13 +329,13 @@
       <Filter>include\Scene</Filter>
     </ClInclude>
     <ClInclude Include="include\Map.h">
-      <Filter>include\Scene\SceneHelper</Filter>
+      <Filter>include\SceneHelper</Filter>
     </ClInclude>
     <ClInclude Include="include\Light.h">
-      <Filter>include\Scene\SceneHelper</Filter>
+      <Filter>include\SceneHelper</Filter>
     </ClInclude>
     <ClInclude Include="include\Grid.h">
-      <Filter>include\Scene\SceneHelper</Filter>
+      <Filter>include\SceneHelper</Filter>
     </ClInclude>
     <ClInclude Include="include\Buffer.h">
       <Filter>include\Mesh</Filter>
@@ -385,11 +388,8 @@
     <ClInclude Include="include\Object.h">
       <Filter>include\Object</Filter>
     </ClInclude>
-    <ClInclude Include="include\Quad.h">
-      <Filter>include\Object</Filter>
-    </ClInclude>
     <ClInclude Include="include\Outline.h">
-      <Filter>include\Scene\SceneHelper</Filter>
+      <Filter>include\SceneHelper</Filter>
     </ClInclude>
     <ClInclude Include="include\SoftBodySolver.h">
       <Filter>include\Physics</Filter>
@@ -413,16 +413,28 @@
       <Filter>include\Extras</Filter>
     </ClInclude>
     <ClInclude Include="include\Gizmo.h">
-      <Filter>include\Scene\SceneHelper</Filter>
-    </ClInclude>
-    <ClInclude Include="include\ObjectCollection.h">
-      <Filter>include\Object</Filter>
+      <Filter>include\SceneHelper</Filter>
     </ClInclude>
     <ClInclude Include="include\ImGuiButton.h">
-      <Filter>include</Filter>
+      <Filter>include\SceneHelper</Filter>
     </ClInclude>
     <ClInclude Include="include\ImGuiManager.h">
-      <Filter>include</Filter>
+      <Filter>include\SceneHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MapManager.h">
+      <Filter>include\SceneHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Quad.h">
+      <Filter>include\SceneHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ObjectCollection.h">
+      <Filter>include\SceneHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ObjectManager.h">
+      <Filter>include\SceneHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ImguiPanel.h">
+      <Filter>include\SceneHelper</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

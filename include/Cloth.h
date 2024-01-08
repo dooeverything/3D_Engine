@@ -18,13 +18,14 @@ public:
 	~Cloth();
 
 	virtual void simulate();
-	virtual void renderProperty();
 	virtual bool getSimulate() { return m_simulate; };
 	virtual void setSimulate(bool s) { m_simulate = s; };
 
-	virtual void draw(const glm::mat4& P, const glm::mat4& V,
-		Light& light, glm::vec3& view_pos, ShadowMap& shadow,
-		IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut) override;
+	virtual void draw(
+		const glm::mat4& P, 
+		const glm::mat4& V, 
+		const glm::vec3& view_pos, 
+		const Light& light) override;
 
 private:
 	void initParticles();

@@ -110,7 +110,7 @@ int ImGuiButtonTransform::getTransformationType()
 		return 0;
 
 	if (m_button_scale->getPress())
-		return 1;
+		return 2;
 
 	return -1;
 }

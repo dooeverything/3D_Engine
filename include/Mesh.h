@@ -32,7 +32,7 @@ public:
 
 	void renderProperty(Sphere& preview_object, const FrameBuffer& preview_fb);
 
-	inline bool intersect(glm::vec3& ray_dir, glm::vec3& ray_pos) { return m_bbox->intersect(ray_dir, ray_pos); };
+	inline bool intersect(const glm::vec3& ray_dir, const glm::vec3& ray_pos) { return m_bbox->intersect(ray_dir, ray_pos); };
 	inline void updateBuffer(const vector<info::VertexLayout>& layouts) { m_buffer->updateBuffer(layouts); };
 	inline void setupBuffer(const vector<info::VertexLayout>& vertices) { m_buffer->createBuffers(vertices); };
 	inline void setupBuffer(

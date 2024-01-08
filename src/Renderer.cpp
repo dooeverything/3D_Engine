@@ -1,7 +1,9 @@
 #include "Renderer.h"
 #include "imgui_internal.h"
 
+#include "MapManager.h"
 #include "Object.h"
+#include "ObjectManager.h"
 #include "ObjectCollection.h"
 #include "Outline.h"
 #include "SoftBodySolver.h"
@@ -13,10 +15,12 @@
 
 unique_ptr<Quad> Quad::m_quad = nullptr;
 unique_ptr<ImGuiManager> ImGuiManager::m_manager = nullptr;
+unique_ptr<ObjectManager> ObjectManager::m_object_manager = nullptr;
+unique_ptr<MapManager> MapManager::m_manager = nullptr;
 
 Renderer::Renderer() :
-	m_shadow_map(nullptr), m_click_object(nullptr),
-	m_frame_events({}), m_scene_objects({}), m_lights({}), m_gizmos({}),
+	m_click_object(nullptr),
+	m_frame_events({}), m_lights({}), m_gizmos({}),
 	m_is_running(true), m_ticks(0), m_start_time(0), m_is_mouse_down(false),
 	m_is_click_gizmo(false), m_mouse_in_panel(false), m_is_moving_gizmo(false), m_is_drag(false),
 	m_is_popup(false)
@@ -47,26 +51,19 @@ void Renderer::init()
 
 	m_camera = make_unique<Camera>(glm::vec3(0.0f, 7.5f, 27.0f), -90.0f, -11.0f);
 	
-	glm::vec3 light_pos = { 1.0f, 1.0f, 1.0f };
-	m_depth_map = make_unique<ShadowMap>(256, 256);
-	m_shadow_map = make_unique<ShadowMap>(1024, 1024, light_pos, false);
-	m_cubemap = make_unique<CubeMap>(256, 256);
-	m_irradiancemap = make_unique<IrradianceMap>(32, 32);
-	m_prefilter = make_unique<PrefilterMap>(256, 256);
-	m_lut = make_unique<LUTMap>(256, 256);
-
 	ShaderManager::createShader("Default", info::BASIC_SHADER);
 	ShaderManager::createShader("Preview", info::PREVIEW_SHADER);
 
 	cout << "********************Loading Gizmos********************" << endl;
 	m_gizmos.resize(2);
-	m_gizmos.at(0) = make_shared<Gizmo>("assets/models/ArrowTranslation.fbx", "translation");
-	m_gizmos.at(1) = make_shared<Gizmo>("assets/models/ArrowScale.fbx", "scale");
+	m_gizmos.at(0) = make_shared<Gizmo>("assets/models/ArrowTranslation.fbx", "translation", 0);
+	m_gizmos.at(1) = make_shared<Gizmo>("assets/models/ArrowScale.fbx", "scale", 2);
 	cout << "********************Finish loading gizmo********************\n" << endl;
 
 	m_scene_collections = make_shared<ObjectCollection>(-1);
 
 	// Setup lights
+	glm::vec3 light_pos = { 1.0f, 1.0f, 1.0f };
 	glm::vec3 dir = -light_pos;
 	glm::vec3 amb = { 1.0f, 1.0f, 1.0f };
 	glm::vec3 diff = { 0.8f, 0.8f, 0.8f };
@@ -76,13 +73,11 @@ void Renderer::init()
 
 void Renderer::run()
 {
-	cout << "Render" << endl;
-	
+
 	// PBR setup
-	m_cubemap->drawMap();
-	m_irradiancemap->drawMap(*m_cubemap->getCubemapBuffer());
-	m_prefilter->drawMap(*m_cubemap->getCubemapBuffer());
-	m_lut->drawMap();
+	cout << "********************PBR Setup********************" << endl;
+	MapManager::getManager()->setupPBRMaps();
+	cout << "********************PBR Setup finish******************** \n" << endl;
 
 	while (m_is_running)
 	{
@@ -98,17 +93,14 @@ void Renderer::render()
 	m_camera->setLastFrame(current_frame);
 	m_camera->processInput();
 
-	for (int i = 0; i < m_scene_objects.size(); ++i)
-	{
-		m_scene_objects.at(i)->setIsClick(false);
-		m_scene_objects.at(i)->resetRayHit();
-	}
+	m_scene_collections->resetObjects();
+
+	MapManager::getManager()->setupShadowMap();
 
 	handleInput();
 
-	m_shadow_map->draw(m_scene_objects);
-
 	renderImGui();
+
 	m_sdl_window->swapWindow();
 }
 
@@ -272,11 +264,11 @@ void Renderer::renderImGui()
 	bool demo = true;
 	ImGui::ShowDemoWindow(&demo);
 
-	ImGuiManager::getImGuiManager()->drawMainMenu(m_scene_collections, m_scene_objects, m_click_object);
+	ImGuiManager::getImGuiManager()->drawMainMenu(m_scene_collections, m_click_object);
 
 	ImGuiManager::getImGuiManager()->drawButtons();
 
-	ImGuiManager::getImGuiManager()->drawPanels(m_scene_collections, m_scene_objects, m_click_object);
+	ImGuiManager::getImGuiManager()->drawPanels(m_scene_collections, m_click_object);
 
 	bool open = true;
 	ImGui::Begin("Scenes", &open);
@@ -305,13 +297,8 @@ void Renderer::renderImGui()
 			const glm::mat4& P = m_camera->getSP();
 			const glm::mat4& V = m_camera->getV();
 
-			// Get Depth map
-			m_depth_map->setProj(P);
-			m_depth_map->setView(V);
-			m_depth_map->draw(m_scene_objects);
-
-			for (auto& it : m_scene_objects)
-				it->setupFramebuffer(V, *m_depth_map, *m_cubemap, *m_camera);
+			// setup Depth map
+			MapManager::getManager()->setupDepthMap(P, V);
 
 			if (m_click_object != nullptr)
 				m_outline->setupBuffers(*m_click_object, V, wsize.x, wsize.y);
@@ -353,7 +340,6 @@ void Renderer::renderScene()
 	glViewport(0, 0, m_framebuffer_multi->getWidth(), m_framebuffer_multi->getHeight());
 
 	// Setup world to pixel coordinate transformation 
-	glm::vec3 cam_pos = m_camera->getPos();
 	const glm::mat4& P = m_camera->getSP();
 	const glm::mat4& V = m_camera->getV();
 
@@ -366,24 +352,50 @@ void Renderer::renderScene()
 	glm::vec3 ray_dir = m_camera->getRay();
 	glm::vec3 ray_pos = m_camera->getPos();
 
+	checkObjectClick(ray_dir, ray_pos);
+
+	if (m_is_popup) 
+		ImGuiManager::getImGuiManager()->popupHierarchyMenu(m_scene_collections, m_click_object);
+
+	bool is_popup = false;
+	ImGuiManager::getImGuiManager()->popupObjectMenu(m_scene_collections, m_click_object, is_popup, m_is_click_gizmo);
+
+	// Check whether any gizmos is clicked
+	checkGizmoClick(ray_dir, ray_pos, is_popup);
+
+	ObjectManager::getObjectManager()->removeObject(m_scene_collections);
+
+	ObjectManager::getObjectManager()->resetObjectIds();
+
+	ObjectManager::getObjectManager()->drawObjects(P, V, ray_pos, *m_lights.at(0));
+
+	MapManager::getManager()->drawCubeMap(P, V);
+
+	// Draw Grid
+	m_grid->draw(P, V, ray_pos);
+
+	// Draw Outline
+	m_outline->draw(*m_click_object);
+
+	int type = ImGuiManager::getImGuiManager()->getTransformationType();
+	m_gizmos.at(0)->checkDraw(type);
+	m_gizmos.at(1)->checkDraw(type);
+
+	// Draw gizmos for clicked objects
+	if (m_click_object != nullptr)
+	{
+		m_gizmos.at(0)->draw(P, V, ray_pos);
+		m_gizmos.at(1)->draw(P, V, ray_pos);
+	}
+}
+
+void Renderer::checkObjectClick(const glm::vec3& ray_dir, const glm::vec3& ray_pos)
+{
 	// Check whether any object is clicked 
 	if (m_is_mouse_down && !m_is_drag && !m_is_click_gizmo)
 	{
-		float min_hit = FLT_MAX;
-		for (int i = 0; i < m_scene_objects.size(); ++i)
-		{
-			if (m_scene_objects[i]->isClick(ray_dir, ray_pos))
-			{
-				float hit = m_scene_objects[i]->getRayHitMin();
-				if (hit < min_hit)
-				{
-					m_click_object = m_scene_objects[i];
-					min_hit = hit;
-				}
-			}
-		}
-
-		if (min_hit >= FLT_MAX)
+		bool is_click = ObjectManager::getObjectManager()->checkObjectClick(m_click_object, ray_dir, ray_pos);
+		if (!is_click)
 		{
 			if (m_click_object != nullptr)
 			{
@@ -392,25 +404,22 @@ void Renderer::renderScene()
 			}
 		}
 	}
-	
+}
 
-	if (m_is_popup) ImGuiManager::getImGuiManager()->popupHierarchyMenu(m_scene_collections, m_scene_objects, m_click_object);
-
-	bool is_popup = false;
-	ImGuiManager::getImGuiManager()->popupObjectMenu(m_scene_collections, m_scene_objects, m_click_object, is_popup, m_is_click_gizmo);
-
+void Renderer::checkGizmoClick(const glm::vec3& ray_dir, const glm::vec3& ray_pos, bool is_popup)
+{
 	// Check whether any gizmos is clicked
 	if (m_is_moving_gizmo)
 	{
-		m_gizmos.at(0)->computeBBox(m_click_object->getCenter(), cam_pos);
-		m_gizmos.at(1)->computeBBox(m_click_object->getCenter(), cam_pos);
+		m_gizmos.at(0)->computeBBox(m_click_object->getCenter(), ray_pos);
+		m_gizmos.at(1)->computeBBox(m_click_object->getCenter(), ray_pos);
 		moveObject(*m_click_object);
 	}
-	else if(m_click_object != nullptr && is_popup == false && !m_is_drag)
+	else if (m_click_object != nullptr && is_popup == false && !m_is_drag)
 	{
-		m_gizmos.at(0)->computeBBox(m_click_object->getCenter(), cam_pos);
-		m_gizmos.at(1)->computeBBox(m_click_object->getCenter(), cam_pos);
-		
+		m_gizmos.at(0)->computeBBox(m_click_object->getCenter(), ray_pos);
+		m_gizmos.at(1)->computeBBox(m_click_object->getCenter(), ray_pos);
+
 		for (int i = 0; i < 2; ++i)
 		{
 			if (m_gizmos.at(i)->getIsDraw())
@@ -426,79 +435,9 @@ void Renderer::renderScene()
 				{
 					m_is_click_gizmo = false;
 					m_click_object->setMoveAxis(-1);
-				}			
+				}
 			}
 		}
-	}
-
-	for (auto& it : m_scene_objects)
-	{
-		if (it->getIsDelete())
-		{
-			ObjectCollectionManager::removeObject(m_scene_collections, it);
-		}
-	}
-
-	m_scene_objects.erase(
-		remove_if(m_scene_objects.begin(), m_scene_objects.end(),
-			[](const shared_ptr<Object>& go) {return go->getIsDelete() == true; }
-		),
-		m_scene_objects.end()
-	);
-
-	for (int i = 0; i < m_scene_objects.size(); ++i)
-	{
-		m_scene_objects.at(i)->setObjectId(i);
-	}
-
-	// Draw objects
-	for (int i = 0; i < m_scene_objects.size(); ++i)
-	{
-		m_scene_objects.at(i)->draw(P, V, *m_lights.at(0), cam_pos,
-			*m_shadow_map, *m_irradiancemap, *m_prefilter, *m_lut);
-	}
-
-	// Draw background
-	m_cubemap->draw(P, V);
-
-	// Draw Grid
-	m_grid->draw(P, V, cam_pos);
-
-	// Draw Outline
-	glDisable(GL_DEPTH_TEST);
-	m_outline->draw(*m_click_object);
-	glEnable(GL_DEPTH_TEST);
-
-	int type = ImGuiManager::getImGuiManager()->getTransformationType();
-	if (type != -1)
-	{
-		if (type == 0)
-		{
-			m_gizmos.at(0)->setDraw(true);
-			m_gizmos.at(1)->setDraw(false);
-		}
-
-		if (type == 1)
-		{
-			m_gizmos.at(0)->setDraw(false);
-			m_gizmos.at(1)->setDraw(true);
-		}
-	}
-	else
-	{
-		m_gizmos.at(0)->setDraw(false);
-		m_gizmos.at(1)->setDraw(false);
-	}
-
-	if (m_click_object != nullptr)
-	{
-		if (m_click_object->getName() == "Terrain") return;
-
-		// Draw gizmos for clicked objects
-		glDisable(GL_DEPTH_TEST);
-		m_gizmos.at(0)->draw(P, V, cam_pos);
-		m_gizmos.at(1)->draw(P, V, cam_pos);
-		glEnable(GL_DEPTH_TEST);
 	}
 }
 

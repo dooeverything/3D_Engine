@@ -1,4 +1,6 @@
 #include "Terrain.h"
+
+#include "MapManager.h"
 #include "Shader.h"
 #include "ShaderManager.h"
 
@@ -29,6 +31,9 @@ Terrain::Terrain(float res) : Object("Terrain")
 
 	ShaderManager::createShader("Terrain", shader_paths);
 
+
+	m_button_plus = make_unique<ImGuiButton>("assets/textures/TerrainPlus.png", "plus");
+	m_button_minus = make_unique<ImGuiButton>("assets/textures/TerrainMinus.png", "minus");
 
 	cout << "*************************Terrain Constructed!*************************" << endl;
 	cout << endl;
@@ -123,7 +128,6 @@ void Terrain::createVertex()
 
 void Terrain::updateVertex(glm::vec3 ray_dir, glm::vec3 ray_pos, bool mouse_down)
 {
-
 	m_hit = glm::vec3(-1000.0f);
 	if (!m_is_edit) return;
 
@@ -242,14 +246,17 @@ void Terrain::updateVertex(glm::vec3 ray_dir, glm::vec3 ray_pos, bool mouse_down
 	}
 }
 
-void Terrain::draw(const glm::mat4& P, const glm::mat4& V,
-	Light& light, glm::vec3& view_pos, ShadowMap& shadow,
-	IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut)
+void Terrain::draw(const glm::mat4& P,
+	const glm::mat4& V,
+	const glm::vec3& view_pos,
+	const Light& light)
 {
 	shared_ptr<Shader> shader = ShaderManager::getShader("Terrain");
 
 	shader->load();
-	glm::mat4 shadow_proj = (*shadow.getProj()) * (*shadow.getView());
+	glm::mat4 shadow_P = MapManager::getManager()->getShadowMapProj();
+	glm::mat4 shadow_V = MapManager::getManager()->getShadowMapView();
+	glm::mat4 shadow_proj = (shadow_P * shadow_V);
 	shader->setMat4("light_matrix", shadow_proj);
 	shader->setVec3("view_pos", view_pos);
 	shader->setLight(light);
@@ -258,23 +265,22 @@ void Terrain::draw(const glm::mat4& P, const glm::mat4& V,
 
 	shader->setInt("shadow_map", 0);
 	glActiveTexture(GL_TEXTURE0);
-	shadow.getBuffer().bindFrameTexture();
+	MapManager::getManager()->bindShadowMap();
 
 	drawTerrain(P, V, *shader, m_res);
 }
 
-void Terrain::renderProperty()
+void Terrain::renderExtraProperty()
 {
-	bool expand_terrain = ImGui::TreeNode("Terrain");
-	if (expand_terrain)
+	if (ImGui::CollapsingHeader("Terrain Edit"))
 	{
+		m_is_edit = false;
+
 		static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
 		ImVec2 cell_padding(0.0f, 2.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
 		ImGui::BeginTable("Terrain", 2);
 		ImU32 cell_bg_color = ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.7f, 0.65f));
-
-		bool update = false;
 
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
@@ -297,45 +303,27 @@ void Terrain::renderProperty()
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
 		ImGui::AlignTextToFramePadding();
-		static int clicked = 0;
-		if (ImGui::Button("Click to edit terrain"))
+
+		ImGui::Text("Terrain Editor: ");
+
+		//ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+		ImGui::AlignTextToFramePadding();
+
+		if (m_button_plus->draw())
 		{
-			clicked++;
+			m_is_edit = true;
 		}
 
-		static int selected = -1;
-		if (clicked & 1)
+		ImGui::SameLine();
+
+		if (m_button_minus->draw())
 		{
-			ImGui::TableNextColumn();
-			char buf1[32];
-			sprintf_s(buf1, "Sculpting");
-			if (ImGui::Selectable(buf1, selected == 0, 0, ImVec2(64, 16)))
-			{
-				selected = 0;
-				m_is_edit = true;
-			}
-
-			ImGui::Dummy(ImVec2(0.0f, 1.0f));
-
-			char buf2[32];
-			sprintf_s(buf2, "Remove");
-			if (ImGui::Selectable(buf2, selected == 1, 0, ImVec2(64, 16)))
-			{
-				selected = 1;
-				m_is_edit = true;
-			}
-
+			m_is_edit = true;
 		}
-		else
-		{
-			selected = -1;
-			//t->setIsEdit(false);
-			m_is_edit = false;
-		}
-
+	
 		ImGui::EndTable();
 		ImGui::PopStyleVar();
-		ImGui::TreePop();
 	}
 	else
 	{

@@ -2,6 +2,7 @@
 
 #include "MeshImporter.h"
 #include "Object.h"
+#include "ObjectManager.h"
 #include "Shader.h"
 #include "ShaderManager.h"
 
@@ -17,9 +18,9 @@ Map::Map(int width, int height, string name) :
 
 Map::~Map() {}
 
-ShadowMap::ShadowMap(int width, int height) : 
+DepthMap::DepthMap(int width, int height) :
 	Map(width, height, "ShadowMap"), 
-	m_shadow_buffer(shared_ptr<ShadowBuffer>()),
+	m_buffer(shared_ptr<ShadowBuffer>()),
 	m_proj(glm::mat4(0.0f)), m_view(glm::mat4(0.0f)), m_light_position(glm::vec3(0.0f)),
 	m_perspective(false)
 {
@@ -27,13 +28,13 @@ ShadowMap::ShadowMap(int width, int height) :
 	vector<string> shader_path = { "assets/shaders/ShadowMap.vert", "assets/shaders/ShadowMap.frag" };
 	ShaderManager::createShader("ShadowMap", shader_path);
 
-	m_shadow_buffer = make_shared<ShadowBuffer>();
-	m_shadow_buffer->createBuffers(m_width, m_height);
+	m_buffer = make_shared<ShadowBuffer>();
+	m_buffer->createBuffers(m_width, m_height);
 	cout << "Depth map loaded" << endl;
 	cout << endl;
 }
 
-ShadowMap::ShadowMap(int width, int height, glm::vec3 position, bool perspective) :
+DepthMap::DepthMap(int width, int height, glm::vec3 position, bool perspective) :
 	Map(width, height, "ShadowMap"), m_perspective(perspective)
 {
 	cout << "Shadow map constructor with " << m_width << ", " << m_height << endl;
@@ -51,43 +52,24 @@ ShadowMap::ShadowMap(int width, int height, glm::vec3 position, bool perspective
 	vector<string> shader_path = { "assets/shaders/ShadowMap.vert", "assets/shaders/ShadowMap.frag" };
 	ShaderManager::createShader("ShadowMap", shader_path);
 
-	m_shadow_buffer = make_shared<ShadowBuffer>();
-	m_shadow_buffer->createBuffers(m_width, m_height);
+	m_buffer = make_shared<ShadowBuffer>();
+	m_buffer->createBuffers(m_width, m_height);
 
 	cout << "Shadow map constructor finish loading" << endl;
 	cout << endl;
 }
 
-ShadowMap::~ShadowMap() {}
+DepthMap::~DepthMap() {}
 
-void ShadowMap::draw(vector<shared_ptr<Object>>& gameobjects)
+void DepthMap::draw()
 {
 	glViewport(0, 0, m_width, m_height);
 	shared_ptr<Shader> shader = ShaderManager::getShader("ShadowMap");
 
-	m_shadow_buffer->bind();
+	m_buffer->bind();
 		glClear(GL_DEPTH_BUFFER_BIT);
-		for (auto& it : gameobjects)
-		{
-			//if (it->getMesh() == nullptr) continue;
-		
-			if (it->getName() == "Fluid") continue;
-
-			it->drawMesh(m_proj, m_view, *shader);
-		}
-	m_shadow_buffer->unbind();
-}
-
-void ShadowMap::draw(shared_ptr<Object>& gameobject)
-{
-	shared_ptr<Shader> shader = ShaderManager::getShader("ShadowMap");
-
-	glViewport(0, 0, m_width, m_height);
-	m_shadow_buffer->bind();
-	glClear(GL_DEPTH_BUFFER_BIT);
-	shader->load();
-	//gameobject->getMesh()->drawInstance(m_proj, m_view, *m_shader);
-	m_shadow_buffer->unbind();
+		ObjectManager::getObjectManager()->drawObjectsMesh(m_proj, m_view, *shader);
+	m_buffer->unbind();
 }
 
 CubeMap::CubeMap(int width, int height) : 
@@ -95,8 +77,8 @@ CubeMap::CubeMap(int width, int height) :
 {
 	cout << "Cubemap constructor " << m_width << ", " << m_height << endl;
 
-	m_cubemap_buffer = make_shared<CubemapBuffer>();
-	m_cubemap_buffer->createBuffers(m_width, m_height, false);
+	m_buffer = make_shared<CubemapBuffer>();
+	m_buffer->createBuffers(m_width, m_height, false);
 
 	vector<string> shader_path = { "assets/shaders/Cubemap.vert", "assets/shaders/Cubemap.frag" };
 	ShaderManager::createShader("Cubemap", shader_path);
@@ -138,15 +120,15 @@ void CubeMap::drawMap()
 	m_hdr_texture->setActive();
 
 	glViewport(0, 0, m_width, m_height);
-	m_cubemap_buffer->bind();
+	m_buffer->bind();
 	for (int i = 0; i < 6; ++i)
 	{
 		shader->setMat4("PV", PVs[i]);
-		m_cubemap_buffer->bindFrameTexture(i);
+		m_buffer->bindFrameTexture(i);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		m_mesh->draw();
 	}
-	m_cubemap_buffer->unbind();
+	m_buffer->unbind();
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 	shader->unload();
@@ -162,7 +144,7 @@ void CubeMap::draw(const glm::mat4& P, const glm::mat4& V)
 	shader->setMat4("PV", PV);
 	shader->setInt("map", 0);
 	glActiveTexture(GL_TEXTURE0);
-	m_cubemap_buffer->bindCubemapTexture();
+	m_buffer->bindCubemapTexture();
 	m_mesh->draw();
 	glDepthFunc(GL_LESS);
 }
@@ -172,8 +154,8 @@ IrradianceMap::IrradianceMap(int width, int height) :
 {
 	cout << "Irradiance map constructor " << m_width << ", " << m_height << endl;
 
-	m_irradiance_buffer = make_shared<CubemapBuffer>();
-	m_irradiance_buffer->createBuffers(m_width, m_height, false);
+	m_buffer = make_shared<CubemapBuffer>();
+	m_buffer->createBuffers(m_width, m_height, false);
 
 	vector<string> shader_path = { "assets/shaders/Cubemap.vert", "assets/shaders/Irradiancemap.frag" };
 	ShaderManager::createShader("Irradiancemap", shader_path);
@@ -191,7 +173,7 @@ IrradianceMap::IrradianceMap(int width, int height) :
 
 IrradianceMap::~IrradianceMap() {}
 
-void IrradianceMap::drawMap(CubemapBuffer& cubemap)
+void IrradianceMap::drawMap(const CubeMap& cubemap)
 {
 	shared_ptr<Shader> shader = ShaderManager::getShader("Irradiancemap");
 
@@ -209,18 +191,18 @@ void IrradianceMap::drawMap(CubemapBuffer& cubemap)
 	shader->load();
 	shader->setInt("map", 0);
 	glActiveTexture(GL_TEXTURE0);
-	cubemap.bindCubemapTexture();
+	cubemap.bindTexture();
 
 	glViewport(0, 0, m_width, m_height);
-	m_irradiance_buffer->bind();
+	m_buffer->bind();
 	for (int i = 0; i < 6; ++i)
 	{
 		shader->setMat4("PV", PVs[i]);
-		m_irradiance_buffer->bindFrameTexture(i);
+		m_buffer->bindFrameTexture(i);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		m_mesh->draw();
 	}
-	m_irradiance_buffer->unbind();
+	m_buffer->unbind();
 	glBindTexture(GL_TEXTURE_2D, 0);
 	shader->unload();
 }
@@ -235,7 +217,7 @@ void IrradianceMap::draw(glm::mat4& P, glm::mat4& V)
 	shader->setMat4("PV", PV);
 	shader->setInt("map", 0);
 	glActiveTexture(GL_TEXTURE0);
-	m_irradiance_buffer->bindCubemapTexture();
+	m_buffer->bindCubemapTexture();
 	m_mesh->draw();
 	glDepthFunc(GL_LESS);
 }
@@ -249,8 +231,8 @@ PrefilterMap::PrefilterMap(int width, int height) :
 {
 	cout << "Prefilter map constructor " << m_width << ", " << m_height << endl;
 
-	m_prefilter_buffer = make_shared<CubemapBuffer>();
-	m_prefilter_buffer->createBuffers(m_width, m_height, true);
+	m_buffer = make_shared<CubemapBuffer>();
+	m_buffer->createBuffers(m_width, m_height, true);
 
 	vector<string> shader_path = { "assets/shaders/Cubemap.vert", "assets/shaders/Prefiltermap.frag" };
 	ShaderManager::createShader("Prefiltermap", shader_path);
@@ -265,7 +247,7 @@ PrefilterMap::PrefilterMap(int width, int height) :
 PrefilterMap::~PrefilterMap()
 {};
 
-void PrefilterMap::drawMap(CubemapBuffer& cubemap)
+void PrefilterMap::drawMap(const CubeMap& cubemap)
 {
 	shared_ptr<Shader> shader = ShaderManager::getShader("Prefiltermap");
 
@@ -283,9 +265,9 @@ void PrefilterMap::drawMap(CubemapBuffer& cubemap)
 	shader->load();
 	shader->setInt("map", 0);
 	glActiveTexture(GL_TEXTURE0);
-	cubemap.bindCubemapTexture();
+	cubemap.bindTexture();
 
-	m_prefilter_buffer->bind();
+	m_buffer->bind();
 	unsigned int levels = 5;
 	for (unsigned int i = 0; i < levels; ++i)
 	{
@@ -293,18 +275,18 @@ void PrefilterMap::drawMap(CubemapBuffer& cubemap)
 		unsigned int mip_width = static_cast<unsigned int>(m_width * pow(0.5, i));
 		unsigned int mip_height = static_cast<unsigned int>(m_height * pow(0.5, i));
 
-		m_prefilter_buffer->bindRenderBuffer(mip_width, mip_height);
+		m_buffer->bindRenderBuffer(mip_width, mip_height);
 		glViewport(0, 0, mip_width, mip_height);
 		shader->setFloat("roughness", roughness);
 		for (int j = 0; j < 6; ++j)
 		{
 			shader->setMat4("PV", PVs[j]);
-			m_prefilter_buffer->bindMipMapTexture(j, i);
+			m_buffer->bindMipMapTexture(j, i);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			m_mesh->draw();
 		}
 	}
-	m_prefilter_buffer->unbind();
+	m_buffer->unbind();
 	glBindTexture(GL_TEXTURE_2D, 0);
 	shader->unload();
 }
@@ -316,8 +298,8 @@ LUTMap::LUTMap(int width, int height) : Map(width, height, "LUTMap")
 {
 	cout << "LUT map constructor " << m_width << ", " << m_height << endl;
 	
-	m_fb = make_shared<FrameBuffer>();
-	m_fb->createBuffers(width, height);
+	m_buffer= make_shared<FrameBuffer>();
+	m_buffer->createBuffers(width, height);
 
 	vector<string> shader_path = { "assets/shaders/LUTMap.vert", "assets/shaders/LUTMap.frag" };
 	ShaderManager::createShader("LUTMap", shader_path);
@@ -336,12 +318,13 @@ void LUTMap::drawMap()
 {
 	shared_ptr<Shader> shader = ShaderManager::getShader("LUTMap");
 
-	m_fb->bind();
-	glViewport(0, 0, m_width, m_height);
-	shader->load();
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	m_mesh->draw();
-	m_fb->unbind();
+	m_buffer->bind();
+		glViewport(0, 0, m_width, m_height);
+		shader->load();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		m_mesh->draw();
+	m_buffer->unbind();
+
 	shader->unload();
 }
 

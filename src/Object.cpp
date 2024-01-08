@@ -4,6 +4,7 @@
 
 #include "Buffer.h"
 #include "Material.h"
+#include "MapManager.h"
 #include "MeshImporter.h"
 #include "Shader.h"
 #include "ShaderManager.h"
@@ -13,20 +14,20 @@
 #include "Light.h"
 
 Object::Object() :
-	m_mesh(nullptr), m_name(""),
-	m_id(0), m_move_axis(-1), m_collection(-1),
+	m_mesh(nullptr), m_name(""), m_id(0), 
+	m_object_id(-1), m_move_axis(-1), m_collection(-1),
 	m_transform_type(Transform::TRANSLATE),
 	m_click(false), m_delete(false), m_is_popup(false){}
 
 Object::Object(const string& name) :
-	m_mesh(nullptr), m_name(name),
-	m_id(0), m_move_axis(-1), m_collection(-1),
+	m_mesh(nullptr), m_name(name), m_id(0),
+	m_object_id(-1), m_move_axis(-1), m_collection(-1),
 	m_transform_type(Transform::TRANSLATE),
 	m_click(false), m_delete(false), m_is_popup(false) {}
 
 Object::Object(const shared_ptr<Mesh>& mesh) :
-	m_mesh(mesh), m_name(m_mesh->getName()), 
-	m_id(0), m_move_axis(-1), m_collection(-1),
+	m_mesh(mesh), m_name(m_mesh->getName()), m_id(0),
+	m_object_id(-1), m_move_axis(-1), m_collection(-1),
 	m_transform_type(Transform::TRANSLATE),
 	m_click(false), m_delete(false), m_is_popup(false)
 {
@@ -49,32 +50,36 @@ void Object::drawMesh(
 void Object::draw(
 	const glm::mat4& P, 
 	const glm::mat4& V, 
-	Light& light, 
-	glm::vec3& view_pos, 
-	ShadowMap& shadow, IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut)
+	const glm::vec3& view_pos, 
+	const Light& light)
 {
 	shared_ptr<Shader> shader = ShaderManager::getShader("Default");
 
 	shader->load();
-	glm::mat4 shadow_proj = (*shadow.getProj()) * (*shadow.getView());
+	glm::mat4 shadow_P = MapManager::getManager()->getShadowMapProj();
+	glm::mat4 shadow_V = MapManager::getManager()->getShadowMapView();
+	glm::mat4 shadow_proj = (shadow_P * shadow_V);
 	shader->setMat4("light_matrix", shadow_proj);
-	shader->setVec3("light_pos", *shadow.getPosition());
+	shader->setVec3("light_pos", MapManager::getManager()->getShadowMapPos());
 	shader->setVec3("view_pos", view_pos);
 	shader->setLight(light);
 	shader->setInt("preview", 0);
 
 	shader->setInt("shadow_map", 0);
 	glActiveTexture(GL_TEXTURE0);
-	shadow.getBuffer().bindFrameTexture();
+	MapManager::getManager()->bindShadowMap();
+	
 	shader->setInt("irradiance_map", 1);
 	glActiveTexture(GL_TEXTURE0 + 1);
-	irradiance.getCubemapBuffer()->bindCubemapTexture();
+	MapManager::getManager()->bindPrefilterMap();
+	
 	shader->setInt("prefilter_map", 2);
 	glActiveTexture(GL_TEXTURE0 + 2);
-	prefilter.getCubemapBuffer()->bindCubemapTexture();
+	MapManager::getManager()->bindPrefilterMap();
+
 	shader->setInt("lut_map", 3);
 	glActiveTexture(GL_TEXTURE0 + 3);
-	lut.getFrameBuffer()->bindFrameTexture();
+	MapManager::getManager()->bindLUTMap();
 
 	shader->setPVM(P, V, m_transform.getModelTransform());
 
@@ -214,11 +219,6 @@ void Object::setTransformType(int type)
 	{
 		m_transform_type = Transform::SCALE;
 	}
-}
-
-void Object::setupFramebuffer(const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap, Camera& camera)
-{
-	return;
 }
 
 void Object::drawTerrain(const glm::mat4& P, const glm::mat4& V, const Shader& shader, float res)

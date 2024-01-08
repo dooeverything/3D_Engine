@@ -27,7 +27,6 @@ public:
 	~ImGuiPanel();
 	virtual void render(
 		shared_ptr<ObjectCollection>& collection,
-		vector<shared_ptr<Object>>& scene_objects,
 		shared_ptr<Object>& clicked_object) = 0;
 
 	virtual void calculatePanelSize();
@@ -39,6 +38,17 @@ private:
 	string m_name;
 };
 
+class ImGuiScene : public ImGuiPanel
+{
+public:
+	ImGuiScene();
+	~ImGuiScene();
+
+	virtual void 
+private:
+
+};
+
 class ImGuiMenuBar : public ImGuiPanel
 {
 public:
@@ -46,11 +56,7 @@ public:
 	~ImGuiMenuBar();
 	virtual void render(
 		shared_ptr<ObjectCollection>& collection,
-		vector<shared_ptr<Object>>& scene_objects, 
 		shared_ptr<Object>& clicked_object) override;
-
-	virtual void addObject(
-		const vector<shared_ptr<Object>>& scene_objects, Object& add_object);
 
 private:
 	unique_ptr<FileDialog> m_fd;
@@ -63,7 +69,6 @@ public:
 	~SceneHierarchyPanel();
 	virtual void render(
 		shared_ptr<ObjectCollection>& collection,
-		vector<shared_ptr<Object>>& scene_objects, 
 		shared_ptr<Object>& clicked_object) override;
 };
 
@@ -74,7 +79,6 @@ public:
 	~PropertyPanel();
 	virtual void render(
 		shared_ptr<ObjectCollection>& collection,
-		vector<shared_ptr<Object>>& scene_objects, 
 		shared_ptr<Object>& clicked_object) override;
 
 private:
@@ -90,13 +94,11 @@ public:
 
 	void popup(
 		shared_ptr<ObjectCollection>& collection,
-		vector<shared_ptr<Object>>& scene_objects,
 		shared_ptr<Object>& clicked_object,
 		bool& is_popup, bool& is_clicked_gizmo);
 
 	virtual void render(
 		shared_ptr<ObjectCollection>& collection,
-		vector<shared_ptr<Object>>& scene_objects,
 		shared_ptr<Object>& clicked_object) override;
 };
 
@@ -108,12 +110,10 @@ public:
 
 	void popup(
 		shared_ptr<ObjectCollection>& collection,
-		vector<shared_ptr<Object>>& scene_objects,
 		shared_ptr<Object>& clicked_object);
 
 	virtual void render(
 		shared_ptr<ObjectCollection>& collection,
-		vector<shared_ptr<Object>>& scene_objects,
 		shared_ptr<Object>& clicked_object) override;
 	
 };

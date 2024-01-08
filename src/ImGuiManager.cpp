@@ -26,14 +26,13 @@ ImGuiManager* ImGuiManager::getImGuiManager()
 
 void ImGuiManager::drawMainMenu(
 	shared_ptr<ObjectCollection>& collection, 
-	vector<shared_ptr<Object>>& scene_objects, 
 	shared_ptr<Object>& clicked_object)
 {
 	ImGui::BeginMainMenuBar();
 	{
 		if (ImGui::BeginMenu("Add"))
 		{
-			m_main_menu->render(collection, scene_objects, clicked_object);
+			m_main_menu->render(collection, clicked_object);
 			ImGui::EndMenu();
 		}
 		ImGui::EndMenuBar();
@@ -43,11 +42,10 @@ void ImGuiManager::drawMainMenu(
 
 void ImGuiManager::drawPanels(
 	shared_ptr<ObjectCollection>& collection, 
-	vector<shared_ptr<Object>>& scene_objects,
 	shared_ptr<Object>& clicked_object)
 {
 	for (auto& it : m_panels)
-		it->render(collection, scene_objects, clicked_object);
+		it->render(collection, clicked_object);
 }
 
 void ImGuiManager::drawButtons()
@@ -70,19 +68,17 @@ void ImGuiManager::drawButtons()
 
 void ImGuiManager::popupObjectMenu(
 	shared_ptr<ObjectCollection>& collection, 
-	vector<shared_ptr<Object>>& scene_objects, 
 	shared_ptr<Object>& clicked_object, 
 	bool& is_popup, bool& is_clicked_gizmo)
 {
-	m_popup_object->popup(collection, scene_objects, clicked_object, is_popup, is_clicked_gizmo);
+	m_popup_object->popup(collection, clicked_object, is_popup, is_clicked_gizmo);
 }
 
 void ImGuiManager::popupHierarchyMenu(
 	shared_ptr<ObjectCollection>& collection, 
-	vector<shared_ptr<Object>>& scene_objects, 
 	shared_ptr<Object>& clicked_object)
 {
-	m_popup_scene->popup(collection, scene_objects, clicked_object);
+	m_popup_scene->popup(collection, clicked_object);
 }
 
 bool ImGuiManager::isMouseInPanel(ImVec2 pos)

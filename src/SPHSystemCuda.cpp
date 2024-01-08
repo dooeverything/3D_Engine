@@ -1,5 +1,6 @@
 #include "SPHSystemCuda.h"
 #include "SPHSolverKernel.cuh"
+#include "MapManager.h"
 #include "MeshImporter.h"
 #include "Shader.h"
 #include "ShaderManager.h"
@@ -325,11 +326,12 @@ void SPHSystemCuda::simulate()
 	setHash(m_hash, m_neighbors);
 }
 
-void SPHSystemCuda::draw(const glm::mat4& P, const glm::mat4& V,
-	Light& light, glm::vec3& view_pos, ShadowMap& shadow,
-	IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut)
+void SPHSystemCuda::draw(
+	const glm::mat4& P,
+	const glm::mat4& V,
+	glm::vec3& view_pos,
+	Light& light)
 {
-
 	simulate();
 
 	shared_ptr<Shader> shader = ShaderManager::getShader("FluidRender");
@@ -339,43 +341,20 @@ void SPHSystemCuda::draw(const glm::mat4& P, const glm::mat4& V,
 	shader->setInt("map", 0);
 	Quad::getQuad()->draw();
 
-	shader = ShaderManager::getShader("Default");
-	shader->load();
-	glm::mat4 shadow_proj = (*shadow.getProj()) * (*shadow.getView());
-	shader->setMat4("light_matrix", shadow_proj);
-	shader->setVec3("light_pos", *shadow.getPosition());
-	shader->setVec3("view_pos", view_pos);
-	shader->setLight(light);
-	shader->setInt("preview", 0);
-
-	// Load shadow map as texture
-	shader->setInt("shadow_map", 0);
-	glActiveTexture(GL_TEXTURE0);
-	shadow.getBuffer().bindFrameTexture();
-	shader->setInt("irradiance_map", 1);
-	glActiveTexture(GL_TEXTURE0 + 1);
-	irradiance.getCubemapBuffer()->bindCubemapTexture();
-	shader->setInt("prefilter_map", 2);
-	glActiveTexture(GL_TEXTURE0 + 2);
-	prefilter.getCubemapBuffer()->bindCubemapTexture();
-	shader->setInt("lut_map", 3);
-	glActiveTexture(GL_TEXTURE0 + 3);
-	lut.getFrameBuffer()->bindFrameTexture();
-	drawMesh(P, V, *shader);
-
+	Object::draw(P, V, view_pos, light);
 }
 
-void SPHSystemCuda::setupFramebuffer(const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap, Camera& camera)
+void SPHSystemCuda::setupFrameBuffer(const glm::mat4& V, const Camera& camera)
 {
 	glViewport(0, 0, m_fb_width, m_fb_height);
-	computeDepth(camera.getSP(), V);
-	computeCurvature(camera.getP(), V);
-	computeNormal(camera.getP(), V, depth, cubemap);
+	getDepth(camera.getSP(), V, camera);
+	getCurvature(camera.getP(), V);
+	getNormal(camera.getP(), V);
 }
 
 // [Screen space rendering] : https://developer.download.nvidia.com/presentations/2010/gdc/Direct3D_Effects.pdf
 // [Screen space fluid rendering with curvature flow] : https://dl.acm.org/doi/10.1145/1507149.1507164
-void SPHSystemCuda::computeDepth(const glm::mat4& P, const glm::mat4& V)
+void SPHSystemCuda::getDepth(const glm::mat4& P, const glm::mat4& V, const Camera& camera)
 {
 	float aspect = float(m_fb_width / m_fb_height);
 	float point_scale = m_fb_width / aspect * (1.0f / tanf(glm::radians(45.0f)));
@@ -391,7 +370,7 @@ void SPHSystemCuda::computeDepth(const glm::mat4& P, const glm::mat4& V)
 
 }
 
-void SPHSystemCuda::computeCurvature(const glm::mat4& P, const glm::mat4& V)
+void SPHSystemCuda::getCurvature(const glm::mat4& P, const glm::mat4& V)
 {
 	shared_ptr<Shader> shader = ShaderManager::getShader("Curvature");
 	glm::vec2 res = glm::vec2(m_fb_width, m_fb_height);
@@ -439,7 +418,7 @@ void SPHSystemCuda::computeCurvature(const glm::mat4& P, const glm::mat4& V)
 	}
 }
 
-void SPHSystemCuda::computeNormal(const glm::mat4& P, const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap)
+void SPHSystemCuda::getNormal(const glm::mat4& P, const glm::mat4& V)
 {
 	glm::vec2 inverse_tex = glm::vec2(1.0 / m_fb_width, 1.0 / m_fb_height);
 	shared_ptr<Shader> shader = ShaderManager::getShader("CurvatureNormal");
@@ -456,11 +435,11 @@ void SPHSystemCuda::computeNormal(const glm::mat4& P, const glm::mat4& V, Shadow
 
 		shader->setInt("depth_map", 1);
 		glActiveTexture(GL_TEXTURE1);
-		depth.getBuffer().bindFrameTexture();
+		MapManager::getManager()->bindDepthmap();
 
 		shader->setInt("cubemap", 2);
-		glActiveTexture(GL_TEXTURE2);
-		cubemap.getCubemapBuffer()->bindCubemapTexture();
+		glActiveTexture(GL_TEXTURE0 + 2);
+		MapManager::getManager()->bindIrradianceMap();
 
 		shader->setMat4("projection", P);
 		shader->setMat4("view", V);

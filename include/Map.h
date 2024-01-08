@@ -25,6 +25,9 @@ public:
 	Map(int width, int height, string name);
 	~Map();
 
+	virtual inline void bindTexture() = 0;
+	virtual inline void bindTexture() const = 0;
+
 protected:
 	int m_width;
 	int m_height;
@@ -32,26 +35,27 @@ protected:
 	shared_ptr<Mesh> m_mesh;
 };
 
-class ShadowMap : public Map
+class DepthMap : public Map
 {
 public:
-	ShadowMap(int width, int height);
-	ShadowMap(int width, int height, glm::vec3 m_position, bool perspective);
-	~ShadowMap();
+	DepthMap(int width, int height);
+	DepthMap(int width, int height, glm::vec3 m_position, bool perspective);
+	~DepthMap();
 
-	void draw(vector<shared_ptr<Object>>& gameobjects);
-	void draw(shared_ptr<Object>& gameobject);
+	void draw();
 
-	inline ShadowBuffer& getBuffer() const { return *m_shadow_buffer; };
-	inline glm::mat4* getProj() { return &m_proj; };
-	inline glm::mat4* getView() { return &m_view; };
-	inline glm::vec3* getPosition() { return &m_light_position; };
+	virtual inline void bindTexture() override { m_buffer->bindFrameTexture(); };
+	virtual inline void bindTexture() const override { m_buffer->bindFrameTexture(); };
+
+	inline glm::mat4 getProj() { return m_proj; };
+	inline glm::mat4 getView() { return m_view; };
+	inline glm::vec3 getPosition() { return m_light_position; };
 
 	inline void setProj(const glm::mat4& P) { m_proj = P; };
 	inline void setView(const glm::mat4& V) { m_view = V; };
 
 private:
-	shared_ptr<ShadowBuffer> m_shadow_buffer;
+	shared_ptr<ShadowBuffer> m_buffer;
 	glm::mat4 m_proj;
 	glm::mat4 m_view;
 	glm::vec3 m_light_position;
@@ -64,27 +68,31 @@ public:
 	CubeMap(int width, int height);
 	~CubeMap();
 
+	virtual inline void bindTexture() override { m_buffer->bindCubemapTexture(); };
+	virtual inline void bindTexture() const override { m_buffer->bindCubemapTexture(); };
+
 	void drawMap();
 	void draw(const glm::mat4& P, const glm::mat4& V);
-	inline shared_ptr<CubemapBuffer> getCubemapBuffer() { return m_cubemap_buffer; };
 
 private:
-	shared_ptr<CubemapBuffer> m_cubemap_buffer;
+	shared_ptr<CubemapBuffer> m_buffer;
 	shared_ptr<Texture> m_hdr_texture;
 };
 
-class IrradianceMap : protected Map
+class IrradianceMap : public Map
 {
 public:
 	IrradianceMap(int width, int height);
 	~IrradianceMap();
 
-	void drawMap(CubemapBuffer& cubemap);
+	virtual inline void bindTexture() override { m_buffer->bindCubemapTexture(); };
+	virtual inline void bindTexture() const override { m_buffer->bindCubemapTexture(); };
+
+	void drawMap(const CubeMap& cubemap);
 	void draw(glm::mat4& P, glm::mat4& V);
-	inline shared_ptr<CubemapBuffer> getCubemapBuffer() { return m_irradiance_buffer; };
 
 private:
-	shared_ptr<CubemapBuffer> m_irradiance_buffer;
+	shared_ptr<CubemapBuffer> m_buffer;
 };
 
 class PrefilterMap : public Map
@@ -94,25 +102,30 @@ public:
 	PrefilterMap(int width, int height);
 	~PrefilterMap();
 
-	void drawMap(CubemapBuffer& cubemap);
+	virtual inline void bindTexture() override { m_buffer->bindCubemapTexture(); };
+	virtual inline void bindTexture() const override { m_buffer->bindCubemapTexture(); };
+
+	void drawMap(const CubeMap& cubemap);
 	//void draw(glm::mat4& P, glm::mat4& V);
-	inline shared_ptr<CubemapBuffer> getCubemapBuffer() { return m_prefilter_buffer; };
 
 private:
-	shared_ptr<CubemapBuffer> m_prefilter_buffer;
+	shared_ptr<CubemapBuffer> m_buffer;
 };
 
-class LUTMap : protected Map
+class LUTMap : public Map
 {
 public:
 	LUTMap();
 	LUTMap(int width, int height);
 	~LUTMap();
 
+	virtual inline void bindTexture() override { m_buffer->bindFrameTexture(); };
+	virtual inline void bindTexture() const override { m_buffer->bindFrameTexture(); };
+
 	void drawMap();
-	inline shared_ptr<FrameBuffer> getFrameBuffer() { return m_fb; };
+
 private:
-	shared_ptr<FrameBuffer> m_fb;
+	shared_ptr<FrameBuffer> m_buffer;
 };
 
 class EnvironmentMap : public Map

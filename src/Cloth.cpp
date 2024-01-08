@@ -387,53 +387,12 @@ void Cloth::updateCollision(vector<shared_ptr<ClothParticle>>& predict)
 
 }
 
-void Cloth::renderProperty()
-{
-	bool expand_fluid = ImGui::TreeNode("Cloth");
-	if (expand_fluid)
-	{
-		static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
-		ImVec2 cell_padding(0.0f, 5.0f);
-		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
-		ImGui::BeginTable("Simulation", 2);
-		ImU32 cell_bg_color = ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.7f, 0.65f));
-
-		ImGui::TableNextRow();
-		ImGui::TableNextColumn();
-		ImGui::AlignTextToFramePadding();
-
-		static int clicked = 0;
-		if (ImGui::Button("Click to simulate"))
-		{
-			clicked++;
-		}
-
-		if (clicked & 1)
-		{
-			ImGui::TableNextColumn();
-			if (ImGui::Button("Start") && m_simulate == false)
-			{
-				m_simulate = true;
-			}
-
-			ImGui::SameLine();
-			if (ImGui::Button("Stop") && m_simulate == true)
-			{
-				m_simulate = false;
-			}
-		}
-
-		ImGui::EndTable();
-
-		ImGui::Text("Simulation average: %.3f ms/frame (%.1f FPS)", double(1000.0 / (ImGui::GetIO().Framerate)), double(ImGui::GetIO().Framerate));
-
-		ImGui::PopStyleVar();
-		ImGui::TreePop();
-	}
-}
-
-void Cloth::draw(const glm::mat4& P, const glm::mat4& V, Light& light, glm::vec3& view_pos, ShadowMap& shadow, IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut)
+void Cloth::draw(
+	const glm::mat4& P,
+	const glm::mat4& V,
+	const glm::vec3& view_pos,
+	const Light& light)
 {
 	simulate();
-	Object::draw(P, V, light, view_pos, shadow, irradiance, prefilter, lut);
+	Object::draw(P, V, view_pos, light);
 }

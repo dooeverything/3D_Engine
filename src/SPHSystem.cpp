@@ -1,4 +1,5 @@
 #include "SPHSystem.h"
+#include "MapManager.h"
 #include "MeshImporter.h"
 #include "Shader.h"
 #include "ShaderManager.h"
@@ -349,15 +350,15 @@ void SPHSystem::buildHash()
 	}
 }
 
-void SPHSystem::setupFrame(const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap, Camera& camera)
+void SPHSystem::setupFrame(const glm::mat4& V, const Camera& camera)
 {
 	glViewport(0, 0, m_fb_width, m_fb_height);
 	getDepth(camera.getSP(), V, camera);
 	getCurvature(camera.getP(), V);
-	getNormal(camera.getP(), V, depth, cubemap);
+	getNormal(camera.getP(), V);
 }
 
-void SPHSystem::getDepth(const glm::mat4& P, const glm::mat4& V, Camera& camera)
+void SPHSystem::getDepth(const glm::mat4& P, const glm::mat4& V, const Camera& camera)
 {
 	float aspect = float(m_fb_width / m_fb_height);
 	float point_scale = m_fb_width / aspect * (1.0f / tanf(glm::radians(45.0f)));
@@ -370,56 +371,6 @@ void SPHSystem::getDepth(const glm::mat4& P, const glm::mat4& V, Camera& camera)
 		shader->setFloat("point_scale", point_scale);
 		m_point->drawPoint(P, V);
 	m_fb->unbind();
-}
-
-void SPHSystem::blurDepth()
-{
-	//glm::vec2 dir_x = glm::vec2(1.0 / m_fb_width, 0.0);
-	//glm::vec2 dir_y = glm::vec2(0.0, 1.0 / m_fb_height);
-	//
-	//m_fb_blur_x->bind();
-	//	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//	m_screen->getShader()->load();
-	//	glActiveTexture(GL_TEXTURE0);
-	//	m_fb->bindFrameTexture();
-	//	m_screen->getShader()->setInt("map", 0);
-	//	m_screen->getShader()->setVec2("dir", dir_x);
-	//	m_screen->getMesh()->draw();
-	//m_fb_blur_x->unbind();
-
-	//m_fb_blur_y->bind();
-	//	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//	m_screen->getShader()->load();
-	//	glActiveTexture(GL_TEXTURE0);
-	//	m_fb_blur_x->bindFrameTexture();
-	//	m_screen->getShader()->setInt("map", 0);
-	//	m_screen->getShader()->setVec2("dir", dir_y);
-	//	m_screen->getMesh()->draw();
-	//m_fb_blur_y->unbind();
-
-	//m_fb_blur_x->bind();
-	//	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//	m_screen->getShader()->load();
-	//	glActiveTexture(GL_TEXTURE0);
-	//	m_fb_blur_y->bindFrameTexture();
-	//	m_screen->getShader()->setInt("map", 0);
-	//	m_screen->getShader()->setVec2("dir", dir_x);
-	//	m_screen->getMesh()->draw();
-	//m_fb_blur_x->unbind();
-
-	//m_fb_blur_y->bind();
-	//	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//	m_screen->getShader()->load();
-	//	glActiveTexture(GL_TEXTURE0);
-	//	m_fb_blur_x->bindFrameTexture();
-	//	m_screen->getShader()->setInt("map", 0);
-	//	m_screen->getShader()->setVec2("dir", dir_y);
-	//	m_screen->getMesh()->draw();
-	//m_fb_blur_y->unbind();
 }
 
 void SPHSystem::getCurvature(const glm::mat4& P, const glm::mat4& V)
@@ -471,7 +422,7 @@ void SPHSystem::getCurvature(const glm::mat4& P, const glm::mat4& V)
 	}
 }
 
-void SPHSystem::getNormal(const glm::mat4& P, const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap)
+void SPHSystem::getNormal(const glm::mat4& P, const glm::mat4& V)
 {
 	shared_ptr<Shader> shader = ShaderManager::getShader("CurvatureNormal");
 
@@ -489,11 +440,11 @@ void SPHSystem::getNormal(const glm::mat4& P, const glm::mat4& V, ShadowMap& dep
 		
 		shader->setInt("depth_map", 1);
 		glActiveTexture(GL_TEXTURE1);
-		depth.getBuffer().bindFrameTexture();
+		MapManager::getManager()->bindDepthmap();
 
 		shader->setInt("cubemap", 2);
 		glActiveTexture(GL_TEXTURE0 + 2);
-		cubemap.getCubemapBuffer()->bindCubemapTexture();
+		MapManager::getManager()->bindIrradianceMap();
 	
 		shader->setMat4("projection", P);
 		shader->setMat4("view", V);

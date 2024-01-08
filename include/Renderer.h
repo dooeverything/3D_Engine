@@ -7,7 +7,6 @@
 #include "Camera.h"
 #include "ImGuiPanel.h"
 #include "Light.h"
-#include "Map.h"
 #include "SDL_GL_Window.h"
 
 class Cloth;
@@ -35,6 +34,9 @@ public:
 	void renderImGui();
 	void renderScene();
 
+	void checkObjectClick(const glm::vec3& ray_dir, const glm::vec3& ray_pos);
+	void checkGizmoClick(const glm::vec3& ray_dir, const glm::vec3& ray_pos, bool is_popup);
+
 	void end();
 
 private:
@@ -47,20 +49,11 @@ private:
 
 	unique_ptr<FrameBuffer> m_framebuffer_multi;
 	unique_ptr<FrameBuffer> m_scene;
-
-	unique_ptr<ShadowMap> m_depth_map;
-	unique_ptr<ShadowMap> m_shadow_map;
-	unique_ptr<CubeMap> m_cubemap;
-	unique_ptr<IrradianceMap> m_irradiancemap;
-	unique_ptr<PrefilterMap> m_prefilter;
-	unique_ptr<LUTMap> m_lut;
-	unique_ptr<EnvironmentMap> m_environment;
 	
-	vector<shared_ptr<Gizmo>> m_gizmos;
-	vector<shared_ptr<Object>> m_scene_objects;
 	shared_ptr<ObjectCollection> m_scene_collections;
 	shared_ptr<Object> m_click_object;
-	shared_ptr<SPHSystemCuda> m_sph;
+	
+	vector<shared_ptr<Gizmo>> m_gizmos;
 	unique_ptr<Outline> m_outline;
 
 	long long m_start_time;
@@ -72,8 +65,7 @@ private:
 	bool m_is_drag;
 	bool m_is_click_gizmo;
 	bool m_is_moving_gizmo;
-	bool m_is_popup = false;
-
+	bool m_is_popup;
 };
 
 #endif

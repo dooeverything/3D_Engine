@@ -92,6 +92,8 @@ void Outline::setupBuffers(Object& go, const glm::mat4& V, float width, float he
 
 void Outline::draw(Object& go)
 {
+	glDisable(GL_DEPTH_TEST);
+
 	shared_ptr<Shader> shader = ShaderManager::getShader("Outline");
 	shader->load();
 	glActiveTexture(GL_TEXTURE0);
@@ -102,6 +104,8 @@ void Outline::draw(Object& go)
 	shader->setInt("mask_map", 1);
 	shader->setInt("pass", 2);
 	Quad::getQuad()->draw();
+
+	glEnable(GL_DEPTH_TEST);
 }
 
 void Outline::clearOutlineFrame()

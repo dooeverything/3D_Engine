@@ -31,9 +31,12 @@ public:
 	void updateSceneProjection();
 	void updateView();
 
-	inline const glm::mat4& getP() { return m_projectMatrix; };
-	inline const glm::mat4& getSP() { return m_scene_projectMatrix; };
-	inline const glm::mat4& getV() { return m_viewMatrix; };
+	inline glm::mat4 getP() { return m_projectMatrix; };
+	inline glm::mat4 getP() const{ return m_projectMatrix; };
+	inline glm::mat4 getSP() { return m_scene_projectMatrix; };
+	inline glm::mat4 getSP() const { return m_scene_projectMatrix; };
+	inline glm::mat4 getV() { return m_viewMatrix; };
+	inline glm::mat4 getV() const { return m_viewMatrix; };
 
 	inline glm::vec3 getPos() { return m_pos; };
 	inline glm::vec3 getForward() { return m_forward; };

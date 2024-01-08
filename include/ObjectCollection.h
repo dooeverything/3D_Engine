@@ -12,17 +12,18 @@
 using namespace std;
 
 class Object;
-
+class ShadowMap;
 class ObjectCollection;
+
 class ObjectCollectionManager
 {
 public:
 	static shared_ptr<ObjectCollection> findRoot(shared_ptr<ObjectCollection>& object);
-	static void findAndRemove(
-		shared_ptr<ObjectCollection>& root,
-		const string& name,
-		int collection_id);
-	static void removeObject(shared_ptr<ObjectCollection>& collection, shared_ptr<Object>& object);
+	static void findAndRemove(shared_ptr<ObjectCollection>& root, const string& active_object);
+	static void removeObjectFromCollection(shared_ptr<ObjectCollection>& collection, const string& active_object);
+
+private:
+	ObjectCollectionManager() = delete;
 };
 
 class ObjectCollection : public enable_shared_from_this<ObjectCollection>
@@ -31,9 +32,14 @@ public:
 	ObjectCollection(int id);
 	~ObjectCollection();
 
-	bool findAndRemoveObject(const string& name);
+	bool findAndRemoveObject(const string& active_object);
 	void addObject(const shared_ptr<Object>& object);
 	void addChild(const shared_ptr<ObjectCollection>& object);
+
+	void renderObjectHierarchy(
+		shared_ptr<Object>& active_object,
+		int n_scene_objects, 
+		int& selection_object);
 
 	void renderPanel(
 		shared_ptr<Object>& active_object,
@@ -42,10 +48,13 @@ public:
 
 	void renderPopup(shared_ptr<Object>& active_object);
 
+	void resetObjects();
+
+	//shared_ptr<Object> getObject(const shared_ptr<Object>& object);
 	inline weak_ptr<ObjectCollection> getParent() { return m_parent; };
-	inline shared_ptr<Object> getObject(const shared_ptr<Object>& object);
 	inline string getNameId() const { return m_name + to_string(m_id); };
 	inline int getNumChilds() const { return static_cast<int>(m_childs.size()); };
+	inline int getNumObjects() { return m_objects.size(); };
 	inline int getId() { return m_id; };
 
 	inline void setParent(const shared_ptr<ObjectCollection> parent) { m_parent = parent; };

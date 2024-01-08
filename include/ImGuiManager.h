@@ -24,25 +24,21 @@ public:
 
 	void drawMainMenu(
 		shared_ptr<ObjectCollection>& collection,
-		vector<shared_ptr<Object>>& scene_objects,
 		shared_ptr<Object>& clicked_object);
 	
 	void drawPanels(
 		shared_ptr<ObjectCollection>& collection,
-		vector<shared_ptr<Object>>& scene_objects,
 		shared_ptr<Object>& clicked_object);
 
 	void drawButtons();
 
 	void popupObjectMenu(
 		shared_ptr<ObjectCollection>& collection,
-		vector<shared_ptr<Object>>& scene_objects,
 		shared_ptr<Object>& clicked_object,
 		bool& is_popup, bool& is_clicked_gizmo);
 	
 	void popupHierarchyMenu(
 		shared_ptr<ObjectCollection>& collection,
-		vector<shared_ptr<Object>>& scene_objects,
 		shared_ptr<Object>& clicked_object);
 
 	bool isMouseInPanel(ImVec2 pos);

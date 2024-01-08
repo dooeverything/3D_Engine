@@ -47,7 +47,7 @@ public:
     virtual void update();
     virtual void draw();
     
-    virtual void setupFrame(const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap, Camera& camera);
+    virtual void setupFrame(const glm::mat4& V, const Camera& camera);
 
     float H;
     float H2;
@@ -71,10 +71,9 @@ private:
     void updateDensPress();
     void updateForces();
 
-    void getDepth(const glm::mat4& P, const glm::mat4& V, Camera& camera);
+    void getDepth(const glm::mat4& P, const glm::mat4& V, const Camera& camera);
     void getCurvature(const glm::mat4& P, const glm::mat4& V);
-    void getNormal(const glm::mat4& P, const glm::mat4& V, ShadowMap& depth, CubeMap& cubemap);
-    void blurDepth();
+    void getNormal(const glm::mat4& P, const glm::mat4& V);
 
     vector<shared_ptr<FluidParticle>> m_particles;
     unordered_map<info::uint, FluidParticle*> m_hash_table;

@@ -6,6 +6,7 @@
 
 #include "Object.h"
 #include "Tri.h"
+#include "ImGuiButton.h"
 
 struct TerrainVertex
 {
@@ -26,14 +27,19 @@ public:
 	void createVertex();
 	virtual void updateVertex(glm::vec3 ray_dir, glm::vec3 ray_pos, bool mouse_down);
 
-	virtual void draw(const glm::mat4& P, const glm::mat4& V,
-		Light& light, glm::vec3& view_pos, ShadowMap& shadow,
-		IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut);
+	virtual void draw(
+		const glm::mat4& P,
+		const glm::mat4& V,
+		const glm::vec3& view_pos,
+		const Light& light) override;
 
-	virtual void renderProperty();
+	virtual void renderExtraProperty() override;
 
 private:
 	int getIndex(const glm::vec2&);
+
+	unique_ptr<ImGuiButton> m_button_plus;
+	unique_ptr<ImGuiButton> m_button_minus;
 
 	vector<shared_ptr<Tri>> m_trimeshes;
 	vector<shared_ptr<TerrainVertex>> m_vertices;

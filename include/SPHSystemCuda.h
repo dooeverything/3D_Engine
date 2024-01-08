@@ -20,23 +20,22 @@ public:
 	//void updateHash();
 
 	void simulate();
-	virtual void draw(const glm::mat4& P, const glm::mat4& V,
-				Light& light, glm::vec3& view_pos, ShadowMap& shadow,
-				IrradianceMap& irradiance, PrefilterMap& prefilter, LUTMap& lut);
+	virtual void draw(
+		const glm::mat4& P, 
+		const glm::mat4& V,
+		glm::vec3& view_pos,
+		Light& light);
 
-	virtual void setupFramebuffer(
-					const glm::mat4& V, ShadowMap& depth,
-					CubeMap& cubemap, Camera& camera);
+	virtual void setupFrameBuffer(const glm::mat4& V, const Camera& camera);
 	virtual void renderProperty();
 
 private:
 	void initParticle();
 	void initFramebuffer();
 	void initShader();
-	void computeDepth(const glm::mat4& P, const glm::mat4& V);
-	void computeCurvature(const glm::mat4& P, const glm::mat4& V);
-	void computeNormal(const glm::mat4& P, const glm::mat4& V, 
-						ShadowMap& depth, CubeMap& cubemap);
+	void getDepth(const glm::mat4& P, const glm::mat4& V, const Camera& camera);
+	void getCurvature(const glm::mat4& P, const glm::mat4& V);
+	void getNormal(const glm::mat4& P, const glm::mat4& V);
 	void reset();
 
 	vector<shared_ptr<FluidParticle>> m_particles;
