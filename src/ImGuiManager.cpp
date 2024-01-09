@@ -86,6 +86,11 @@ bool ImGuiManager::isMouseInPanel(ImVec2 pos)
 	return m_panels.at(0)->mouseInPanel(pos.x, pos.y);
 }
 
+bool ImGuiManager::getIsSimulate()
+{
+	return m_button2->getIsSimulate();
+}
+
 int ImGuiManager::getTransformationType()
 {
 	return m_button1->getTransformationType();

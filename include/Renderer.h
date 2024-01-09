@@ -41,19 +41,19 @@ public:
 
 private:
 	vector<SDL_Event> m_frame_events;
-	vector<shared_ptr<Light>> m_lights;
-	
 	unique_ptr<SDL_GL_Window> m_sdl_window;
-	unique_ptr<Camera> m_camera;
-	unique_ptr<Grid> m_grid;
 
 	unique_ptr<FrameBuffer> m_framebuffer_multi;
 	unique_ptr<FrameBuffer> m_scene;
 	
+	vector<shared_ptr<Light>> m_lights;
+	unique_ptr<Camera> m_camera;
+
 	shared_ptr<ObjectCollection> m_scene_collections;
 	shared_ptr<Object> m_click_object;
 	
 	vector<shared_ptr<Gizmo>> m_gizmos;
+	unique_ptr<Grid> m_grid;
 	unique_ptr<Outline> m_outline;
 
 	long long m_start_time;

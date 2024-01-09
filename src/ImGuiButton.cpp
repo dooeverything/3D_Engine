@@ -155,3 +155,11 @@ void ImGuiButtonPlay::draw(ImVec2 pos)
 		}
 	}
 }
+
+bool ImGuiButtonPlay::getIsSimulate()
+{
+	if (m_button_play->getPress())
+		return true;
+
+	return false;
+}

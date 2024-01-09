@@ -38,17 +38,6 @@ private:
 	string m_name;
 };
 
-class ImGuiScene : public ImGuiPanel
-{
-public:
-	ImGuiScene();
-	~ImGuiScene();
-
-	virtual void 
-private:
-
-};
-
 class ImGuiMenuBar : public ImGuiPanel
 {
 public:

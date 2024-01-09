@@ -55,6 +55,7 @@ public:
 	~ImGuiButtonPlay();
 
 	void draw(ImVec2 pos);
+	bool getIsSimulate();
 
 private:
 	unique_ptr<ImGuiButton> m_button_play;

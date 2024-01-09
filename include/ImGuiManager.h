@@ -43,6 +43,7 @@ public:
 
 	bool isMouseInPanel(ImVec2 pos);
 
+	bool getIsSimulate();
 	int getTransformationType();
 
 private:

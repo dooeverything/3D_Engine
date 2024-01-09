@@ -93,7 +93,7 @@ void Renderer::render()
 	m_camera->setLastFrame(current_frame);
 	m_camera->processInput();
 
-	m_scene_collections->resetObjects();
+	ObjectManager::getObjectManager()->resetObjects();
 
 	MapManager::getManager()->setupShadowMap();
 
@@ -294,16 +294,17 @@ void Renderer::renderImGui()
 			m_camera->updateProjection();
 			m_camera->updateView();
 
-			const glm::mat4& P = m_camera->getSP();
-			const glm::mat4& V = m_camera->getV();
+			const glm::mat4 SP = m_camera->getSP();
+			const glm::mat4 P = m_camera->getP();
+			const glm::mat4 V = m_camera->getV();
 
 			// setup Depth map
-			MapManager::getManager()->setupDepthMap(P, V);
+			MapManager::getManager()->setupDepthMap(SP, V);
 
-			if (m_click_object != nullptr)
-				m_outline->setupBuffers(*m_click_object, V, wsize.x, wsize.y);
-			else
-				m_outline->clearOutlineFrame();
+			ObjectManager::getObjectManager()->setupFluidsFramebuffer(SP, P, V);
+
+			if (m_click_object != nullptr) m_outline->setupBuffers(*m_click_object, V, wsize.x, wsize.y);
+			else m_outline->clearOutlineFrame();
 
 			m_framebuffer_multi->bind();
 			m_sdl_window->clearWindow();
@@ -366,6 +367,8 @@ void Renderer::renderScene()
 	ObjectManager::getObjectManager()->removeObject(m_scene_collections);
 
 	ObjectManager::getObjectManager()->resetObjectIds();
+
+	ObjectManager::getObjectManager()->setSimulation(ImGuiManager::getImGuiManager()->getIsSimulate());
 
 	ObjectManager::getObjectManager()->drawObjects(P, V, ray_pos, *m_lights.at(0));
 

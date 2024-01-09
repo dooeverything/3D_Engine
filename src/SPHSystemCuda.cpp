@@ -329,10 +329,14 @@ void SPHSystemCuda::simulate()
 void SPHSystemCuda::draw(
 	const glm::mat4& P,
 	const glm::mat4& V,
-	glm::vec3& view_pos,
-	Light& light)
+	const glm::vec3& view_pos,
+	const Light& light)
 {
 	simulate();
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	Object::draw(P, V, view_pos, light);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	shared_ptr<Shader> shader = ShaderManager::getShader("FluidRender");
 	shader->load();
@@ -341,20 +345,19 @@ void SPHSystemCuda::draw(
 	shader->setInt("map", 0);
 	Quad::getQuad()->draw();
 
-	Object::draw(P, V, view_pos, light);
 }
 
-void SPHSystemCuda::setupFrameBuffer(const glm::mat4& V, const Camera& camera)
+void SPHSystemCuda::setupFrameBuffer(const glm::mat4& SP, const glm::mat4& P, const glm::mat4& V)
 {
 	glViewport(0, 0, m_fb_width, m_fb_height);
-	getDepth(camera.getSP(), V, camera);
-	getCurvature(camera.getP(), V);
-	getNormal(camera.getP(), V);
+	getDepth(SP, V);
+	getCurvature(P, V);
+	getNormal(P, V);
 }
 
 // [Screen space rendering] : https://developer.download.nvidia.com/presentations/2010/gdc/Direct3D_Effects.pdf
 // [Screen space fluid rendering with curvature flow] : https://dl.acm.org/doi/10.1145/1507149.1507164
-void SPHSystemCuda::getDepth(const glm::mat4& P, const glm::mat4& V, const Camera& camera)
+void SPHSystemCuda::getDepth(const glm::mat4& P, const glm::mat4& V)
 {
 	float aspect = float(m_fb_width / m_fb_height);
 	float point_scale = m_fb_width / aspect * (1.0f / tanf(glm::radians(45.0f)));
@@ -380,12 +383,11 @@ void SPHSystemCuda::getCurvature(const glm::mat4& P, const glm::mat4& V)
 	shader->setVec2("res", res);
 
 	m_fb_curvature->bind();
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glActiveTexture(GL_TEXTURE0);
-	m_fb->bindFrameTexture();
-
-	Quad::getQuad()->draw();
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glActiveTexture(GL_TEXTURE0);
+		m_fb->bindFrameTexture();
+		Quad::getQuad()->draw();
 	m_fb_curvature->unbind();
 
 	bool swap = false;
@@ -394,23 +396,21 @@ void SPHSystemCuda::getCurvature(const glm::mat4& P, const glm::mat4& V)
 		if (swap)
 		{
 			m_fb_curvature->bind();
-			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glActiveTexture(GL_TEXTURE0);
-			m_fb_curvature2->bindFrameTexture();
-
-			Quad::getQuad()->draw();
+				glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				glActiveTexture(GL_TEXTURE0);
+				m_fb_curvature2->bindFrameTexture();
+				Quad::getQuad()->draw();
 			m_fb_curvature->unbind();
 		}
 		else
 		{
 			m_fb_curvature2->bind();
-			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glActiveTexture(GL_TEXTURE0);
-			m_fb_curvature->bindFrameTexture();
-
-			Quad::getQuad()->draw();
+				glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				glActiveTexture(GL_TEXTURE0);
+				m_fb_curvature->bindFrameTexture();
+				Quad::getQuad()->draw();
 			m_fb_curvature2->unbind();
 		}
 
@@ -465,90 +465,65 @@ void SPHSystemCuda::reset()
 	setHash(m_hash, m_neighbors);
 }
 
-void SPHSystemCuda::renderProperty()
+void SPHSystemCuda::renderExtraProperty()
 {
-	bool expand_fluid = ImGui::TreeNode("Fluid");
-	if (expand_fluid)
+	if (ImGui::CollapsingHeader("Fluid"))
 	{
+		ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
+		if (ImGui::Button("Reset"))
+		{
+			m_simulation = false;
+			reset();
+		}
+
 		static ImGuiTableFlags flags = ImGuiTableFlags_RowBg;
 		ImVec2 cell_padding(0.0f, 5.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
 		ImGui::BeginTable("Simulation", 2);
 		ImU32 cell_bg_color = ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.7f, 0.65f));
 
-		ImGui::TableNextRow();
+		ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
 		ImGui::TableNextColumn();
-		ImGui::AlignTextToFramePadding();
+		ImGui::Text("Speed");
+		ImGui::TableNextColumn();
+		ImGui::SliderFloat("##t", &t, 0.0f, 0.1f, "%.4f", 0);
 
-		static int clicked_sph = 0;
-		if (ImGui::Button("Click to simulate"))
-		{
-			clicked_sph++;
-		}
+		ImGui::TableNextColumn();
+		ImGui::Text("Gas Constant");
+		ImGui::TableNextColumn();
+		ImGui::SliderFloat("##K", &m_params.K, 0.0f, 10.0f, "%.3f", 0);
 
-		if (clicked_sph & 1)
-		{
-			ImGui::TableNextColumn();
-			if (ImGui::Button("Start") && m_simulation == false)
-			{
-				m_simulation = true;
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Stop") && m_simulation == true)
-			{
-				m_simulation = false;
-			}
+		ImGui::TableNextColumn();
+		ImGui::Text("Rest Density");
+		ImGui::TableNextColumn();
+		ImGui::SliderFloat("##rDENSITY", &m_params.rDENSITY, 0.0f, 1000.0f, "%.3f", 0);
 
-			ImGui::SameLine();
-			if (ImGui::Button("Reset"))
-			{
-				m_simulation = false;
-				reset();
-			}
+		ImGui::TableNextColumn();
+		ImGui::Text("Viscousity");
+		ImGui::TableNextColumn();
+		ImGui::SliderFloat("##VISC", &m_params.VISC, -1.0f, 10.0f, "%.3f", 0);
 
-			ImGui::Dummy(ImVec2(0.0f, 10.0f));
+		ImGui::TableNextColumn();
+		ImGui::Text("Wall Damping");
+		ImGui::TableNextColumn();
+		ImGui::SliderFloat("##WALL", &m_params.WALL, -1.0f, 0.0f, "%.3f", 0);
 
-			ImGui::TableNextColumn();
-			ImGui::Text("Speed");
-			ImGui::TableNextColumn();
-			ImGui::SliderFloat("##t", &t, 0.0f, 0.1f, "%.4f", 0);
+		ImGui::TableNextColumn();
+		ImGui::Text("Render Type");
+		ImGui::TableNextColumn();
+		ImGui::SliderInt("##TYPE", &render_type, 0, 1);
 
-			ImGui::TableNextColumn();
-			ImGui::Text("Gas Constant");
-			ImGui::TableNextColumn();
-			ImGui::SliderFloat("##K", &m_params.K, 0.0f, 10.0f, "%.3f", 0);
-
-			ImGui::TableNextColumn();
-			ImGui::Text("Rest Density");
-			ImGui::TableNextColumn();
-			ImGui::SliderFloat("##rDENSITY", &m_params.rDENSITY, 0.0f, 1000.0f, "%.3f", 0);
-
-			ImGui::TableNextColumn();
-			ImGui::Text("Viscousity");
-			ImGui::TableNextColumn();
-			ImGui::SliderFloat("##VISC", &m_params.VISC, -1.0f, 10.0f, "%.3f", 0);
-
-			ImGui::TableNextColumn();
-			ImGui::Text("Wall Damping");
-			ImGui::TableNextColumn();
-			ImGui::SliderFloat("##WALL", &m_params.WALL, -1.0f, 0.0f, "%.3f", 0);
-
-			ImGui::TableNextColumn();
-			ImGui::Text("Render Type");
-			ImGui::TableNextColumn();
-			ImGui::SliderInt("##TYPE", &render_type, 0, 1);
-
-			ImGui::TableNextColumn();
-			ImGui::Text("Iteration Rendering");
-			ImGui::TableNextColumn();
-			ImGui::SliderInt("##ITERATION", &iteration, 1, 100);
-		}
+		ImGui::TableNextColumn();
+		ImGui::Text("Render Iter");
+		ImGui::TableNextColumn();
+		ImGui::SliderInt("##ITERATION", &iteration, 1, 100);
 
 		ImGui::EndTable();
 
 		ImGui::Text("Simulation average: %.3f ms/frame (%.1f FPS)", double(1000.0 / (ImGui::GetIO().Framerate)), double(ImGui::GetIO().Framerate));
 
 		ImGui::PopStyleVar();
-		ImGui::TreePop();
 	}
 }

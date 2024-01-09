@@ -23,17 +23,20 @@ public:
 	virtual void draw(
 		const glm::mat4& P, 
 		const glm::mat4& V,
-		glm::vec3& view_pos,
-		Light& light);
+		const glm::vec3& view_pos,
+		const Light& light) override;
 
-	virtual void setupFrameBuffer(const glm::mat4& V, const Camera& camera);
-	virtual void renderProperty();
+	
+	void setupFrameBuffer(const glm::mat4& SP, const glm::mat4& P, const glm::mat4& V);
+	virtual void renderExtraProperty() override;
+
+	inline void setIsSimulate(bool simulate) { m_simulation = simulate; };
 
 private:
 	void initParticle();
 	void initFramebuffer();
 	void initShader();
-	void getDepth(const glm::mat4& P, const glm::mat4& V, const Camera& camera);
+	void getDepth(const glm::mat4& P, const glm::mat4& V);
 	void getCurvature(const glm::mat4& P, const glm::mat4& V);
 	void getNormal(const glm::mat4& P, const glm::mat4& V);
 	void reset();

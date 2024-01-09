@@ -1,5 +1,6 @@
 #include "ObjectManager.h"
 
+#include "SPHSystemCuda.h"
 #include "ObjectCollection.h"
 
 ObjectManager::ObjectManager() :
@@ -62,6 +63,29 @@ bool ObjectManager::checkObjectClick(shared_ptr<Object>& clicked_object, const g
 	return true;
 }
 
+void ObjectManager::setupFluidsFramebuffer(const glm::mat4& SP, const glm::mat4& P, const glm::mat4& V)
+{
+	for (const auto& it : m_fluids)
+	{
+		if (it.lock())
+		{
+			it.lock()->setupFrameBuffer(SP, P, V);
+		}
+	}
+}
+
+void ObjectManager::setSimulation(bool simulate)
+{
+	for (const auto& it : m_fluids)
+	{
+		//cout << "Set simulate" << endl;
+		if (it.lock())
+		{
+			it.lock()->setIsSimulate(simulate);
+		}
+	}
+}
+
 void ObjectManager::removeObject(shared_ptr<ObjectCollection>& collection)
 {
 	//cout << "Remove Object" << endl;
@@ -90,6 +114,23 @@ void ObjectManager::addObject(const shared_ptr<Object>& object)
 	m_objects.emplace_back(object);
 }
 
+void ObjectManager::addFluidObject(const shared_ptr<SPHSystemCuda>& fluid)
+{
+	if (m_fluids.empty()) fluid->setId(0);
+	else fluid->setId(m_fluids.size());
+
+	m_fluids.emplace_back(fluid);
+}
+
+void ObjectManager::resetObjects()
+{
+	for (int i = 0; i < m_objects.size(); ++i)
+	{
+		m_objects.at(i)->setIsClick(false);
+		m_objects.at(i)->resetRayHit();
+	}
+}
+
 void ObjectManager::resetObjectIds()
 {
 	for (int i = 0; i < m_objects.size(); ++i)
@@ -108,12 +149,22 @@ void ObjectManager::drawObjects(
 	{
 		m_objects.at(i)->draw(P, V, view_pos, light);
 	}
+
+	//for (int i = 0; i < m_fluids.size(); ++i)
+	//{
+	//	if (m_fluids.at(i).lock())
+	//	{
+	//		m_fluids.at(i).lock()->draw(P, V, view_pos, light);
+	//	}
+	//}
 }
 
 void ObjectManager::drawObjectsMesh(const glm::mat4& P, const glm::mat4& V, const Shader& shader)
 {
 	for (int i = 0; i < m_objects.size(); ++i)
 	{
+		if (m_objects.at(i)->getName() == "Fluid Boundary") continue;
+
 		m_objects.at(i)->drawMesh(P, V, shader);
 	}
 }

@@ -121,9 +121,13 @@ void ObjectCollection::renderObjectHierarchy(
 									ImGuiTreeNodeFlags_Leaf;
 
 	string name_active = "";
-	if (active_object)	name_active = active_object->getIdName();
-
 	int object_clicked = -1;
+	if (active_object)
+	{
+		object_clicked = active_object->getObjectId();
+		name_active = active_object->getIdName();
+	}
+
 	for (int i = 0; i < m_objects.size(); ++i)
 	{
 		string name = m_objects.at(i)->getIdName();
@@ -143,10 +147,12 @@ void ObjectCollection::renderObjectHierarchy(
 			{
 				selection_object = (1 << n_scene_objects);
 				object_clicked = -1;
+				cout << "Object deselect: " << object_clicked << endl;
 			}
 			else
 			{
 				object_clicked = m_objects.at(i)->getObjectId();
+				cout << "Object select: " << object_clicked << endl;
 			}
 		}
 
@@ -172,6 +178,7 @@ void ObjectCollection::renderObjectHierarchy(
 
 	if (object_clicked == -1)
 	{
+		//cout << "Object: " << object_clicked << " at " << getNameId() << endl;
 		active_object = nullptr;
 		selection_object = (1 << n_scene_objects);
 	}
@@ -198,10 +205,11 @@ void ObjectCollection::renderPanel(
 		if (ImGui::GetIO().MouseReleased[0] && active_object)
 		{
 			cout << "Move " << active_object->getIdName() << " to " << getNameId() << endl;
-			
 			ObjectCollectionManager::removeObjectFromCollection(shared_from_this(), active_object->getIdName());
 			active_object->setCollectionId(m_id);
 			addObject(active_object);
+			cout << active_object->getIdName() << " at " << active_object->getCollectionId() << endl;
+
 			active_object = nullptr;
 			selection_object = (1 << n_scene_objects);
 		}
@@ -227,7 +235,6 @@ void ObjectCollection::renderPanel(
 		}
 
 		if (m_id != -1) ImGui::TreePop();
-	
 	}
 
 }
@@ -253,14 +260,5 @@ void ObjectCollection::renderPopup(shared_ptr<Object>& active_object)
 				m_childs.at(i)->renderPopup(active_object);
 			}
 		}
-	}
-}
-
-void ObjectCollection::resetObjects()
-{
-	for (int i = 0; i < m_objects.size(); ++i)
-	{
-		m_objects.at(i)->setIsClick(false);
-		m_objects.at(i)->resetRayHit();
 	}
 }

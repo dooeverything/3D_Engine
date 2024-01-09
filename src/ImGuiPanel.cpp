@@ -135,6 +135,7 @@ void ImGuiMenuBar::render(
 		shared_ptr<SPHSystemCuda> fluid = make_shared<SPHSystemCuda>(64.0f, 32.0f, 64.0f);
 		fluid->setObjectId(collection->getNumObjects());
 		ObjectManager::getObjectManager()->addObject(fluid);
+		ObjectManager::getObjectManager()->addFluidObject(fluid);
 
 		collection->addObject(fluid);
 	}
