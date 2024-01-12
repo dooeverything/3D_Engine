@@ -33,8 +33,6 @@ Outline::~Outline()
 
 void Outline::setupBuffers(Object& go, const glm::mat4& V, float width, float height)
 {
-	//if (go.getMesh() == nullptr) return;
-
 	float aspect = width / height;
 	glm::mat4 P = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
@@ -48,14 +46,12 @@ void Outline::setupBuffers(Object& go, const glm::mat4& V, float width, float he
 	m_outline_buffers.at(0)->unbind();
 
 	shader = ShaderManager::getShader("Debug");
-	//m_debug->setProperty(2, go.getMesh()->getSize());
 	m_outline_buffers.at(1)->bind();
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	shader->load();
 	glActiveTexture(GL_TEXTURE0);
 	m_outline_buffers.at(0)->bindFrameTexture();
-	//m_debug->getMesh()->draw();
 	Quad::getQuad()->draw();
 	m_outline_buffers.at(1)->unbind();
 
@@ -71,7 +67,6 @@ void Outline::setupBuffers(Object& go, const glm::mat4& V, float width, float he
 	shader->setFloat("height", 800.0f);
 	shader->setInt("pass", 0);
 	shader->setFloat("jump", 1.0f);
-	//m_debug->getMesh()->draw();
 	Quad::getQuad()->draw();
 	m_outline_buffers.at(2)->unbind();
 
@@ -85,7 +80,6 @@ void Outline::setupBuffers(Object& go, const glm::mat4& V, float width, float he
 	shader->setFloat("height", 800.0f);
 	shader->setInt("pass", 0);
 	shader->setFloat("jump", 2.0f);
-	//m_debug->getMesh()->draw();
 	Quad::getQuad()->draw();
 	m_outline_buffers.at(3)->unbind();
 }

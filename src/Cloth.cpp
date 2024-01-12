@@ -24,9 +24,7 @@ Cloth::Cloth() : Object("Cloth")
 	initParticles();
 }
 
-Cloth::~Cloth()
-{
-}
+Cloth::~Cloth() {}
 
 void Cloth::initParticles()
 {

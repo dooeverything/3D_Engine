@@ -164,7 +164,7 @@
     <ClCompile Include="src\Point.cpp">
       <Filter>src\Physics</Filter>
     </ClCompile>
-    <ClCompile Include="src\SoftBodySolver.cpp">
+    <ClCompile Include="src\SoftBodyObject.cpp">
       <Filter>src\Physics</Filter>
     </ClCompile>
     <ClCompile Include="src\SPHSystem.cpp">
@@ -391,7 +391,7 @@
     <ClInclude Include="include\Outline.h">
       <Filter>include\SceneHelper</Filter>
     </ClInclude>
-    <ClInclude Include="include\SoftBodySolver.h">
+    <ClInclude Include="include\SoftBodyObject.h">
       <Filter>include\Physics</Filter>
     </ClInclude>
     <ClInclude Include="include\SPHSystem.h">

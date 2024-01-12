@@ -5,6 +5,9 @@
 #include "Object.h"
 class ObjectCollection;
 class SPHSystemCuda;
+class Terrain;
+class Cloth;
+class SoftBodyObject;
 
 class ObjectManager
 {
@@ -20,10 +23,18 @@ public:
 	void resetObjects();
 	void resetObjectIds();
 
+	void swapObject(
+		const shared_ptr<ObjectCollection>& collection,
+		shared_ptr<Object>& source,
+		shared_ptr<Object> target
+	);
 	void removeObject(shared_ptr<ObjectCollection>& collection);
 	
 	void addObject(const shared_ptr<Object>& object);
 	void addFluidObject(const shared_ptr<SPHSystemCuda>& fluid);
+	void addTerrain(const shared_ptr<Terrain>& terrain);
+	void addCloth(const shared_ptr<Cloth>& cloth);
+	void addSoftBody(const shared_ptr<SoftBodyObject>& soft);
 
 	bool checkObjectClick(
 		shared_ptr<Object>& clicked_object,
@@ -46,6 +57,9 @@ public:
 private:
 	vector<shared_ptr<Object>> m_objects;
 	vector<weak_ptr<SPHSystemCuda>> m_fluids;
+	vector<weak_ptr<Terrain>> m_terrains;
+	vector<weak_ptr<Cloth>> m_clothes;
+	vector<weak_ptr<SoftBodyObject>> m_softs;
 	unordered_map<string, vector<int>> m_object_ids;
 
 	static unique_ptr<ObjectManager> m_object_manager;

@@ -2,6 +2,9 @@
 
 #include "SPHSystemCuda.h"
 #include "ObjectCollection.h"
+#include "Terrain.h"
+#include "Cloth.h"
+#include "SoftBodyObject.h"
 
 ObjectManager::ObjectManager() :
 	m_objects({})
@@ -60,6 +63,18 @@ bool ObjectManager::checkObjectClick(shared_ptr<Object>& clicked_object, const g
 		return false;
 	}
 
+	for (const auto& it : m_terrains)
+	{
+		if (it.lock())
+		{
+			if (it.lock()->getNameId() == clicked_object->getNameId())
+			{
+				it.lock()->editTerrain(ray_dir, ray_pos, true);
+				break;
+			}
+		}
+	}
+
 	return true;
 }
 
@@ -84,17 +99,43 @@ void ObjectManager::setSimulation(bool simulate)
 			it.lock()->setIsSimulate(simulate);
 		}
 	}
+
+	for (const auto& it : m_clothes)
+	{
+		if (it.lock())
+		{
+			it.lock()->setSimulate(simulate);
+		}
+	}
+
+	for (const auto& it : m_softs)
+	{
+		if (it.lock())
+		{
+			it.lock()->setSimulate(simulate);
+		}
+	}
+}
+
+void ObjectManager::swapObject(
+	const shared_ptr<ObjectCollection>& collection, 
+	shared_ptr<Object>& source, 
+	shared_ptr<Object> target)
+{
+	source->setIsDelete(true);
+
+	ObjectCollectionManager::findAndSwap(collection, source, target);
 }
 
 void ObjectManager::removeObject(shared_ptr<ObjectCollection>& collection)
 {
-	//cout << "Remove Object" << endl;
 	for (const auto& it : m_objects)
 	{
 		if (it->getIsDelete())
 		{
+			cout << "Remove Object " << it->getNameId() << endl;
 			m_object_ids[it->getName()][it->getId()] = -1;
-			ObjectCollectionManager::removeObjectFromCollection(collection, it->getIdName());
+			ObjectCollectionManager::removeObjectFromCollection(collection, it->getNameId());
 		}
 	}
 
@@ -122,12 +163,35 @@ void ObjectManager::addFluidObject(const shared_ptr<SPHSystemCuda>& fluid)
 	m_fluids.emplace_back(fluid);
 }
 
+void ObjectManager::addTerrain(const shared_ptr<Terrain>& terrain)
+{
+	m_terrains.emplace_back(terrain);
+}
+
+void ObjectManager::addCloth(const shared_ptr<Cloth>& cloth)
+{
+	m_clothes.emplace_back(cloth);
+}
+
+void ObjectManager::addSoftBody(const shared_ptr<SoftBodyObject>& soft)
+{
+	m_softs.emplace_back(soft);
+}
+
 void ObjectManager::resetObjects()
 {
 	for (int i = 0; i < m_objects.size(); ++i)
 	{
 		m_objects.at(i)->setIsClick(false);
 		m_objects.at(i)->resetRayHit();
+	}
+
+	for (const auto& it : m_terrains)
+	{
+		if (it.lock())
+		{
+			it.lock()->resetHitPos();
+		}
 	}
 }
 
@@ -149,14 +213,6 @@ void ObjectManager::drawObjects(
 	{
 		m_objects.at(i)->draw(P, V, view_pos, light);
 	}
-
-	//for (int i = 0; i < m_fluids.size(); ++i)
-	//{
-	//	if (m_fluids.at(i).lock())
-	//	{
-	//		m_fluids.at(i).lock()->draw(P, V, view_pos, light);
-	//	}
-	//}
 }
 
 void ObjectManager::drawObjectsMesh(const glm::mat4& P, const glm::mat4& V, const Shader& shader)

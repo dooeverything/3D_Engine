@@ -58,7 +58,7 @@ void Mesh::drawInstance()
 	m_buffer->unbind();
 }
 
-void Mesh::drawTerrain(const Shader& shader, float res)
+void Mesh::drawTess(const Shader& shader, float res)
 {
 	m_material->loadMaterialToShader(shader);
 

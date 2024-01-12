@@ -10,7 +10,7 @@
 #include "ObjectManager.h"
 #include "ObjectCollection.h"
 #include "SPHSystemCuda.h"
-#include "SoftBodySolver.h"
+#include "SoftBodyObject.h"
 #include "Terrain.h"
 
 ImGuiPanel::ImGuiPanel(string name) :
@@ -113,9 +113,10 @@ void ImGuiMenuBar::render(
 	ImGui::SeparatorText("Landscape");
 	if (ImGui::MenuItem("Terrain"))
 	{
-		shared_ptr<Object> terrain = make_shared<Terrain>(20.0f);
+		shared_ptr<Terrain> terrain = make_shared<Terrain>(40.0f);
 		terrain->setObjectId(collection->getNumObjects());
 		ObjectManager::getObjectManager()->addObject(terrain);
+		ObjectManager::getObjectManager()->addTerrain(terrain);
 
 		collection->addObject(terrain);
 	}
@@ -123,9 +124,10 @@ void ImGuiMenuBar::render(
 	ImGui::SeparatorText("Physics Simulator");
 	if (ImGui::MenuItem("Cloth"))
 	{
-		shared_ptr<Object> cloth = make_shared<Cloth>();
+		shared_ptr<Cloth> cloth = make_shared<Cloth>();
 		cloth->setObjectId(collection->getNumObjects());
 		ObjectManager::getObjectManager()->addObject(cloth);
+		ObjectManager::getObjectManager()->addCloth(cloth);
 
 		collection->addObject(cloth);
 	}
@@ -192,7 +194,7 @@ void SceneHierarchyPanel::render(
 
 		if (active_object)
 		{
-			name_active = active_object->getIdName();
+			name_active = active_object->getNameId();
 		}
 		else
 		{
@@ -231,7 +233,7 @@ void PropertyPanel::render(
 			return;
 		}
 
-		string name = clicked_object->getIdName();
+		string name = clicked_object->getNameId();
 		const char* object_name = name.c_str();
 		
 		// Transform panel
@@ -309,6 +311,21 @@ void PopupObject::render(
 	}
 
 	ImGui::SeparatorText("Physics");
+
+	if (ImGui::MenuItem("Add SoftBodySolver"))
+	{
+		shared_ptr<SoftBodyObject> soft = make_shared<SoftBodyObject>(
+			clicked_object->getVertices(),
+			clicked_object->getIndices(),
+			clicked_object->getTransform(),
+			clicked_object->getMin(),
+			clicked_object->getMax());
+
+		clicked_object->setIsDelete(true);
+		ObjectManager::getObjectManager()->addObject(soft);
+		ObjectManager::getObjectManager()->addSoftBody(soft);
+		collection->addObject(soft);
+	}
 }
 
 PopupSceneHierarchy::PopupSceneHierarchy() : ImGuiPanel("PopupScene")

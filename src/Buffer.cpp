@@ -12,6 +12,12 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts)
 	m_layouts = layouts;
 	n_layouts = int(layouts.size());
 	cout << "Create vertex buffers without indices: " << n_layouts << endl;
+	
+	if (n_layouts == 0)
+	{
+		cout << "Layout is empty! " << endl;
+		assert(n_layouts);
+	}
 
 	// Generate buffers: VAO, VBO, EBO
 	glGenVertexArrays(1, &m_VAO);
@@ -156,7 +162,6 @@ void VertexBuffer::createBuffers(const vector<info::VertexLayout>& layouts, cons
 void VertexBuffer::updateBuffer(const vector<info::VertexLayout>& layouts)
 {
 	m_layouts = layouts;
-
 	assert(layouts.size() == n_layouts);
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);

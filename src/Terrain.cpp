@@ -126,7 +126,7 @@ void Terrain::createVertex()
 	addMesh(mesh);
 }
 
-void Terrain::updateVertex(glm::vec3 ray_dir, glm::vec3 ray_pos, bool mouse_down)
+void Terrain::editTerrain(glm::vec3 ray_dir, glm::vec3 ray_pos, bool mouse_down)
 {
 	m_hit = glm::vec3(-1000.0f);
 	if (!m_is_edit) return;
@@ -267,7 +267,7 @@ void Terrain::draw(const glm::mat4& P,
 	glActiveTexture(GL_TEXTURE0);
 	MapManager::getManager()->bindShadowMap();
 
-	drawTerrain(P, V, *shader, m_res);
+	drawTessMesh(P, V, *shader, m_res);
 }
 
 void Terrain::renderExtraProperty()
@@ -310,16 +310,26 @@ void Terrain::renderExtraProperty()
 		ImGui::TableNextColumn();
 		ImGui::AlignTextToFramePadding();
 
-		if (m_button_plus->draw())
+		m_button_plus->draw();
+		if (m_button_plus->getPress())
 		{
 			m_is_edit = true;
+			m_button_minus->setPress(false);
+
+			if (m_strength < 0)
+				m_strength = -m_strength;
 		}
 
 		ImGui::SameLine();
 
-		if (m_button_minus->draw())
+		m_button_minus->draw();
+		if (m_button_minus->getPress())
 		{
 			m_is_edit = true;
+			m_button_plus->setPress(false);
+
+			if(m_strength > 0)
+				m_strength = -m_strength;
 		}
 	
 		ImGui::EndTable();

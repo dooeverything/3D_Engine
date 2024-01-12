@@ -24,8 +24,9 @@ public:
 	Terrain(float res);
 	~Terrain();
 
+	inline void resetHitPos() { m_hit = glm::vec3(-1000.0f); };
 	void createVertex();
-	virtual void updateVertex(glm::vec3 ray_dir, glm::vec3 ray_pos, bool mouse_down);
+	void editTerrain(glm::vec3 ray_dir, glm::vec3 ray_pos, bool mouse_down);
 
 	virtual void draw(
 		const glm::mat4& P,

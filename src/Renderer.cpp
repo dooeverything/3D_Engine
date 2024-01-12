@@ -6,7 +6,7 @@
 #include "ObjectManager.h"
 #include "ObjectCollection.h"
 #include "Outline.h"
-#include "SoftBodySolver.h"
+#include "SoftBodyObject.h"
 #include "ShaderManager.h"
 #include "Quad.h"
 #include "Gizmo.h"
@@ -380,9 +380,12 @@ void Renderer::renderScene()
 	// Draw Outline
 	m_outline->draw(*m_click_object);
 
-	int type = ImGuiManager::getImGuiManager()->getTransformationType();
-	m_gizmos.at(0)->checkDraw(type);
-	m_gizmos.at(1)->checkDraw(type);
+	if (!ImGuiManager::getImGuiManager()->getIsSimulate())
+	{
+		int type = ImGuiManager::getImGuiManager()->getTransformationType();
+		m_gizmos.at(0)->checkDraw(type);
+		m_gizmos.at(1)->checkDraw(type);	
+	}
 
 	// Draw gizmos for clicked objects
 	if (m_click_object != nullptr)

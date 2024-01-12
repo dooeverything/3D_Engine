@@ -8,27 +8,27 @@
 #include "MeshImporter.h"
 #include "Shader.h"
 #include "ShaderManager.h"
-#include "SoftBodySolver.h"
+#include "SoftBodyObject.h"
 #include "Geometry.h"
 #include "Gizmo.h"
 #include "Light.h"
 
 Object::Object() :
-	m_mesh(nullptr), m_name(""), m_id(0), 
-	m_object_id(-1), m_move_axis(-1), m_collection(-1),
 	m_transform_type(Transform::TRANSLATE),
+	m_mesh(nullptr), m_name_id(""), m_name(""), m_id(0),
+	m_object_id(-1), m_move_axis(-1), m_collection(-1),
 	m_click(false), m_delete(false), m_is_popup(false){}
 
 Object::Object(const string& name) :
-	m_mesh(nullptr), m_name(name), m_id(0),
-	m_object_id(-1), m_move_axis(-1), m_collection(-1),
 	m_transform_type(Transform::TRANSLATE),
+	m_mesh(nullptr), m_name_id(""), m_name(name), m_id(0),
+	m_object_id(-1), m_move_axis(-1), m_collection(-1),
 	m_click(false), m_delete(false), m_is_popup(false) {}
 
 Object::Object(const shared_ptr<Mesh>& mesh) :
-	m_mesh(mesh), m_name(m_mesh->getName()), m_id(0),
-	m_object_id(-1), m_move_axis(-1), m_collection(-1),
 	m_transform_type(Transform::TRANSLATE),
+	m_mesh(mesh), m_name_id(""), m_name(m_mesh->getName()), m_id(0),
+	m_object_id(-1), m_move_axis(-1), m_collection(-1),
 	m_click(false), m_delete(false), m_is_popup(false)
 {
 	computeBBox();
@@ -37,12 +37,21 @@ Object::Object(const shared_ptr<Mesh>& mesh) :
 Object::~Object()
 {}
 
+void Object::drawMesh()
+{
+	m_mesh->draw();
+}
+
 void Object::drawMesh(
 	const glm::mat4& P, const glm::mat4& V,
 	const Shader& shader)
 {
 	shader.load();
-	shader.setPVM(P, V, m_transform.getModelTransform());
+
+	if(m_name == "SoftBody")
+		shader.setPVM(P, V, glm::mat4(1.0f));
+	else
+		shader.setPVM(P, V, m_transform.getModelTransform());
 
 	m_mesh->draw();
 }
@@ -81,7 +90,10 @@ void Object::draw(
 	glActiveTexture(GL_TEXTURE0 + 3);
 	MapManager::getManager()->bindLUTMap();
 
-	shader->setPVM(P, V, m_transform.getModelTransform());
+	if (m_name == "SoftBody")
+		shader->setPVM(P, V, glm::mat4(1.0f));
+	else
+		shader->setPVM(P, V, m_transform.getModelTransform());
 
 	m_mesh->draw(*shader);
 }
@@ -96,14 +108,11 @@ void Object::resetRayHit()
 	m_mesh->setRayHitMin(FLT_MAX);
 }
 
-void Object::addSoftBodySolver()
+void Object::addMesh(const shared_ptr<Mesh>& mesh)
 {
-	//m_soft = make_shared<SoftBodySolver>(m_mesh.get());
-}
-
-string Object::getIdName()
-{
-	return m_id_name;
+	m_mesh = mesh;
+	m_name = m_mesh->getName(); 
+	computeBBox();
 }
 
 void Object::calcTransform(const glm::vec3& forward)
@@ -206,7 +215,7 @@ void Object::setId(int id)
 	}
 	//cout << m_id << endl;
 	//cout << sid << endl;
-	m_id_name = m_name + "_" + sid;
+	m_name_id = m_name + "_" + sid;
 }
 
 void Object::setTransformType(int type)
@@ -221,17 +230,24 @@ void Object::setTransformType(int type)
 	}
 }
 
-void Object::drawTerrain(const glm::mat4& P, const glm::mat4& V, const Shader& shader, float res)
-{
-	shader.load();
-	shader.setPVM(P, V, m_transform.getModelTransform());
-
-	m_mesh->drawTerrain(shader, res);
-}
-
 void Object::computeBBox()
 {
 	//cout << "Computer bbox " << endl;
 	//cout << glm::to_string(m_transform.getPosition()) << endl;
-	m_mesh->computeBBox(m_transform.getModelTransform());
+	if (m_name == "SoftBody")
+		m_mesh->computeBBox(glm::mat4(1.0f));
+	else
+		m_mesh->computeBBox(m_transform.getModelTransform());
+}
+
+void Object::drawTessMesh(
+	const glm::mat4& P, 
+	const glm::mat4& V, 
+	const Shader& shader, 
+	float res)
+{
+	shader.load();
+	shader.setPVM(P, V, m_transform.getModelTransform());
+
+	m_mesh->drawTess(shader, res);
 }

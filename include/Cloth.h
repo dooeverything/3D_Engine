@@ -17,9 +17,8 @@ public:
 	Cloth();
 	~Cloth();
 
-	virtual void simulate();
-	virtual bool getSimulate() { return m_simulate; };
-	virtual void setSimulate(bool s) { m_simulate = s; };
+	bool getSimulate() { return m_simulate; };
+	void setSimulate(bool s) { m_simulate = s; };
 
 	virtual void draw(
 		const glm::mat4& P, 
@@ -28,6 +27,7 @@ public:
 		const Light& light) override;
 
 private:
+	void simulate();
 	void initParticles();
 	void buildHash(vector<shared_ptr<ClothParticle>>& predict);
 

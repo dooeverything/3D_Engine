@@ -5,14 +5,7 @@
 #include "Object.h"
 #include "Map.h"
 
-ObjectCollection::ObjectCollection(int id) : 
-	m_childs({}), m_objects({}), 
-	m_name("Collection"), m_id(id), n_childs(0)
-{}
-
-ObjectCollection::~ObjectCollection() {}
-
-shared_ptr<ObjectCollection> ObjectCollectionManager::findRoot(shared_ptr<ObjectCollection>& collection)
+shared_ptr<ObjectCollection> ObjectCollectionManager::findRoot(const shared_ptr<ObjectCollection>& collection)
 {
 	shared_ptr<ObjectCollection> current = collection;
 
@@ -37,7 +30,9 @@ shared_ptr<ObjectCollection> ObjectCollectionManager::findRoot(shared_ptr<Object
 	return current;
 }
 
-void ObjectCollectionManager::findAndRemove(shared_ptr<ObjectCollection>& root, const string& active_object)
+void ObjectCollectionManager::findAndRemove(
+	shared_ptr<ObjectCollection>& root, 
+	const string& active_object)
 {
 	if (root != nullptr)
 	{
@@ -45,11 +40,26 @@ void ObjectCollectionManager::findAndRemove(shared_ptr<ObjectCollection>& root, 
 	}
 }
 
+void ObjectCollectionManager::findAndSwap(
+	const shared_ptr<ObjectCollection>& collection, 
+	const shared_ptr<Object>& source, 
+	const shared_ptr<Object>& target)
+{
+	shared_ptr<ObjectCollection> root = collection;
+	if (collection->getParent().lock() != nullptr)
+	{
+		root = findRoot(collection);
+	}
+
+	if (root != nullptr)
+	{
+		root->findAndSwapObject(source, target);
+	}
+}
+
 void ObjectCollectionManager::removeObjectFromCollection(
 	shared_ptr<ObjectCollection>& collection, const string& active_object)
 {
-	cout << "Remove object" << endl;
-
 	// 1. Find a root node, it collection is the root
 	shared_ptr<ObjectCollection> root = collection;
 	if (collection->getParent().lock() != nullptr)
@@ -63,6 +73,40 @@ void ObjectCollectionManager::removeObjectFromCollection(
 	cout << endl;
 }
 
+
+ObjectCollection::ObjectCollection(int id) :
+	m_childs({}), m_objects({}),
+	m_name("Collection"), m_id(id), n_childs(0)
+{}
+
+ObjectCollection::~ObjectCollection() {}
+
+bool ObjectCollection::findAndSwapObject(
+	const shared_ptr<Object>& source, 
+	const shared_ptr<Object>& target)
+{
+	for (int j = 0; j < m_objects.size(); ++j)
+	{
+		if (source->getNameId() == m_objects.at(j)->getNameId())
+		{
+			cout << "successfully swap " << source->getNameId() << " to " << target->getName() << endl;
+			m_objects.at(j) = target;
+			return true;
+		}
+	}
+
+	for (int i = 0; i < m_childs.size(); ++i)
+	{
+		if (m_childs.at(i)->findAndSwapObject(source, target))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
 bool ObjectCollection::findAndRemoveObject(const string& active_object)
 {
 	bool is_erase = false;
@@ -70,7 +114,7 @@ bool ObjectCollection::findAndRemoveObject(const string& active_object)
 	int j = 0;
 	for (; j < m_objects.size(); ++j)
 	{
-		if (active_object == m_objects.at(j)->getIdName())
+		if (active_object == m_objects.at(j)->getNameId())
 		{
 			is_erase = true;
 			break;
@@ -125,12 +169,12 @@ void ObjectCollection::renderObjectHierarchy(
 	if (active_object)
 	{
 		object_clicked = active_object->getObjectId();
-		name_active = active_object->getIdName();
+		name_active = active_object->getNameId();
 	}
 
 	for (int i = 0; i < m_objects.size(); ++i)
 	{
-		string name = m_objects.at(i)->getIdName();
+		string name = m_objects.at(i)->getNameId();
 		const bool is_selected = (selection_object & (1 << m_objects.at(i)->getObjectId())) != 0;
 
 		if (is_selected)
@@ -204,11 +248,11 @@ void ObjectCollection::renderPanel(
 		
 		if (ImGui::GetIO().MouseReleased[0] && active_object)
 		{
-			cout << "Move " << active_object->getIdName() << " to " << getNameId() << endl;
-			ObjectCollectionManager::removeObjectFromCollection(shared_from_this(), active_object->getIdName());
+			cout << "Move " << active_object->getNameId() << " to " << getNameId() << endl;
+			ObjectCollectionManager::removeObjectFromCollection(shared_from_this(), active_object->getNameId());
 			active_object->setCollectionId(m_id);
 			addObject(active_object);
-			cout << active_object->getIdName() << " at " << active_object->getCollectionId() << endl;
+			cout << active_object->getNameId() << " at " << active_object->getCollectionId() << endl;
 
 			active_object = nullptr;
 			selection_object = (1 << n_scene_objects);
@@ -252,7 +296,7 @@ void ObjectCollection::renderPopup(shared_ptr<Object>& active_object)
 	{
 		if (ImGui::MenuItem(getNameId().c_str()	))
 		{
-			ObjectCollectionManager::removeObjectFromCollection(shared_from_this(), active_object->getIdName());
+			ObjectCollectionManager::removeObjectFromCollection(shared_from_this(), active_object->getNameId());
 			active_object->setCollectionId(m_id);
 			addObject(active_object);
 			for (info::uint i = 0; i < n_childs; ++i)

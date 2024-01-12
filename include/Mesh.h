@@ -28,7 +28,7 @@ public:
 	void draw();
 	void drawArrays();
 	void drawInstance();
-	void drawTerrain(const Shader& shader, float res);
+	void drawTess(const Shader& shader, float res);
 
 	void renderProperty(Sphere& preview_object, const FrameBuffer& preview_fb);
 
@@ -44,21 +44,19 @@ public:
 	inline void setName(string name) { m_name = name; };
 	inline void setRayHitMin(float t) { m_bbox->setRayHitMin(t); }
 	inline void setMaterial(const shared_ptr<Material>& material) { m_material = material; };
-
-	inline glm::vec3 getMin() { return m_bbox->getMin(); };
-	inline glm::vec3 getMax() { return m_bbox->getMax(); };
-
-	inline glm::vec3 getCenter() { return m_bbox->getCenter(); };
-	inline glm::vec3 getSize() { return m_bbox->getSize(); };
+	inline void setMinMax(const glm::vec3& b_min, const glm::vec3& b_max) { m_bbox->setMin(b_min); m_bbox->setMax(b_max); };
 
 	inline shared_ptr<Material> getMaterial() { return m_material; };
-	inline string getName() { return m_name; };
-	
 	inline vector<info::VertexLayout> getVertices() { return m_buffer->getLayouts(); };
 	inline vector<info::uint> getIndices() { return m_buffer->getIndices(); };
+	inline glm::vec3 getMin() { return m_bbox->getMin(); };
+	inline glm::vec3 getMax() { return m_bbox->getMax(); };
+	inline glm::vec3 getCenter() { return m_bbox->getCenter(); };
+	inline glm::vec3 getSize() { return m_bbox->getSize(); };
+	inline string getName() { return m_name; };
+	inline float getRayHitMin() { return m_bbox->getRayHitMin(); };
 	inline int getSizeVertices() { return static_cast<int>(m_buffer->getLayouts().size()); };
 	inline int getSizeIndices() { return static_cast<int>(m_buffer->getSizeOfIndices()); };
-	virtual inline float getRayHitMin() { return m_bbox->getRayHitMin(); };
 
 	void computeBBox(const glm::mat4& M);
 private:
